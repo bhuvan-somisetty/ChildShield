@@ -21,22 +21,20 @@ app.use('/api', apiRoutes);
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
-// Force alter:true to pick up new columns without losing data
-if (process.env.NODE_ENV !== 'production') {
-  sequelize.sync({ alter: true }).then(() => {
-    console.log('[Database] SQLite models synchronized (alter mode).');
+// Sync DB and start server (skip listen on Vercel serverless)
+sequelize.sync({ alter: true }).then(() => {
+  console.log('[Database] SQLite models synchronized.');
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
+  }
+}).catch(err => {
+  console.error('[Database] Sync error:', err.message);
+  sequelize.sync().then(() => {
     if (!process.env.VERCEL) {
       app.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
     }
-  }).catch(err => {
-    console.error('[Database] Sync error:', err.message);
-    sequelize.sync().then(() => {
-      if (!process.env.VERCEL) {
-        app.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
-      }
-    });
   });
-}
+});
 
 // Export for Vercel Serverless
 module.exports = app;
