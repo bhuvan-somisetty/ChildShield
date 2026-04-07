@@ -1,4 +1,9 @@
 {
+  "name": "childshield-ai",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build"
+  },
   "dependencies": {
     "classnames": "^2.5.1",
     "lucide-react": "^1.7.0",
