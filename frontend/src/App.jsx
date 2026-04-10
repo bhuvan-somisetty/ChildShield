@@ -11,8 +11,13 @@ import WatchHistory from './pages/WatchHistory';
 import Analytics from './pages/Analytics';
 import Controls from './pages/Controls';
 import Reports from './pages/Reports';
+
+// Public/Auth Pages
+import Landing from './pages/public/Landing';
 import Login from './pages/public/Login';
 import Signup from './pages/public/Signup';
+import ChildSetup from './pages/public/ChildSetup';
+import ChildPairing from './pages/public/ChildPairing';
 
 const AppLayout = () => {
   const location = useLocation();
@@ -42,12 +47,12 @@ const AppLayout = () => {
         <main className="page-content">
           <React.Suspense fallback={<div>Loading...</div>}>
             <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/history" element={<WatchHistory />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/controls" element={<Controls />} />
               <Route path="/reports" element={<Reports />} />
-              <Route path="*" element={<Navigate to="/" />} />
+              <Route path="*" element={<Navigate to="/dashboard" />} />
             </Routes>
           </React.Suspense>
         </main>
@@ -60,8 +65,11 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/child-setup" element={<ChildSetup />} />
+        <Route path="/child-pairing" element={<ChildPairing />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <AppLayout />

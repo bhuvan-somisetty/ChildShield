@@ -140,3 +140,16 @@ h1, h2, h3, h4, h5, h6 {
   padding: 24px;
   padding-bottom: 60px;
 }
+
+/* Skeleton Loading */
+@keyframes shimmer {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
+}
+
+.skeleton {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  animation: shimmer 2s infinite ease-in-out;
+}

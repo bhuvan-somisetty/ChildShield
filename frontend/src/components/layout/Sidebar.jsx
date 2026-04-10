@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 const Sidebar = () => {
   const navItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Watch History', icon: History, path: '/history' },
     { name: 'Analytics', icon: PieChart, path: '/analytics' },
     { name: 'Controls', icon: Shield, path: '/controls' },

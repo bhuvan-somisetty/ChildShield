@@ -13,10 +13,16 @@ if (process.env.DATABASE_URL) {
         rejectUnauthorized: false
       }
     },
-    logging: false
+    logging: false,
+    pool: {
+      max: 3,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   });
 } else {
-  // Local dev: SQLite
+  // Local dev: SQLite file-based
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: path.join(__dirname, 'database.sqlite'),

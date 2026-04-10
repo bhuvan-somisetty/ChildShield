@@ -31,7 +31,16 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    severity: {
+      type: DataTypes.ENUM('low', 'medium', 'high', 'critical'),
+      defaultValue: 'medium'
+    },
+    platform: {
+      type: DataTypes.STRING,
+      defaultValue: 'Mobile'
+    },
     timestamp: {
+
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }

@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { Shield, Lock, Mail } from 'lucide-react';
+import { Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const { login, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   if (loading) return <div>Loading...</div>;
-  if (user) return <Navigate to="/" />;
+  if (user) return <Navigate to="/dashboard" />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,8 +52,14 @@ const Login = () => {
             <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px', color: 'var(--text-secondary)' }}>Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={18} color="var(--text-muted)" style={{ position: 'absolute', top: '12px', left: '16px' }} />
-              <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 16px 12px 44px', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }} placeholder="••••••••" />
+              <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
+                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 40px 12px 44px', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }} placeholder="••••••••" />
+              <div 
+                onClick={() => setShowPassword(!showPassword)} 
+                style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </div>
             </div>
           </div>
 

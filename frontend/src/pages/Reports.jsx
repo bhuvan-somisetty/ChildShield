@@ -1,64 +1,126 @@
 import React from 'react';
 import { Download, FileText, CheckCircle, AlertTriangle, ShieldX, Activity } from 'lucide-react';
 import { useLivePolling } from '../hooks/useLivePolling';
+import { useAuth } from '../context/AuthContext';
 
 const Reports = () => {
-  const insights = useLivePolling('/api/insights');
+  const { activeChild } = useAuth();
+  const data = useLivePolling('/api/reports/full');
 
-  if(!insights) return <div className="animate-fade-in" style={{ padding: '24px' }}>Loading live reports...</div>;
+  if (!activeChild || !activeChild.isPaired) {
+    return (
+      <div className="animate-fade-in" style={{ padding: '60px', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+        <ShieldX size={64} color="var(--accent-purple)" style={{ marginBottom: '24px' }} />
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Device Not Connected</h2>
+        <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>Reports cannot be generated without an active connection. Please link a child device to begin compiling historical behavioral analysis.</p>
+      </div>
+    );
+  }
+
+  if(!data) return <div className="animate-fade-in" style={{ padding: '24px', textAlign: 'center' }}>Synchronizing reporting data...</div>;
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '40px' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '60px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '600' }}>Dynamic Risk Assessment</h2>
-          <p style={{ color: 'var(--text-muted)' }}>AI-driven live evaluation of current activity patterns.</p>
+          <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Parental Insights Report</h2>
+          <p style={{ color: 'var(--text-muted)', marginTop: '4px' }}>Detailed behavioral analysis for the past 30 days.</p>
         </div>
-        <button style={{ 
-          display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
-          background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '8px', color: '#fff', cursor: 'pointer'
-        }}>
-          <Download size={16} /> Export PDF
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+           <div style={{ padding: '8px 16px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', color: 'var(--accent-green)', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              DATA VERIFIED
+           </div>
+           <button style={{ 
+            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
+            background: 'var(--accent-purple)', border: 'none',
+            borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: 'bold'
+          }}>
+            <Download size={16} /> DOWNLOAD REPORT
+          </button>
+        </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '24px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', textAlign: 'center' }}>
-          
-          <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="120" height="120" viewBox="0 0 140 140" style={{ transform: 'rotate(-90deg)', transition: 'all 1s' }}>
-              <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
-              <circle cx="70" cy="70" r="60" fill="none" stroke={insights.score > 70 ? "var(--accent-green)" : insights.score > 40 ? "#f59e0b" : "var(--accent-red)"} strokeWidth="12" 
-                strokeDasharray="377" 
-                strokeDashoffset={377 - (377 * insights.score) / 100}
-                strokeLinecap="round"
-                style={{ transition: 'stroke-dashoffset 1s ease-out, stroke 0.5s' }}
-              />
-            </svg>
-            <div style={{ position: 'absolute', textAlign: 'center' }}>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>{insights.score}</div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>/ 100</div>
-            </div>
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
+         <div className="glass-card" style={{ padding: '24px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>AVG DAILY SCREEN TIME</div>
+            <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--accent-cyan)' }}>{data.last30DaysSummary?.averageDailyFormatted || '0h 00m'}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Based on last 30 days</div>
+         </div>
+         <div className="glass-card" style={{ padding: '24px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>RISK SCORE (LIVE)</div>
+            <div style={{ fontSize: '28px', fontWeight: '800', color: data.riskScore > 70 ? 'var(--accent-green)' : '#f59e0b' }}>{data.riskScore}/100</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>{data.riskLevel} alert status</div>
+         </div>
+         <div className="glass-card" style={{ padding: '24px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>SECURITY FLAGS</div>
+            <div style={{ fontSize: '28px', fontWeight: '800', color: data.alertCount > 0 ? 'var(--accent-red)' : '#fff' }}>{data.alertCount}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Total incidents detected</div>
+         </div>
+      </div>
 
-          <div>
-            <h3 style={{ fontSize: '20px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              {insights.level === 'Low Risk' ? <CheckCircle color="var(--accent-green)"/> : 
-               insights.level === 'Medium Risk' ? <AlertTriangle color="#f59e0b"/> : 
-               <ShieldX color="var(--accent-red)"/> }
-              {insights.level}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+         
+         <div className="glass-card" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+               <Activity size={18} color="var(--accent-cyan)" /> Activity Breakdown
             </h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5, maxWidth: '500px', margin: '0 auto' }}>
-              The current risk score is dynamically shifting based on real-time activity tracking, 
-              facial presence verification patterns, and categorized watch histories.
-            </p>
-          </div>
-        </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+               {data.topApps?.map((app, i) => (
+                  <div key={app.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: app.color }} />
+                     <div style={{ flex: 1, fontSize: '14px' }}>{app.name}</div>
+                     <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{app.time}</div>
+                  </div>
+               ))}
+            </div>
+            <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+               <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>Most Watched Category</div>
+               <div style={{ padding: '12px', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--accent-cyan)', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                  {data.mostWatchedCategory || 'N/A'}
+               </div>
+            </div>
+         </div>
+
+         <div className="glass-card" style={{ padding: '24px' }}>
+            <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+               <FileText size={18} color="var(--accent-purple)" /> Safety Recommendations
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+               {(data.recommendations || []).map((rec, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                     <CheckCircle size={16} color="var(--accent-green)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                     <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>{rec}</p>
+                  </div>
+               ))}
+               {(!data.recommendations || data.recommendations.length === 0) && (
+                 <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Continuing monitoring to generate insights...</p>
+               )}
+            </div>
+         </div>
+
       </div>
 
+      <div className="glass-card" style={{ marginTop: '24px', padding: '24px' }}>
+         <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShieldX size={18} color="var(--accent-red)" /> Critical Incidents Log
+         </h3>
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {data.flags?.map((flag, i) => (
+               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>
+                  <AlertTriangle size={16} color="var(--accent-red)" />
+                  <span style={{ fontSize: '13px', color: '#fff' }}>{flag}</span>
+               </div>
+            ))}
+            {(!data.flags || data.flags.length === 0) && (
+               <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                  No critical security incidents documented in this period.
+               </div>
+            )}
+         </div>
+      </div>
     </div>
   );
 };
+
 
 export default Reports;

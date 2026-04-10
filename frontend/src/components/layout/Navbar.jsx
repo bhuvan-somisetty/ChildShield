@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bell, User, LogOut, Settings, HelpCircle, ChevronDown, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLivePolling } from '../../hooks/useLivePolling';
+import ProfileSettingsModal from './ProfileSettingsModal';
 
 const Navbar = () => {
   const { user, logout, activeChild, childrenList, setActiveChild, isDemoMode, setIsDemoMode } = useAuth();
@@ -10,6 +11,7 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [childSelectOpen, setChildSelectOpen] = useState(false);
   const [notiOpen, setNotiOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -106,6 +108,12 @@ const Navbar = () => {
                 <div style={{ fontWeight: '600', fontSize: '14px' }}>{user?.email}</div>
                 <div style={{ fontSize: '12px', color: 'var(--accent-cyan)' }}>SaaS Pro Plan</div>
               </div>
+              <div 
+                onClick={() => { setShowSettings(true); setProfileOpen(false); }} 
+                style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '14px', marginTop: '4px', transition: 'background 0.2s' }}
+              >
+                <Settings size={16} /> Account Settings
+              </div>
               <div onClick={logout} style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-red)', fontSize: '14px', marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
                 <LogOut size={16} /> Sign Out
               </div>
@@ -113,6 +121,8 @@ const Navbar = () => {
           )}
         </div>
       </div>
+      
+      {showSettings && <ProfileSettingsModal onClose={() => setShowSettings(false)} />}
     </header>
   );
 };

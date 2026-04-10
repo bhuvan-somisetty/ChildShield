@@ -53,6 +53,15 @@ module.exports = (sequelize) => {
     saveFaceSnapshots: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    // Timer fields
+    timerEndTime: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    timerDurationMinutes: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   });
 };
