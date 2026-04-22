@@ -1,4 +1,10 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {
+  console.warn('[Database] Could not set custom DNS servers:', e.message);
+}
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
@@ -6,6 +12,7 @@ let sequelize;
 let Parent, Child, Activity, FaceEvent, Location, SafeZone;
 
 const isMongo = !!process.env.MONGODB_URI;
+if (isMongo) mongoose.set('bufferCommands', false); // Fail fast if DB not connected
 
 if (isMongo) {
   // MongoDB Connection via Mongoose
@@ -13,8 +20,11 @@ if (isMongo) {
     serverSelectionTimeoutMS: 5000, // Fail fast if no connection
     socketTimeoutMS: 45000,
   })
-    .then(() => console.log('[Database] Connected to MongoDB Atlas'))
-    .catch(err => console.error('[Database] MongoDB connection error:', err));
+    .then(() => console.log('[Database] ✅ Connected to MongoDB Atlas'))
+    .catch(err => {
+      console.error('[Database] ❌ MongoDB connection error:', err.message);
+      console.error('[Database] Check your MONGODB_URI and IP Whitelisting in Atlas.');
+    });
 
   const MongoParent = require('./models/mongo/Parent');
   const MongoChild = require('./models/mongo/Child');

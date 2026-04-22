@@ -23,6 +23,7 @@ import AudioListener from './pages/AudioListener';
 import ScreenView from './pages/ScreenView';
 
 // Public/Auth Pages
+import Welcome from './pages/public/Welcome';
 import Onboarding from './pages/public/Onboarding';
 import Landing from './pages/public/Landing';
 import Login from './pages/public/Login';
@@ -115,8 +116,8 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<Onboarding />} />
-        <Route path="/onboarding" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<Welcome />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/role-selection" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
