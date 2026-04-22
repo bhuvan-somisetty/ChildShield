@@ -3,15 +3,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://childshield-backend.onrender.com/api/$1"
+      "destination": "https://childshield-1sd6.onrender.com/api/$1"
     },
     {
       "source": "/auth/(.*)",
-      "destination": "https://childshield-backend.onrender.com/auth/$1"
+      "destination": "https://childshield-1sd6.onrender.com/auth/$1"
     },
     {
       "source": "/socket.io/(.*)",
-      "destination": "https://childshield-backend.onrender.com/socket.io/$1"
+      "destination": "https://childshield-1sd6.onrender.com/socket.io/$1"
     },
     {
       "source": "/(.*)",

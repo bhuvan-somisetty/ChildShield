@@ -48,6 +48,7 @@ app.use('/api/device', deviceRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api', apiRoutes);
 
+app.get('/', (req, res) => res.send('ChildShield AI Backend is running!'));
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 // Sync DB and start server (use `server.listen` not `app.listen` for Socket.IO)
