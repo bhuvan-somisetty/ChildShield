@@ -36,6 +36,18 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Ensure DB is connected before any route is processed
+app.use(async (req, res, next) => {
+  if (isMongo && mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (err) {
+      return res.status(500).json({ error: 'Database connection failed', details: err.message });
+    }
+  }
+  next();
+});
+
 // OAuth social login routes MUST be mounted BEFORE /api
 app.use('/auth', oauthRoutes);
 
