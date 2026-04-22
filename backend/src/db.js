@@ -15,17 +15,7 @@ const isMongo = !!process.env.MONGODB_URI;
 if (isMongo) mongoose.set('bufferCommands', false); // Fail fast if DB not connected
 
 if (isMongo) {
-  // MongoDB Connection via Mongoose
-  mongoose.connect(process.env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 5000, // Fail fast if no connection
-    socketTimeoutMS: 45000,
-  })
-    .then(() => console.log('[Database] ✅ Connected to MongoDB Atlas'))
-    .catch(err => {
-      console.error('[Database] ❌ MongoDB connection error:', err.message);
-      console.error('[Database] Check your MONGODB_URI and IP Whitelisting in Atlas.');
-    });
-
+  // Connection logic has been moved to server.js to ensure it connects before server starts
   const MongoParent = require('./models/mongo/Parent');
   const MongoChild = require('./models/mongo/Child');
   const MongoActivity = require('./models/mongo/Activity');

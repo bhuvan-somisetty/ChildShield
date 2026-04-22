@@ -170,7 +170,7 @@ const Welcome = () => {
         color: 'var(--text-muted)',
         opacity: 0.6
       }}>
-        © 2024 ChildShield AI. All rights reserved.
+        © {new Date().getFullYear()} ChildShield AI. All rights reserved.
       </div>
 
       <style>{`

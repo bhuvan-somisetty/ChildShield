@@ -5,7 +5,7 @@ const cors    = require('cors');
 const session = require('express-session');
 const passport = require('./passport');
 const { Server: SocketServer } = require('socket.io');
-const { sequelize, isMongo } = require('./db');
+const { sequelize, isMongo, mongoose } = require('./db');
 const initSignaling = require('./signaling');
 
 const authRoutes     = require('./routes/auth');
@@ -53,7 +53,17 @@ app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 // Sync DB and start server (use `server.listen` not `app.listen` for Socket.IO)
 if (isMongo) {
-  server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT} (MongoDB)`));
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => {
+      console.log("MongoDB Connected");
+      server.listen(PORT, () => {
+        console.log(`[ChildShield] Server running on http://localhost:${PORT} (MongoDB)`);
+      });
+    })
+    .catch(err => {
+      console.error("MongoDB connection error:", err);
+      process.exit(1);
+    });
 } else {
   sequelize.sync({ alter: true }).then(() => {
     console.log('[Database] SQL models synchronized.');
