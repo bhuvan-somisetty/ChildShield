@@ -35,12 +35,17 @@ const createParentModel = require('./models/Parent');
 const createChildModel = require('./models/Child');
 const createActivityModel = require('./models/Activity');
 const createFaceEventModel = require('./models/FaceEvent');
+const createLocationModel = require('./models/Location');
+const createSafeZoneModel = require('./models/SafeZone');
 
 // Initialize Models
 const Parent = createParentModel(sequelize);
 const Child = createChildModel(sequelize);
 const Activity = createActivityModel(sequelize);
 const FaceEvent = createFaceEventModel(sequelize);
+const Location = createLocationModel(sequelize);
+const SafeZone = createSafeZoneModel(sequelize);
+
 
 // Define Relationships
 Parent.hasMany(Child, { foreignKey: 'parentId' });
@@ -52,4 +57,11 @@ Activity.belongsTo(Child, { foreignKey: 'childId' });
 Child.hasMany(FaceEvent, { foreignKey: 'childId' });
 FaceEvent.belongsTo(Child, { foreignKey: 'childId' });
 
-module.exports = { sequelize, Parent, Child, Activity, FaceEvent };
+Child.hasMany(Location, { foreignKey: 'childId' });
+Location.belongsTo(Child, { foreignKey: 'childId' });
+
+Child.hasMany(SafeZone, { foreignKey: 'childId' });
+SafeZone.belongsTo(Child, { foreignKey: 'childId' });
+
+module.exports = { sequelize, Parent, Child, Activity, FaceEvent, Location, SafeZone };
+

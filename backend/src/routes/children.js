@@ -90,4 +90,16 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
+// Delete (remove) child profile
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const child = await Child.findOne({ where: { id: req.params.id, parentId: req.user.id } });
+    if (!child) return res.status(404).json({ error: 'Child not found' });
+    await child.destroy();
+    res.json({ success: true });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

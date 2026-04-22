@@ -78,14 +78,27 @@ export const AuthProvider = ({ children }) => {
     throw new Error(data.error);
   };
 
+  // Called by OAuthCallback after social login redirect
+  const loginWithToken = (jwt, userObj) => {
+    localStorage.setItem('cs_token', jwt);
+    setToken(jwt);
+    setUser(userObj);
+    fetchChildren(jwt);
+  };
+
   const logout = () => {
     setToken(null);
     setChildrenList([]);
     setActiveChild(null);
   };
 
+  // Update user in-memory after profile edits
+  const updateUser = (updatedFields) => {
+    setUser(prev => ({ ...prev, ...updatedFields }));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, childrenList, activeChild, setActiveChild, isDemoMode, setIsDemoMode }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, loginWithToken, logout, fetchChildren, updateUser, childrenList, activeChild, setActiveChild, isDemoMode, setIsDemoMode }}>
       {children}
     </AuthContext.Provider>
   );

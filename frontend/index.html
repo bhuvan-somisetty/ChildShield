@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="google" content="notranslate" />
     <title>ChildShield AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,5 +12,51 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/index.jsx"></script>
+    <div id="google_translate_element" style="display:none;"></div>
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({pageLanguage: 'en', autoDisplay: false}, 'google_translate_element');
+      }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script>
+      // 🚀 Active DOM Destroyer: Nuke the Google Translate banner forever
+      const killGoogleBanner = new MutationObserver(() => {
+        // 1. Destroy Google's injected iframe banner
+        const banners = document.querySelectorAll('.goog-te-banner-frame, .VIpgJd-Zvi9od-aZ2wEe-wOHMyf');
+        banners.forEach(b => { b.style.setProperty('display', 'none', 'important'); b.style.height = '0px'; });
+        
+        // 2. Destroy the popup hover boxes
+        const popups = document.querySelectorAll('#goog-gt-tt');
+        popups.forEach(p => p.style.setProperty('display', 'none', 'important'));
+
+        // 3. Force body back to normal (Google pushes it down 40px)
+        if (document.body) {
+          document.body.style.setProperty('top', '0px', 'important');
+          document.body.style.setProperty('position', 'static', 'important');
+          document.body.style.setProperty('margin-top', '0px', 'important');
+        }
+        if (document.documentElement) {
+          document.documentElement.style.setProperty('top', '0px', 'important');
+          document.documentElement.style.setProperty('position', 'static', 'important');
+        }
+      });
+
+      // Start patrolling the DOM immediately
+      killGoogleBanner.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+      window.addEventListener('load', () => killGoogleBanner.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] }));
+    </script>
+    <style>
+      /* Aggressively hide Google Translate Top Banner and Tooltips */
+      .goog-te-banner-frame { display: none !important; }
+      iframe[src*="translate.googleapis.com"] { display: none !important; }
+      iframe.goog-te-banner-frame { display: none !important; }
+      /* Prevent the body from jumping down */
+      body, html { top: 0 !important; margin-top: 0 !important; position: static !important; }
+      /* Hide hover popups */
+      .goog-tooltip, .goog-tooltip:hover { display: none !important; }
+      .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
+      #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+    </style>
   </body>
 </html>

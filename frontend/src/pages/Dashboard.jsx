@@ -19,7 +19,7 @@ const Dashboard = () => {
   if (!data) return <div style={{ padding: '24px', color: '#fff' }}>Loading Data...</div>;
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '40px' }}>
+    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '80px' }}>
       
       {/* Device Connection Status */}
       <div className="glass-card" style={{ padding: '16px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

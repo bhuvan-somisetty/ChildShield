@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Lock, Smartphone, Moon, ShieldAlert, Eye, EyeOff, Clock, Camera, Wifi, CheckCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Lock, Smartphone, Moon, ShieldAlert, Eye, EyeOff, Clock, Camera, Wifi, CheckCircle, LockKeyhole, Unlock, AppWindow } from 'lucide-react';
 import FaceRegistration from '../components/FaceRegistration';
 import LockScreen from '../components/LockScreen';
 import { useAuth } from '../context/AuthContext';
@@ -31,7 +31,7 @@ const Toggle = ({ active, onChange, danger = false }) => {
 };
 
 const Controls = () => {
-  const { user, activeChild, setActiveChild, token } = useAuth();
+  const { user, activeChild, setActiveChild, childrenList, fetchChildren, token } = useAuth();
   const [deviceLock, setDeviceLock] = useState(false); // Global lock sim
   const [parentInputCode, setParentInputCode] = useState('');
   const [linkError, setLinkError] = useState('');
@@ -42,7 +42,27 @@ const Controls = () => {
   const [showUnpairPass, setShowUnpairPass] = useState(false);
   const [unpairError, setUnpairError] = useState('');
   const [isUnpairing, setIsUnpairing] = useState(false);
+  const [enforcingState, setEnforcingState] = useState(null);
+  const [enforceMsg, setEnforceMsg] = useState('');
   const webcamRef = useRef(null);
+
+  // Live-poll activeChild every 5s so isPaired/deviceState stay fresh
+  const refreshActiveChild = useCallback(async () => {
+    if (!token || !activeChild?.id) return;
+    try {
+      const res = await fetch(`/api/children/${activeChild.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.child) setActiveChild(data.child);
+    } catch {}
+  }, [token, activeChild?.id, setActiveChild]);
+
+  useEffect(() => {
+    refreshActiveChild();
+    const iv = setInterval(refreshActiveChild, 5000);
+    return () => clearInterval(iv);
+  }, [refreshActiveChild]);
 
   useEffect(() => {
     if (!scanMode) return;
@@ -82,7 +102,12 @@ const Controls = () => {
       });
       const data = await res.json();
       if(res.ok && data.success) {
-        window.location.reload(); 
+        // ✅ Refresh children list WITHOUT reloading the page (reload wipes auth state)
+        await fetchChildren(token);
+        // If the newly paired child is returned, set it as active immediately
+        if (data.child) setActiveChild(data.child);
+        setParentInputCode('');
+        setLinkError('');
       } else {
         setLinkError(data.error || `Failed to link device (Status: ${res.status}, Body: ${JSON.stringify(data)})`);
       }
@@ -171,27 +196,51 @@ const Controls = () => {
 
   const generateCode = async () => {
     try {
-      const res = await fetch(`/api/device/generate-code/${activeChild.id}`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`/api/device/refresh-code/${activeChild.id}`, {
+        method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        setPairingCode(data.code);
-        setActiveChild({...activeChild, pairingCode: data.code, isPaired: false});
+        setActiveChild({...activeChild, pairingCode: data.pairingCode });
       }
     } catch(err) { console.error(err); }
   };
 
   const toggleControl = async (key, forceVal) => {
-    // Optimistic update
+    if (key === 'deviceState') {
+      const actionMap = { locked: 'lock', paused: 'pause', active: 'resume' };
+      const action = actionMap[forceVal] || 'resume';
+      const labelMap = { lock: 'Locking...', pause: 'Pausing...', resume: 'Resuming...' };
+      setEnforcingState(action);
+      setEnforceMsg(labelMap[action]);
+      try {
+        const res = await fetch(`/api/device/control/${activeChild.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ action, reason: action === 'lock' ? 'Locked by parent' : action === 'pause' ? 'Paused by parent' : null })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setActiveChild({ ...activeChild, deviceState: forceVal });
+          setEnforceMsg(action === 'lock' ? 'Device Locked!' : action === 'pause' ? 'Session Paused!' : 'Session Resumed!');
+        } else {
+          setEnforceMsg('Error: ' + (data.error || 'Command failed'));
+        }
+      } catch (err) {
+        setEnforceMsg('Network error: ' + err.message);
+      }
+      setTimeout(() => { setEnforcingState(null); setEnforceMsg(''); }, 2500);
+      return;
+    }
     const newValue = forceVal !== undefined ? forceVal : !activeChild[key];
-    setActiveChild({...activeChild, [key]: newValue});
-    
-    fetch(`/api/children/${activeChild.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ [key]: newValue })
-    }).catch(console.error);
+    setActiveChild({ ...activeChild, [key]: newValue });
+    try {
+      await fetch(`/api/children/${activeChild.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ [key]: newValue })
+      });
+    } catch (err) { console.error('Toggle failed:', err); }
   };
 
   const setDailyLimit = async (val) => {
@@ -317,32 +366,50 @@ const Controls = () => {
               <Lock size={20} color="var(--accent-red)" /> 3. Instant Enforcement
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>Manually override the device state. This takes effect within 5 seconds.</p>
-            
+
+            {enforceMsg && (
+              <div style={{
+                padding: '10px 16px', borderRadius: '10px', marginBottom: '16px',
+                textAlign: 'center', fontWeight: '700', fontSize: '14px',
+                background: enforceMsg.startsWith('Error') || enforceMsg.startsWith('Network') ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)',
+                color: enforceMsg.startsWith('Error') || enforceMsg.startsWith('Network') ? 'var(--accent-red)' : 'var(--accent-green)',
+                border: '1px solid currentColor'
+              }}>
+                {enforceMsg}
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <button 
+              <button
                 onClick={() => toggleControl('deviceState', 'locked')}
-                disabled={!activeChild.isPaired}
-                style={{ padding: '14px', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--accent-red)', border: '1px solid var(--accent-red)', borderRadius: '8px', cursor: activeChild.isPaired ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.5 }}
+                disabled={!activeChild.isPaired || !!enforcingState}
+                style={{ padding: '14px', background: 'rgba(239,68,68,0.15)', color: 'var(--accent-red)', border: '1px solid var(--accent-red)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
               >
-                 LOCK NOW
+                {enforcingState === 'lock' ? 'Locking...' : 'LOCK NOW'}
               </button>
-              <button 
+              <button
                 onClick={() => toggleControl('deviceState', 'paused')}
-                disabled={!activeChild.isPaired}
-                style={{ padding: '14px', background: 'rgba(245, 158, 11, 0.15)', color: 'var(--accent-yellow)', border: '1px solid var(--accent-yellow)', borderRadius: '8px', cursor: activeChild.isPaired ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.5 }}
+                disabled={!activeChild.isPaired || !!enforcingState}
+                style={{ padding: '14px', background: 'rgba(245,158,11,0.15)', color: 'var(--accent-yellow)', border: '1px solid var(--accent-yellow)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
               >
-                 PAUSE SESSION
+                {enforcingState === 'pause' ? 'Pausing...' : 'PAUSE SESSION'}
               </button>
             </div>
-            
-            <button 
+
+            <button
               onClick={() => toggleControl('deviceState', 'active')}
-              disabled={!activeChild.isPaired}
-              style={{ width: '100%', marginTop: '12px', padding: '14px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--accent-green)', border: '1px solid var(--accent-green)', borderRadius: '8px', cursor: activeChild.isPaired ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.5 }}
+              disabled={!activeChild.isPaired || !!enforcingState}
+              style={{ width: '100%', marginTop: '12px', padding: '14px', background: 'rgba(16,185,129,0.15)', color: 'var(--accent-green)', border: '1px solid var(--accent-green)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
             >
-               RESUME / UNLOCK
+              {enforcingState === 'resume' ? 'Resuming...' : 'RESUME / UNLOCK'}
             </button>
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '12px', textAlign: 'center' }}>Helper: Use "Resume" to clear any active lockouts.</p>
+
+            {!activeChild.isPaired && (
+              <p style={{ fontSize: '12px', color: 'var(--accent-yellow)', marginTop: '12px', textAlign: 'center' }}>
+                Device not paired — pair a child device to enable controls.
+              </p>
+            )}
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', textAlign: 'center' }}>Use "Resume" to clear any active lockouts.</p>
           </div>
 
           {/* SECTOR 4: Security Filters */}
@@ -379,9 +446,144 @@ const Controls = () => {
            <FaceRegistration />
         </div>
 
+        {/* ─── App Manager ─────────────────────────────────────────────────── */}
+        <AppManager childId={activeChild?.id} token={token} childName={activeChild?.name} />
+
       </div>
 
     </>
+  );
+};
+
+// ─── App Manager Component ────────────────────────────────────────────────────
+const INSTALLED_APPS = [
+  { name: 'YouTube', icon: '📺', category: 'Entertainment', avgTime: '2h 15m', color: '#ef4444' },
+  { name: 'Instagram', icon: '📸', category: 'Social', avgTime: '1h 30m', color: '#e91e8c' },
+  { name: 'WhatsApp', icon: '💬', category: 'Messaging', avgTime: '45m', color: '#10b981' },
+  { name: 'TikTok', icon: '🎵', category: 'Entertainment', avgTime: '1h 45m', color: '#000' },
+  { name: 'Snapchat', icon: '👻', category: 'Social', avgTime: '50m', color: '#f59e0b' },
+  { name: 'Chrome', icon: '🌐', category: 'Browser', avgTime: '1h 10m', color: '#3b82f6' },
+  { name: 'Roblox', icon: '🎮', category: 'Gaming', avgTime: '2h 00m', color: '#8b5cf6' },
+  { name: 'Spotify', icon: '🎧', category: 'Music', avgTime: '30m', color: '#10b981' },
+  { name: 'Telegram', icon: '✈️', category: 'Messaging', avgTime: '25m', color: '#0891b2' },
+  { name: 'Gallery', icon: '🖼️', category: 'System', avgTime: '15m', color: '#6366f1' },
+];
+
+const AppManager = ({ childId, token, childName }) => {
+  const [lockedApps, setLockedApps] = useState([]);
+  const [loading, setLoading] = useState({});
+
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
+  const fetchLocked = useCallback(async () => {
+    if (!childId || !token) return;
+    try {
+      const res = await fetch(`/api/device/locked-apps/${childId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) setLockedApps(data.lockedApps || []);
+    } catch {}
+  }, [childId, token]);
+
+  useEffect(() => { fetchLocked(); }, [fetchLocked]);
+
+  const handleLock = async (appName) => {
+    setLoading(l => ({ ...l, [appName]: true }));
+    try {
+      await fetch('/api/device/lock-app', { method: 'POST', headers, body: JSON.stringify({ childId, appName }) });
+      await fetchLocked();
+    } catch {}
+    setLoading(l => ({ ...l, [appName]: false }));
+  };
+
+  const handleUnlock = async (appName) => {
+    setLoading(l => ({ ...l, [appName]: true }));
+    try {
+      await fetch('/api/device/unlock-app', { method: 'POST', headers, body: JSON.stringify({ childId, appName }) });
+      await fetchLocked();
+    } catch {}
+    setLoading(l => ({ ...l, [appName]: false }));
+  };
+
+  const getLockedInfo = (appName) => lockedApps.find(a => a.appName === appName);
+
+  const getRemainingTime = (lockedAt) => {
+    const end = new Date(lockedAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = end - Date.now();
+    if (remaining <= 0) return 'Expired';
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    return `${h}h ${m}m left`;
+  };
+
+  if (!childId) return null;
+
+  return (
+    <div style={{ marginTop: '32px' }}>
+      <div className="glass-card" style={{ padding: '24px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <AppWindow size={20} color="var(--accent-purple)" /> App Manager
+        </h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '20px' }}>
+          See what apps {childName} is using and lock specific apps. Locked apps auto-unlock after 24 hours.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {INSTALLED_APPS.map(app => {
+            const lockInfo = getLockedInfo(app.name);
+            const isLocked = !!lockInfo;
+            return (
+              <div key={app.name} style={{
+                display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
+                background: isLocked ? 'rgba(239,68,68,0.04)' : 'rgba(255,255,255,0.02)',
+                border: `1px solid ${isLocked ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)'}`,
+                borderRadius: '14px', transition: 'all 0.2s'
+              }}>
+                {/* App icon */}
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${app.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, border: `1px solid ${app.color}25` }}>
+                  {app.icon}
+                </div>
+
+                {/* App info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>{app.name}</span>
+                    {isLocked && <span style={{ fontSize: '10px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>LOCKED</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                    <span>{app.category}</span>
+                    <span>📊 {app.avgTime}/day</span>
+                    {isLocked && <span style={{ color: '#f59e0b' }}>⏰ {getRemainingTime(lockInfo.lockedAt)}</span>}
+                  </div>
+                </div>
+
+                {/* Lock/Unlock button */}
+                <button
+                  onClick={() => isLocked ? handleUnlock(app.name) : handleLock(app.name)}
+                  disabled={loading[app.name]}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '8px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                    fontWeight: '700', fontSize: '12px',
+                    background: isLocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                    color: isLocked ? '#10b981' : '#ef4444',
+                    opacity: loading[app.name] ? 0.5 : 1,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {isLocked ? <><Unlock size={14} /> Unlock</> : <><LockKeyhole size={14} /> Lock</>}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>
+          <p style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '500' }}>
+            🔒 Locked apps require the parent control password to unlock on the child device, or auto-unlock after 24 hours.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

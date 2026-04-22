@@ -120,7 +120,12 @@ router.get('/history', async (req, res) => {
   const acts = await Activity.findAll({ where: { childId }, order: [['createdAt', 'DESC']], limit: 50 });
   
   let data = acts.map(a => ({
-    id: a.id, app: a.app, title: a.title, category: a.category, startTime: a.time, duration: `${a.durationMinutes}m`, risk: a.riskTag
+    id: a.id, app: a.app, title: a.title, category: a.category,
+    startTime: a.time, duration: `${a.durationMinutes}m`, risk: a.riskTag,
+    alerts: (() => {
+      try { return a.alerts ? JSON.parse(a.alerts) : []; }
+      catch { return []; }
+    })()
   }));
   
   if(req.query.category) {

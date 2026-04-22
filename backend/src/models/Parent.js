@@ -28,6 +28,10 @@ module.exports = (sequelize) => {
     parentControlPasswordHash: {
       type: DataTypes.STRING,
       allowNull: false // Separate password to unlock devices/overrides
+    },
+    needsPasswordSetup: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   });
 };

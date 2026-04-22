@@ -9,7 +9,9 @@ module.exports = (sequelize) => {
     },
     name: { type: DataTypes.STRING, allowNull: false },
     age: { type: DataTypes.INTEGER, allowNull: false },
+    gender: { type: DataTypes.ENUM('boy', 'girl', 'other'), allowNull: true },
     dailyLimitHours: { type: DataTypes.FLOAT, defaultValue: 5.0 },
+    locationTrackingEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
     safeMode: { type: DataTypes.BOOLEAN, defaultValue: true },
     nightRestriction: { type: DataTypes.BOOLEAN, defaultValue: false },
     facePresenceEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
@@ -62,6 +64,11 @@ module.exports = (sequelize) => {
     timerDurationMinutes: {
       type: DataTypes.INTEGER,
       allowNull: true
+    },
+    // App locking: JSON array of { appName, lockedAt, lockedBy }
+    lockedApps: {
+      type: DataTypes.JSON,
+      defaultValue: []
     }
   });
 };

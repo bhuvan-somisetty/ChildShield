@@ -1,19 +1,46 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
+const http    = require('http');
+const cors    = require('cors');
+const session = require('express-session');
+const passport = require('./passport');
+const { Server: SocketServer } = require('socket.io');
 const { sequelize } = require('./db');
+const initSignaling = require('./signaling');
 
-const authRoutes = require('./routes/auth');
-const childRoutes = require('./routes/children');
-const apiRoutes = require('./routes/api');
-const deviceRoutes = require('./routes/device');
+const authRoutes     = require('./routes/auth');
+const oauthRoutes    = require('./routes/oauth');
+const childRoutes    = require('./routes/children');
+const apiRoutes      = require('./routes/api');
+const deviceRoutes   = require('./routes/device');
 const activityRoutes = require('./routes/activity');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-app.use(cors());
+// Create HTTP server (needed for Socket.IO)
+const server = http.createServer(app);
+
+// Attach Socket.IO
+const io = new SocketServer(server, {
+  cors: { origin: FRONTEND_URL, methods: ['GET', 'POST'], credentials: true }
+});
+initSignaling(io);
+
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'childshield_session_secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 10 * 60 * 1000 } // 10 min — only for OAuth handshake
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// OAuth social login routes MUST be mounted BEFORE /api so they bypass api.js's global auth middleware
+app.use('/auth', oauthRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/children', childRoutes);
@@ -23,14 +50,14 @@ app.use('/api', apiRoutes);
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
-// Sync DB and start server
+// Sync DB and start server (use `server.listen` not `app.listen` for Socket.IO)
 sequelize.sync({ alter: true }).then(() => {
   console.log('[Database] SQLite models synchronized.');
-  app.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
+  server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
 }).catch(err => {
   console.error('[Database] Sync error:', err.message);
   sequelize.sync().then(() => {
-    app.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
+    server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
   });
 });
 
