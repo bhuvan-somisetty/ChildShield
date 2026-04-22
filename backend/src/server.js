@@ -5,7 +5,7 @@ const cors    = require('cors');
 const session = require('express-session');
 const passport = require('./passport');
 const { Server: SocketServer } = require('socket.io');
-const { sequelize } = require('./db');
+const { sequelize, isMongo } = require('./db');
 const initSignaling = require('./signaling');
 
 const authRoutes     = require('./routes/auth');
@@ -51,16 +51,19 @@ app.use('/api', apiRoutes);
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 // Sync DB and start server (use `server.listen` not `app.listen` for Socket.IO)
-sequelize.sync({ alter: true }).then(() => {
-  console.log('[Database] SQLite models synchronized.');
-  server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
-}).catch(err => {
-  console.error('[Database] Sync error:', err.message);
-  sequelize.sync().then(() => {
-    server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT}`));
+if (isMongo) {
+  server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT} (MongoDB)`));
+} else {
+  sequelize.sync({ alter: true }).then(() => {
+    console.log('[Database] SQL models synchronized.');
+    server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT} (SQL)`));
+  }).catch(err => {
+    console.error('[Database] Sync error:', err.message);
+    sequelize.sync().then(() => {
+      server.listen(PORT, () => console.log(`[ChildShield] Server running on http://localhost:${PORT} (SQL)`));
+    });
   });
-});
-
+}
 
 // Export for Vercel Serverless
 module.exports = app;
