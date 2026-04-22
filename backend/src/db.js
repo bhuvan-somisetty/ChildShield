@@ -12,7 +12,6 @@ let sequelize;
 let Parent, Child, Activity, FaceEvent, Location, SafeZone;
 
 const isMongo = !!process.env.MONGODB_URI;
-if (isMongo) mongoose.set('bufferCommands', false); // Fail fast if DB not connected
 
 if (isMongo) {
   // Connection logic has been moved to server.js to ensure it connects before server starts
