@@ -325,7 +325,7 @@ const ProfileSettingsModal = ({ onClose }) => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {/* Google */}
                     <button
-                      onClick={() => window.location.href = 'http://localhost:5000/auth/google'}
+                      onClick={() => window.location.href = '/auth/google'}
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s', width: '100%' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
@@ -336,7 +336,7 @@ const ProfileSettingsModal = ({ onClose }) => {
                     </button>
                     {/* Facebook */}
                     <button
-                      onClick={() => window.location.href = 'http://localhost:5000/auth/facebook'}
+                      onClick={() => window.location.href = '/auth/facebook'}
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(24,119,242,0.06)', border: '1px solid rgba(24,119,242,0.2)', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s', width: '100%' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(24,119,242,0.12)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'rgba(24,119,242,0.06)'}

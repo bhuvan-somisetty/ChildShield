@@ -1,19 +1,21 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "backend/api/index.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/api/index.js"
+      "source": "/api/(.*)",
+      "destination": "https://childshield-backend.onrender.com/api/$1"
     },
     {
-      "src": "/health",
-      "dest": "backend/api/index.js"
+      "source": "/auth/(.*)",
+      "destination": "https://childshield-backend.onrender.com/auth/$1"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://childshield-backend.onrender.com/socket.io/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

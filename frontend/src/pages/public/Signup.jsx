@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
 import { Shield, User, Lock, Mail, Key, Eye, EyeOff } from 'lucide-react';
 
-const BACKEND = 'http://localhost:5000';
+const BACKEND = '';
 const oauthRedirect = (provider) => { window.location.href = `${BACKEND}/auth/${provider}`; };
 
 

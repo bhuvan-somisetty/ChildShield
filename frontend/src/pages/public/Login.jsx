@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Navigate, Link, useSearchParams } from 'react-router-dom';
 import { Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
-const BACKEND = 'http://localhost:5000';
+const BACKEND = '';
 // /auth/* is unprotected — bypasses api.js global auth middleware
 const oauthRedirect = (provider) => { window.location.href = `${BACKEND}/auth/${provider}`; };
 

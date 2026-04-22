@@ -965,7 +965,7 @@ const AccountSettings = () => {
         <div style={{ padding: '16px 20px' }}>
           <div style={{ fontSize: '13px', color: '#475569', marginBottom: '14px' }}>Link a social account for faster sign-in</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button onClick={() => window.location.href = 'http://localhost:5000/auth/google'}
+            <button onClick={() => window.location.href = '/auth/google'}
               style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', cursor: 'pointer', width: '100%', transition: 'all 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
@@ -974,7 +974,7 @@ const AccountSettings = () => {
               <span style={{ fontSize: '14px', color: '#cbd5e1', fontWeight: '500' }}>Link Google Account</span>
               <ChevronRight size={14} color="#334155" style={{ marginLeft: 'auto' }} />
             </button>
-            <button onClick={() => window.location.href = 'http://localhost:5000/auth/facebook'}
+            <button onClick={() => window.location.href = '/auth/facebook'}
               style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '13px 16px', background: 'rgba(24,119,242,0.06)', border: '1px solid rgba(24,119,242,0.2)', borderRadius: '12px', cursor: 'pointer', width: '100%', transition: 'all 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(24,119,242,0.12)'}
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(24,119,242,0.06)'}
