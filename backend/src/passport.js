@@ -1,38 +1,3 @@
-/**
- * passport.js — Social OAuth Strategies
- *
- * Supports: Google, Facebook, Twitter/X
- *
- * SETUP (one-time):
- *   Add these to your backend/.env file:
- *
- *   GOOGLE_CLIENT_ID=your_google_client_id
- *   GOOGLE_CLIENT_SECRET=your_google_client_secret
- *
- *   FACEBOOK_APP_ID=your_facebook_app_id
- *   FACEBOOK_APP_SECRET=your_facebook_app_secret
- *
- *   TWITTER_CONSUMER_KEY=your_twitter_api_key
- *   TWITTER_CONSUMER_SECRET=your_twitter_api_secret
- *
- *   SESSION_SECRET=any_random_string_here
- *   FRONTEND_URL=http://localhost:5173
- *
- * HOW TO GET CREDENTIALS:
- *
- *  Google  → https://console.cloud.google.com/
- *            APIs & Services → Credentials → OAuth 2.0 Client IDs
- *            Authorized redirect URI: http://localhost:5000/api/auth/google/callback
- *
- *  Facebook→ https://developers.facebook.com/apps/
- *            Facebook Login → Settings
- *            Valid OAuth Redirect URI: http://localhost:5000/api/auth/facebook/callback
- *
- *  Twitter → https://developer.twitter.com/
- *            Authentication settings → OAuth 1.0a
- *            Callback URL: http://localhost:5000/api/auth/twitter/callback
- */
-
 const passport       = require('passport');
 const GoogleStrategy  = require('passport-google-oauth20').Strategy;
 const FacebookStrategy= require('passport-facebook').Strategy;
@@ -40,9 +5,9 @@ const bcrypt         = require('bcryptjs');
 const crypto         = require('crypto');
 const { Parent }     = require('./db');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://child-shield.vercel.app';
+const RENDER_URL   = process.env.RENDER_EXTERNAL_URL || 'https://childshield-1sd6.onrender.com';
 
-// ── Shared: find-or-create parent from social profile ─────────────────────────
 const findOrCreateSocial = async (provider, profile, email, name) => {
   let parent = await Parent.findOne({ where: { email } });
   if (!parent) {
@@ -60,12 +25,22 @@ const findOrCreateSocial = async (provider, profile, email, name) => {
   return parent;
 };
 
-// ── Google ─────────────────────────────────────────────────────────────────────
+// Ensure absolute URLs are used to prevent redirect_uri_mismatch errors
+const getGoogleCallback = () => {
+  if (process.env.GOOGLE_CALLBACK_URL) return process.env.GOOGLE_CALLBACK_URL;
+  return `${RENDER_URL}/auth/google/callback`;
+};
+
+const getFacebookCallback = () => {
+  if (process.env.FACEBOOK_CALLBACK_URL) return process.env.FACEBOOK_CALLBACK_URL;
+  return `${RENDER_URL}/auth/facebook/callback`;
+};
+
 if (process.env.GOOGLE_CLIENT_ID) {
   passport.use(new GoogleStrategy({
     clientID:     process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  '/auth/google/callback',
+    callbackURL:  getGoogleCallback(),
     proxy:        true,
   }, async (accessToken, refreshToken, profile, done) => {
     try {
@@ -77,12 +52,11 @@ if (process.env.GOOGLE_CLIENT_ID) {
   }));
 }
 
-// ── Facebook ───────────────────────────────────────────────────────────────────
 if (process.env.FACEBOOK_APP_ID) {
   passport.use(new FacebookStrategy({
     clientID:     process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL:  '/auth/facebook/callback',
+    callbackURL:  getFacebookCallback(),
     profileFields: ['id', 'displayName', 'emails'],
     proxy:        true,
   }, async (accessToken, refreshToken, profile, done) => {
@@ -94,9 +68,6 @@ if (process.env.FACEBOOK_APP_ID) {
   }));
 }
 
-// ── Twitter/X removed — not used ──────────────────────────────────────────────
-
-// ── Session serialization (minimal — JWT issued at callback, no session needed) ─
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
   try { const parent = await Parent.findByPk(id); done(null, parent); }
