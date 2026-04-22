@@ -9,7 +9,10 @@ const isMongo = !!process.env.MONGODB_URI;
 
 if (isMongo) {
   // MongoDB Connection via Mongoose
-  mongoose.connect(process.env.MONGODB_URI)
+  mongoose.connect(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000, // Fail fast if no connection
+    socketTimeoutMS: 45000,
+  })
     .then(() => console.log('[Database] Connected to MongoDB Atlas'))
     .catch(err => console.error('[Database] MongoDB connection error:', err));
 
