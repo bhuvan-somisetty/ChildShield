@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Navigate, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
-const BACKEND = '';
+const BACKEND = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : 'https://childshield-1sd6.onrender.com';
 // /auth/* is unprotected — bypasses api.js global auth middleware
 const oauthRedirect = (provider) => { window.location.href = `${BACKEND}/auth/${provider}`; };
 
