@@ -184,26 +184,6 @@ router.delete('/me', auth, async (req, res) => {
   }
 });
 
-// ─── Setup Password (For Social Logins) ──────────────────────────────────────
-router.post('/set-control-password', auth, async (req, res) => {
-  try {
-    const { parentControlPassword } = req.body;
-    if (!parentControlPassword) return res.status(400).json({ error: 'Password is required' });
-
-    const parent = await Parent.findByPk(req.user.id);
-    if (!parent) return res.status(404).json({ error: 'Account not found' });
-
-    const salt = await bcrypt.genSalt(10);
-    parent.parentControlPasswordHash = await bcrypt.hash(parentControlPassword, salt);
-    parent.needsPasswordSetup = false;
-    await parent.save();
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ── OTP Delivery & Reset Implementation ───────────────────────────────────────
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');

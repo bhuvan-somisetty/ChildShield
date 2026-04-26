@@ -101,6 +101,7 @@ const LocationTracker = () => {
   const [savingZone, setSavingZone] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [tempLocation, setTempLocation] = useState(null);
+  const [zoneMsg, setZoneMsg] = useState(null); // { type: 'success'|'error', text: string }
   const lastGeoRef = useRef({ child: '', parent: '' });
   const searchTimeoutRef = useRef(null);
 
@@ -233,13 +234,14 @@ const LocationTracker = () => {
   };
 
   const handleAddZone = async () => {
-    if (!newZone.name || !newZone.latitude || !newZone.longitude) return;
-    setSavingZone(true);
+    if (!newZone.name) { setZoneMsg({ type: 'error', text: 'Please enter a name for this place.' }); return; }
+    if (!newZone.latitude || !newZone.longitude) { setZoneMsg({ type: 'error', text: 'Please select a location on the map or search for a place.' }); return; }
+    setSavingZone(true); setZoneMsg(null);
     try {
       const url = newZone.id ? `/api/device/safe-zones/${newZone.id}` : '/api/device/safe-zones';
       const method = newZone.id ? 'PUT' : 'POST';
-      
-      await fetch(url, {
+
+      const res = await fetch(url, {
         method, headers,
         body: JSON.stringify({
           ...newZone,
@@ -249,14 +251,26 @@ const LocationTracker = () => {
           radiusMeters: DEFAULT_RADIUS
         })
       });
-      fetchZones();
-      setShowAddZone(false);
-      setNewZone({ name: '', type: 'home', latitude: null, longitude: null, address: '' });
-      setZoneSearchQuery('');
-      setZoneSearchResults([]);
-      setPinMode(false);
-      setTab('live');
-    } catch { }
+      const data = await res.json();
+      if (!res.ok) {
+        setZoneMsg({ type: 'error', text: data.error || 'Failed to save place. Try again.' });
+        setSavingZone(false);
+        return;
+      }
+      await fetchZones(); // Refresh list from backend
+      setZoneMsg({ type: 'success', text: `"${newZone.name}" saved successfully!` });
+      setTimeout(() => {
+        setShowAddZone(false);
+        setZoneMsg(null);
+        setNewZone({ name: '', type: 'home', latitude: null, longitude: null, address: '' });
+        setZoneSearchQuery('');
+        setZoneSearchResults([]);
+        setPinMode(false);
+        setTab('live');
+      }, 1500);
+    } catch (err) {
+      setZoneMsg({ type: 'error', text: 'Network error. Check your connection and try again.' });
+    }
     setSavingZone(false);
   };
 
@@ -583,7 +597,20 @@ const LocationTracker = () => {
                   )}
                 </div>
 
-                <button onClick={handleAddZone} disabled={!newZone.name || !newZone.latitude || savingZone} style={{ padding: '16px', background: !newZone.name || !newZone.latitude || savingZone ? '#334155' : '#10b981', border: 'none', borderRadius: '14px', color: '#fff', fontWeight: '700', fontSize: '15px', cursor: !newZone.name || !newZone.latitude || savingZone ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                {/* ── Save feedback ── */}
+                {zoneMsg && (
+                  <div style={{
+                    padding: '12px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: '600',
+                    background: zoneMsg.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                    border: `1px solid ${zoneMsg.type === 'success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                    color: zoneMsg.type === 'success' ? '#10b981' : '#ef4444',
+                    display: 'flex', alignItems: 'center', gap: '8px'
+                  }}>
+                    {zoneMsg.type === 'success' ? '✅' : '❌'} {zoneMsg.text}
+                  </div>
+                )}
+
+                <button onClick={handleAddZone} disabled={savingZone} style={{ padding: '16px', background: savingZone ? '#334155' : '#10b981', border: 'none', borderRadius: '14px', color: '#fff', fontWeight: '700', fontSize: '15px', cursor: savingZone ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                   {savingZone ? <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={20} />}
                   {savingZone ? 'Saving...' : 'Save Place'}
                 </button>

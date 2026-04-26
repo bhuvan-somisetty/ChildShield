@@ -626,7 +626,8 @@ router.post('/lock-app', auth, async (req, res) => {
     if (!locked.find(a => a.appName === appName)) {
       locked.push({ appName, lockedAt: new Date().toISOString(), lockedBy: 'parent' });
       child.lockedApps = locked;
-      child.changed('lockedApps', true);
+      if (child.changed) child.changed('lockedApps', true);
+      else if (child.markModified) child.markModified('lockedApps');
       await child.save();
     }
     res.json({ success: true, lockedApps: child.lockedApps });
@@ -644,7 +645,8 @@ router.post('/unlock-app', auth, async (req, res) => {
     if (!child) return res.status(404).json({ error: 'Child not found' });
     
     child.lockedApps = (child.lockedApps || []).filter(a => a.appName !== appName);
-    child.changed('lockedApps', true);
+    if (child.changed) child.changed('lockedApps', true);
+    else if (child.markModified) child.markModified('lockedApps');
     await child.save();
     res.json({ success: true, lockedApps: child.lockedApps });
   } catch (err) {
@@ -666,7 +668,8 @@ router.get('/locked-apps/:childId', auth, async (req, res) => {
     });
     if (filtered.length !== (child.lockedApps || []).length) {
       child.lockedApps = filtered;
-      child.changed('lockedApps', true);
+      if (child.changed) child.changed('lockedApps', true);
+      else if (child.markModified) child.markModified('lockedApps');
       await child.save();
     }
     res.json({ success: true, lockedApps: filtered });
@@ -683,6 +686,71 @@ router.get('/check-app-lock/:childId', async (req, res) => {
     res.json({ success: true, lockedApps: child.lockedApps || [] });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Parent: Get locked apps for a child ──────────────────────────────────────
+router.get('/locked-apps/:childId', auth, async (req, res) => {
+  try {
+    const { childId } = req.params;
+    const child = await Child.findOne({ where: { id: childId, parentId: req.user.id } });
+    if (!child) return res.status(404).json({ success: false, error: 'Child not found' });
+    res.json({ success: true, lockedApps: child.lockedApps || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Parent: Lock an app on a child device ────────────────────────────────────
+router.post('/lock-app', auth, async (req, res) => {
+  try {
+    const { childId, appName } = req.body;
+    if (!childId || !appName) return res.status(400).json({ error: 'childId and appName required' });
+
+    const child = await Child.findOne({ where: { id: childId, parentId: req.user.id } });
+    if (!child) return res.status(404).json({ error: 'Child not found' });
+
+    const lockedApps = child.lockedApps || [];
+    // Avoid duplicates
+    if (!lockedApps.find(a => a.appName === appName)) {
+      lockedApps.push({ appName, lockedAt: new Date().toISOString() });
+      child.lockedApps = lockedApps;
+      child.changed('lockedApps', true);
+      await child.save();
+    }
+    res.json({ success: true, lockedApps: child.lockedApps });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Parent: Unlock an app on a child device ──────────────────────────────────
+router.post('/unlock-app', auth, async (req, res) => {
+  try {
+    const { childId, appName } = req.body;
+    if (!childId || !appName) return res.status(400).json({ error: 'childId and appName required' });
+
+    const child = await Child.findOne({ where: { id: childId, parentId: req.user.id } });
+    if (!child) return res.status(404).json({ error: 'Child not found' });
+
+    child.lockedApps = (child.lockedApps || []).filter(a => a.appName !== appName);
+    child.changed('lockedApps', true);
+    await child.save();
+    res.json({ success: true, lockedApps: child.lockedApps });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Get locked apps list for child device (polled every 3s) ─────────────────
+router.get('/check-app-lock/:childId', async (req, res) => {
+  try {
+    const { childId } = req.params;
+    const child = await Child.findByPk(childId, { attributes: ['id', 'lockedApps'] });
+    if (!child) return res.status(404).json({ success: false, error: 'Child not found' });
+    res.json({ success: true, lockedApps: child.lockedApps || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -706,7 +774,8 @@ router.post('/unlock-app-child', async (req, res) => {
     }
 
     child.lockedApps = (child.lockedApps || []).filter(a => a.appName !== appName);
-    child.changed('lockedApps', true);
+    if (child.changed) child.changed('lockedApps', true);
+    else if (child.markModified) child.markModified('lockedApps');
     await child.save();
     res.json({ success: true, lockedApps: child.lockedApps });
   } catch (err) {

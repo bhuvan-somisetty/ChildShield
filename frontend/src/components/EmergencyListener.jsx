@@ -178,8 +178,11 @@ const EmergencyListener = () => {
               </button>
             </>
           ) : (
-            <div style={{ fontSize: '14px', color: '#f59e0b', textAlign: 'center', fontStyle: 'italic', padding: '20px 0' }}>
-              Waiting for live GPS coordinates... Check Location Tracker.
+            <div style={{ fontSize: '14px', color: '#f59e0b', textAlign: 'center', padding: '20px 0' }}>
+              {sosEvent.payload?.reason === 'denied' ? '⚠️ Child device denied location permission. Accurate GPS unavailable.' :
+               sosEvent.payload?.reason === 'timeout' ? '⚠️ Child device GPS signal timed out.' :
+               sosEvent.payload?.reason === 'unavailable' ? '⚠️ Child device location services are unavailable.' :
+               'Waiting for live GPS coordinates... Check Location Tracker.'}
             </div>
           )}
         </div>

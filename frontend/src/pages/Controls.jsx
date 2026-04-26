@@ -121,7 +121,7 @@ const Controls = () => {
       <h3 style={{ fontSize: '18px', marginBottom: '16px', color: '#fff' }}>Link New Device</h3>
       {linkError && <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>{linkError}</div>}
       
-      <div style={{ display: 'flex', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
         <input 
           type="text" 
           placeholder="Enter 6-digit code" 
@@ -129,12 +129,12 @@ const Controls = () => {
           onChange={(e) => setParentInputCode(e.target.value)}
           maxLength={6}
           disabled={isLinking}
-          style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(176, 38, 255, 0.3)', padding: '16px', borderRadius: '12px', color: '#fff', fontSize: '18px', letterSpacing: '4px', textAlign: 'center', outline: 'none' }} 
+          style={{ flex: '1 1 120px', minWidth: '120px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(176, 38, 255, 0.3)', padding: '16px', borderRadius: '12px', color: '#fff', fontSize: '18px', letterSpacing: '4px', textAlign: 'center', outline: 'none' }} 
         />
         <button 
           onClick={handleLinkDevice}
           disabled={isLinking}
-          style={{ padding: '0 24px', background: 'var(--accent-purple)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: isLinking ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isLinking ? 0.7 : 1 }}
+          style={{ flexShrink: 0, padding: '14px 24px', background: 'var(--accent-purple)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: isLinking ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isLinking ? 0.7 : 1 }}
         >
           {isLinking ? 'Linking...' : 'Connect'}
         </button>
@@ -602,6 +602,56 @@ const AppManager = ({ childId, token, childName }) => {
 
   if (!childId) return null;
 
+  const renderApp = (app, isLocked) => {
+    const lockInfo = getLockedInfo(app.name);
+    return (
+      <div key={app.name} style={{
+        display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
+        background: isLocked ? 'rgba(239,68,68,0.04)' : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${isLocked ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)'}`,
+        borderRadius: '14px', transition: 'all 0.2s'
+      }}>
+        {/* App icon */}
+        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${app.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, border: `1px solid ${app.color}25` }}>
+          {app.icon}
+        </div>
+
+        {/* App info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>{app.name}</span>
+            {isLocked && <span style={{ fontSize: '10px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>LOCKED</span>}
+          </div>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
+            <span>{app.category}</span>
+            <span>📊 {app.avgTime}/day</span>
+            {isLocked && <span style={{ color: '#f59e0b' }}>⏰ {getRemainingTime(lockInfo.lockedAt)}</span>}
+          </div>
+        </div>
+
+        {/* Lock/Unlock button */}
+        <button
+          onClick={() => isLocked ? handleUnlock(app.name) : handleLock(app.name)}
+          disabled={loading[app.name]}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '8px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+            fontWeight: '700', fontSize: '12px',
+            background: isLocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+            color: isLocked ? '#10b981' : '#ef4444',
+            opacity: loading[app.name] ? 0.5 : 1,
+            transition: 'all 0.2s'
+          }}
+        >
+          {isLocked ? <><Unlock size={14} /> Unlock</> : <><LockKeyhole size={14} /> Lock</>}
+        </button>
+      </div>
+    );
+  };
+
+  const lockedAppsList = INSTALLED_APPS.filter(app => !!getLockedInfo(app.name));
+  const unlockedAppsList = INSTALLED_APPS.filter(app => !getLockedInfo(app.name));
+
   return (
     <div style={{ marginTop: '32px' }}>
       <div className="glass-card" style={{ padding: '24px' }}>
@@ -612,54 +662,24 @@ const AppManager = ({ childId, token, childName }) => {
           See what apps {childName} is using and lock specific apps. Locked apps auto-unlock after 24 hours.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {INSTALLED_APPS.map(app => {
-            const lockInfo = getLockedInfo(app.name);
-            const isLocked = !!lockInfo;
-            return (
-              <div key={app.name} style={{
-                display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
-                background: isLocked ? 'rgba(239,68,68,0.04)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${isLocked ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)'}`,
-                borderRadius: '14px', transition: 'all 0.2s'
-              }}>
-                {/* App icon */}
-                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${app.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, border: `1px solid ${app.color}25` }}>
-                  {app.icon}
-                </div>
+        {lockedAppsList.length > 0 && (
+          <div style={{ marginBottom: '24px' }}>
+            <h4 style={{ fontSize: '12px', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <LockKeyhole size={14} /> Locked Apps
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {lockedAppsList.map(app => renderApp(app, true))}
+            </div>
+          </div>
+        )}
 
-                {/* App info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>{app.name}</span>
-                    {isLocked && <span style={{ fontSize: '10px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>LOCKED</span>}
-                  </div>
-                  <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
-                    <span>{app.category}</span>
-                    <span>📊 {app.avgTime}/day</span>
-                    {isLocked && <span style={{ color: '#f59e0b' }}>⏰ {getRemainingTime(lockInfo.lockedAt)}</span>}
-                  </div>
-                </div>
-
-                {/* Lock/Unlock button */}
-                <button
-                  onClick={() => isLocked ? handleUnlock(app.name) : handleLock(app.name)}
-                  disabled={loading[app.name]}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '8px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                    fontWeight: '700', fontSize: '12px',
-                    background: isLocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                    color: isLocked ? '#10b981' : '#ef4444',
-                    opacity: loading[app.name] ? 0.5 : 1,
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {isLocked ? <><Unlock size={14} /> Unlock</> : <><LockKeyhole size={14} /> Lock</>}
-                </button>
-              </div>
-            );
-          })}
+        <div>
+          <h4 style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
+            Available Apps
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {unlockedAppsList.map(app => renderApp(app, false))}
+          </div>
         </div>
 
         <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>

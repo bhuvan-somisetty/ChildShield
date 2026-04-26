@@ -1,10 +1,7 @@
 /**
  * OAuthCallback.jsx
- *
- * After Google/Facebook/Twitter redirects back to the app, the backend
- * redirects here with: /auth/callback?token=JWT&user=JSON
- *
- * This page reads token + user from URL, stores them, and redirects to dashboard.
+ * ALWAYS routes: Google Login → Password Setup → Controls
+ * Never goes to dashboard directly.
  */
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -12,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Shield } from 'lucide-react';
 
 const OAuthCallback = () => {
-  const [searchParams]  = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { loginWithToken } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
@@ -20,7 +17,7 @@ const OAuthCallback = () => {
   useEffect(() => {
     const token = searchParams.get('token');
     const userRaw = searchParams.get('user');
-    const err   = searchParams.get('error');
+    const err = searchParams.get('error');
 
     if (err) {
       setError(`Social login failed: ${err.replace(/_/g, ' ')}`);
@@ -31,10 +28,18 @@ const OAuthCallback = () => {
     if (token && userRaw) {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
-        loginWithToken(token, user);   // store token + user in AuthContext
+
+        // Always wipe old session state on every new OAuth login
+        localStorage.removeItem('child_session');
+        localStorage.removeItem('cs_active_child');
+
+        loginWithToken(token, user);
+
+        // FLOW: Always go to password setup first. Setup page redirects to /controls.
         if (user.needsPasswordSetup) {
-          navigate('/onboarding', { replace: true });
+          navigate('/setup-password', { replace: true });
         } else {
+          // Returning user with password already set
           navigate('/controls', { replace: true });
         }
       } catch {
@@ -45,6 +50,7 @@ const OAuthCallback = () => {
       setError('No token received. Please try again.');
       setTimeout(() => navigate('/login'), 3000);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -76,8 +82,8 @@ const OAuthCallback = () => {
       )}
       <style>{`
         @keyframes pulse {
-          0%, 100% { transform: scale(1);   opacity: 1; }
-          50%       { transform: scale(1.1); opacity: 0.85; }
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.1); opacity: 0.85; }
         }
       `}</style>
     </div>

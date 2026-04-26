@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Navigate, Link, useSearchParams } from 'react-router-dom';
+import { Navigate, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
 const BACKEND = '';
@@ -10,6 +10,7 @@ const oauthRedirect = (provider) => { window.location.href = `${BACKEND}/auth/${
 const Login = () => {
   const { login, user, loading } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [email,      setEmail]      = useState('');
   const [password,   setPassword]   = useState('');
   const [showPass,   setShowPass]   = useState(false);
@@ -29,13 +30,20 @@ const Login = () => {
   const initialErr  = urlError ? (oauthErrorMap[urlError] || `Login error: ${urlError}`) : '';
   const [error, setError] = useState(initialErr);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}><div style={{ width: '40px', height: '40px', border: '3px solid rgba(0,240,255,0.2)', borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>;
   if (user) return <Navigate to="/controls" />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true); setError('');
-    try { await login(email, password); }
+    try {
+      // Clear stale sessions before fresh login
+      localStorage.removeItem('child_session');
+      localStorage.removeItem('cs_active_child');
+      const result = await login(email, password);
+      // Always navigate to /controls after successful login
+      navigate('/controls', { replace: true });
+    }
     catch (err) { setError(err.message || 'Login failed. Please try again.'); }
     finally { setSubmitting(false); }
   };
