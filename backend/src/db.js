@@ -10,6 +10,22 @@ let Parent, Child, Activity, FaceEvent, Location, SafeZone;
 
 const isMongo = !!process.env.MONGODB_URI;
 
+if (isMongo) {
+  const uri = process.env.MONGODB_URI;
+  if (uri.includes('<') || uri.includes('>')) {
+    console.error('\n=============================================================');
+    console.error('❌ CRITICAL ERROR: Invalid MONGODB_URI detected!');
+    console.error('It looks like your connection string contains placeholder text.');
+    console.error('Please replace <password> and <your_cluster_url> with real values.');
+    console.error('=============================================================\n');
+    process.exit(1);
+  }
+  const redacted = uri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+  console.log(`[Database] MONGODB_URI detected: ${redacted}`);
+} else {
+  console.log('[Database] MONGODB_URI not detected. Falling back to SQL mode.');
+}
+
 // ── Mongoose global options ────────────────────────────────────────────────────
 mongoose.set('strictQuery', false);
 mongoose.set('bufferCommands', true); // Queue ops while reconnecting
