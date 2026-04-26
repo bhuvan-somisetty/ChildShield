@@ -123,7 +123,7 @@ function App() {
         <Route path="/role-selection" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/auth/callback" element={<OAuthCallback />} />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
         <Route path="/child-setup" element={<ChildSetup />} />
         <Route path="/child-pairing" element={<ChildPairing />} />
         <Route path="/child/setup" element={<PairingSetup />} />
