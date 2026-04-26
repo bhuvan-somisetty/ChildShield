@@ -8,10 +8,16 @@ const path = require('path');
 let sequelize;
 let Parent, Child, Activity, FaceEvent, Location, SafeZone;
 
-const isMongo = !!process.env.MONGODB_URI;
+// Auto-fix if the user accidentally pasted "MONGODB_URI=" inside the value field
+let uri = process.env.MONGODB_URI;
+if (uri && uri.startsWith('MONGODB_URI=')) {
+  uri = uri.replace('MONGODB_URI=', '');
+  process.env.MONGODB_URI = uri; // Update it globally
+}
+
+const isMongo = !!uri;
 
 if (isMongo) {
-  const uri = process.env.MONGODB_URI;
   if (uri.includes('<') || uri.includes('>')) {
     console.error('\n=============================================================');
     console.error('❌ CRITICAL ERROR: Invalid MONGODB_URI detected!');
