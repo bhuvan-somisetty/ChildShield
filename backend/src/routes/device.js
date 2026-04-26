@@ -3,6 +3,73 @@ const router = express.Router();
 const { Child, FaceEvent, Parent, Location, SafeZone } = require('../db');
 const auth = require('../middleware/auth');
 
+// ─── In-memory logout request store ──────────────────────────────────────────
+// childId -> { status: 'pending'|'approved'|'denied', timestamp, childName }
+const logoutRequests = new Map();
+
+// Child requests logout (verifies password first, then sends to parent for approval)
+router.post('/logout-request', async (req, res) => {
+  try {
+    const { childId, parentControlPassword } = req.body;
+    if (!childId || !parentControlPassword) {
+      return res.status(400).json({ error: 'childId and parentControlPassword are required' });
+    }
+    const child = await Child.findByPk(childId);
+    if (!child) return res.status(404).json({ error: 'Child not found' });
+
+    const parent = await Parent.findByPk(child.parentId);
+    if (parent && parent.parentControlPasswordHash) {
+      const bcrypt = require('bcryptjs');
+      const valid = await bcrypt.compare(parentControlPassword, parent.parentControlPasswordHash);
+      if (!valid) return res.status(400).json({ error: 'Incorrect Parent Control Password' });
+    }
+
+    // Password correct → set pending request
+    logoutRequests.set(String(childId), { status: 'pending', timestamp: Date.now(), childName: child.name });
+    res.json({ success: true, message: 'Logout request sent to parent for approval' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Parent checks for pending logout requests
+router.get('/logout-request/:childId', async (req, res) => {
+  const request = logoutRequests.get(String(req.params.childId));
+  res.json({ success: true, request: request || null });
+});
+
+// Parent responds to logout request
+router.post('/logout-respond/:childId', auth, async (req, res) => {
+  try {
+    const { approved } = req.body;
+    const childId = String(req.params.childId);
+    const request = logoutRequests.get(childId);
+    if (!request || request.status !== 'pending') {
+      return res.status(400).json({ error: 'No pending logout request' });
+    }
+
+    if (approved) {
+      logoutRequests.set(childId, { ...request, status: 'approved' });
+      // Actually disconnect the child
+      const child = await Child.findByPk(req.params.childId);
+      if (child) {
+        child.isPaired = false;
+        child.parentId = null;
+        await child.save();
+      }
+    } else {
+      logoutRequests.set(childId, { ...request, status: 'denied' });
+    }
+
+    // Clean up after 30 seconds
+    setTimeout(() => logoutRequests.delete(childId), 30000);
+
+    res.json({ success: true, status: approved ? 'approved' : 'denied' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Child device initializes pairing
 router.post('/init-pairing', async (req, res) => {
   try {
@@ -13,7 +80,7 @@ router.post('/init-pairing', async (req, res) => {
     const child = await Child.create({
       name: childName,
       age: 10, // Default fallback
-      gender: gender || null,
+      gender: gender || undefined,
       pairingCode: code,
       isPaired: false,
       deviceState: 'active'
@@ -75,11 +142,8 @@ router.post('/unpair/:childId', auth, async (req, res) => {
     const child = await Child.findOne({ where: { id: req.params.childId, parentId: req.user.id } });
     if (!child) return res.status(404).json({ error: 'Child not found' });
 
-    child.parentId = null;
-    child.isPaired = false;
-    // We optionally regenerate code so child gets disconnected UI instantly
-    child.pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
-    await child.save();
+    // Destroy child record completely to ensure data is lost and starts fresh as requested
+    await child.destroy();
 
     res.json({ success: true });
   } catch (err) {
@@ -351,26 +415,23 @@ router.post('/disconnect', async (req, res) => {
       return res.status(400).json({ error: 'childId and parentControlPassword are required' });
     }
 
-    const child = await Child.findByPk(childId, {
-      include: [{ model: Parent, attributes: ['parentControlPasswordHash'] }]
-    });
-
+    const child = await Child.findByPk(childId);
     if (!child) return res.status(404).json({ error: 'Child not found' });
-    
-    // If child has a parent, verify password
-    if (child.Parent && child.Parent.parentControlPasswordHash) {
+
+    // Find parent and verify password
+    const parent = await Parent.findByPk(child.parentId);
+    if (parent && parent.parentControlPasswordHash) {
       const bcrypt = require('bcryptjs');
-      const validPass = await bcrypt.compare(parentControlPassword, child.Parent.parentControlPasswordHash);
+      const validPass = await bcrypt.compare(parentControlPassword, parent.parentControlPasswordHash);
       if (!validPass) {
         return res.status(400).json({ error: 'Incorrect Parent Control Password' });
       }
     }
 
-    // Use raw update to avoid FK constraint triggers when nullifying parentId
-    await Child.update(
-      { isPaired: false, parentId: null },
-      { where: { id: childId } }
-    );
+    // Disconnect child
+    child.isPaired = false;
+    child.parentId = null;
+    await child.save();
 
     res.json({ success: true });
   } catch (err) {
@@ -418,10 +479,13 @@ router.get('/locations/:childId', auth, async (req, res) => {
 
     // Fetch locations from the past 24 hours
     const yesterday = new Date(new Date() - 24 * 60 * 60 * 1000);
+    const { isMongo } = require('../db');
+    const timeFilter = isMongo ? { $gte: yesterday } : { [require('sequelize').Op.gte]: yesterday };
+    
     const locations = await Location.findAll({
       where: {
         childId,
-        timestamp: { [Op.gte]: yesterday }
+        timestamp: timeFilter
       },
       order: [['timestamp', 'DESC']],
       limit: 1000
@@ -481,6 +545,18 @@ router.get('/safe-zones/:childId', auth, async (req, res) => {
   }
 });
 
+// List safe zones for child device (no parent auth needed)
+router.get('/child-safe-zones/:childId', async (req, res) => {
+  try {
+    const child = await Child.findByPk(req.params.childId);
+    if (!child) return res.status(404).json({ error: 'Child not found' });
+    const zones = await SafeZone.findAll({ where: { childId: req.params.childId }, order: [['createdAt', 'DESC']] });
+    res.json({ success: true, zones });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Update a safe zone
 router.put('/safe-zones/:zoneId', auth, async (req, res) => {
   try {
@@ -505,7 +581,7 @@ router.delete('/safe-zones/:zoneId', auth, async (req, res) => {
   try {
     const zone = await SafeZone.findByPk(req.params.zoneId);
     if (!zone) return res.status(404).json({ error: 'Zone not found' });
-    await zone.destroy();
+    await SafeZone.destroy({ where: { id: zone.id || zone._id } });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -4,10 +4,10 @@ import { LayoutDashboard, History, MapPin, Shield, User } from 'lucide-react';
 
 const BottomNav = () => {
   const navItems = [
-    { name: 'Home',     path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Controls', path: '/controls',  icon: Shield },
     { name: 'Activity', path: '/history',   icon: History },
     { name: 'Location', path: '/location',  icon: MapPin },
-    { name: 'Controls', path: '/controls',  icon: Shield },
+    { name: 'Home',     path: '/dashboard', icon: LayoutDashboard },
     { name: 'Profile',  path: '/account-settings', icon: User }
   ];
 

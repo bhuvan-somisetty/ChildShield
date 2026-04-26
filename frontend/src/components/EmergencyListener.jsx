@@ -14,6 +14,7 @@ const EmergencyListener = () => {
   const loopRef = useRef(null);
   const alarmRef = useRef(null);
   const loopCountRef = useRef(0);
+  const snoozeTimerRef = useRef(null);
 
   useEffect(() => {
     if (sosEvent?.payload?.lat && sosEvent?.payload?.lon) {
@@ -67,7 +68,7 @@ const EmergencyListener = () => {
             osc.frequency.setValueAtTime(880, ctx.currentTime);
             osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.2);
             osc.frequency.setValueAtTime(880, ctx.currentTime + 0.4);
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.setValueAtTime(0.4, ctx.currentTime);  // audible alarm
             osc.start();
             osc.stop(ctx.currentTime + 0.6);
           } catch(e) {}
@@ -96,8 +97,30 @@ const EmergencyListener = () => {
       socket.off('command', handleCommand);
       if (loopRef.current) clearInterval(loopRef.current);
       if (alarmRef.current) clearInterval(alarmRef.current);
+      if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
     };
   }, [activeChild, connectSocket]);
+
+  const dismissAlert = () => {
+    if (loopRef.current) clearInterval(loopRef.current);
+    if (alarmRef.current) clearInterval(alarmRef.current);
+    if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
+    setSosEvent(null);
+  };
+
+  const snoozeAlert = () => {
+    if (alarmRef.current) clearInterval(alarmRef.current);
+    if (loopRef.current) clearInterval(loopRef.current);
+    // Re-trigger alert in 5 minutes
+    snoozeTimerRef.current = setTimeout(() => {
+      if (sosEvent) {
+        window.speechSynthesis.cancel();
+        setTimeout(() => window.speechSynthesis.speak(
+          Object.assign(new SpeechSynthesisUtterance(`Reminder: ${sosEvent.childName} is still in an emergency.`), { volume: 0.9, rate: 0.92 })
+        ), 50);
+      }
+    }, 5 * 60 * 1000);
+  };
 
   if (!sosEvent) return null;
 
@@ -109,11 +132,7 @@ const EmergencyListener = () => {
         textAlign: 'center', boxShadow: '0 0 100px rgba(239, 68, 68, 0.8)',
         animation: 'pulse-dot 1s infinite'
       }}>
-        <div style={{ position: 'absolute', top: '16px', right: '16px', cursor: 'pointer', background: 'rgba(255,255,255,0.1)', padding: '6px', borderRadius: '50%' }} onClick={() => {
-          if (loopRef.current) clearInterval(loopRef.current);
-          if (alarmRef.current) clearInterval(alarmRef.current);
-          setSosEvent(null);
-        }}>
+        <div style={{ position: 'absolute', top: '16px', right: '16px', cursor: 'pointer', background: 'rgba(255,255,255,0.1)', padding: '6px', borderRadius: '50%' }} onClick={dismissAlert}>
           <X color="#fff" size={20} />
         </div>
         
@@ -165,7 +184,15 @@ const EmergencyListener = () => {
           )}
         </div>
         
-        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+          <button onClick={snoozeAlert} style={{ flex: 1, padding: '12px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '12px', color: '#f59e0b', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+            🔕 Remind in 5 min
+          </button>
+          <button onClick={dismissAlert} style={{ flex: 1, padding: '12px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', borderRadius: '12px', color: '#10b981', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+            ✅ OK, I've seen this
+          </button>
+        </div>
+        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '12px' }}>
           <div>🔊</div> Samantha AI is repeating broadcast. Mute AI to stop.
         </div>
       </div>

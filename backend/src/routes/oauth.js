@@ -23,7 +23,7 @@ const issueJWT = (req, res) => {
   }
   const token = jwt.sign({ id: req.user.id }, JWT_SECRET, { expiresIn: '7d' });
   const user  = encodeURIComponent(JSON.stringify({
-    id: req.user.id, fullName: req.user.fullName, email: req.user.email
+    id: req.user.id, fullName: req.user.fullName, email: req.user.email, needsPasswordSetup: req.user.needsPasswordSetup
   }));
   // Redirect to a dedicated callback page in the frontend
   res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}&user=${user}`);
@@ -48,6 +48,9 @@ const safeAuth = (strategy, options) => (req, res, next) => {
 
 // ── GOOGLE ─────────────────────────────────────────────────────────────────────
 router.get('/google', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID.includes('YOUR_')) {
+    return res.redirect(`${FRONTEND_URL}/login?error=google_not_configured`);
+  }
   try {
     passport.authenticate('google', { scope: ['profile', 'email'], prompt: 'select_account' })(req, res, next);
   } catch(e) { res.redirect(`${FRONTEND_URL}/login?error=google_failed`); }

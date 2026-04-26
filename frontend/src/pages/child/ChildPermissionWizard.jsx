@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Camera, Mic, Bell, Monitor, Battery, CheckCircle, XCircle, ChevronRight, ShieldCheck, Loader } from 'lucide-react';
 
@@ -9,7 +9,11 @@ const PERMISSIONS = [
     desc: 'Allows your parent to see where you are in real time. This keeps you safe and helps them know your whereabouts.',
     request: async () => {
       return new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition(() => resolve(true), () => resolve(false), { timeout: 10000 });
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve(true),
+          (err) => resolve(false),
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
       });
     }
   },
@@ -18,7 +22,13 @@ const PERMISSIONS = [
     title: 'Camera Access',
     desc: 'Allows your parent to remotely view the camera when needed. This helps verify your safety.',
     request: async () => {
-      try { const s = await navigator.mediaDevices.getUserMedia({ video: true }); s.getTracks().forEach(t => t.stop()); return true; } catch { return false; }
+      try { 
+        const s = await navigator.mediaDevices.getUserMedia({ video: true }); 
+        s.getTracks().forEach(t => t.stop()); 
+        return true; 
+      } catch (err) { 
+        return false; 
+      }
     }
   },
   {
@@ -26,7 +36,13 @@ const PERMISSIONS = [
     title: 'Microphone Access',
     desc: 'Allows your parent to listen to surroundings when needed. Used only for safety purposes.',
     request: async () => {
-      try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach(t => t.stop()); return true; } catch { return false; }
+      try { 
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true }); 
+        s.getTracks().forEach(t => t.stop()); 
+        return true; 
+      } catch (err) { 
+        return false; 
+      }
     }
   },
   {
@@ -56,13 +72,31 @@ const PERMISSIONS = [
 const ChildPermissionWizard = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [statuses, setStatuses] = useState({}); // { location: 'granted'|'denied'|'pending' }
+  const [statuses, setStatuses] = useState({}); // { location: 'granted'|'denied'|'info' }
   const [requesting, setRequesting] = useState(false);
 
   const perm = PERMISSIONS[step];
   const isLast = step === PERMISSIONS.length - 1;
   const isComplete = step >= PERMISSIONS.length;
   const status = statuses[perm?.id];
+
+  // Check initial permission state so we don't repeatedly ask if already granted
+  useEffect(() => {
+    if (!perm) return;
+    const checkInitial = async () => {
+      if (perm.id === 'location' && navigator.permissions) {
+        try {
+          const res = await navigator.permissions.query({ name: 'geolocation' });
+          if (res.state === 'granted') setStatuses(s => ({ ...s, location: 'granted' }));
+          if (res.state === 'denied') setStatuses(s => ({ ...s, location: 'denied' }));
+        } catch (e) {}
+      } else if (perm.id === 'notifications' && 'Notification' in window) {
+        if (Notification.permission === 'granted') setStatuses(s => ({ ...s, notifications: 'granted' }));
+        if (Notification.permission === 'denied') setStatuses(s => ({ ...s, notifications: 'denied' }));
+      }
+    };
+    checkInitial();
+  }, [perm]);
 
   const handleRequest = useCallback(async () => {
     if (!perm?.request) {
@@ -72,12 +106,37 @@ const ChildPermissionWizard = () => {
     setRequesting(true);
     try {
       const granted = await perm.request();
-      setStatuses(s => ({ ...s, [perm.id]: granted ? 'granted' : 'denied' }));
-    } catch {
-      setStatuses(s => ({ ...s, [perm.id]: 'denied' }));
+      setStatuses(prev => ({ ...prev, [perm.id]: granted ? 'granted' : 'denied' }));
+    } catch (err) {
+      setStatuses(prev => ({ ...prev, [perm.id]: 'denied' }));
+    } finally {
+      setRequesting(false);
     }
-    setRequesting(false);
   }, [perm]);
+
+  const handleTryAgain = async () => {
+    if (perm.id === 'location' && navigator.permissions) {
+      setRequesting(true);
+      try {
+        const res = await navigator.permissions.query({ name: 'geolocation' });
+        if (res.state === 'prompt') {
+          setRequesting(false);
+          handleRequest(); // trigger getCurrentPosition to show popup
+        } else if (res.state === 'granted') {
+          setStatuses(s => ({ ...s, location: 'granted' }));
+          setRequesting(false);
+        } else if (res.state === 'denied') {
+          setStatuses(s => ({ ...s, location: 'denied' }));
+          setRequesting(false);
+        }
+      } catch (e) {
+        setRequesting(false);
+        handleRequest();
+      }
+    } else {
+      handleRequest();
+    }
+  };
 
   const handleNext = () => {
     if (isLast) {
@@ -94,6 +153,8 @@ const ChildPermissionWizard = () => {
 
   // Summary screen
   if (isComplete) {
+    const allGranted = PERMISSIONS.every(p => statuses[p.id] === 'granted' || statuses[p.id] === 'info');
+
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', padding: '24px' }}>
         <div style={{ position: 'fixed', top: '15%', left: '20%', width: '400px', height: '400px', background: '#10b981', filter: 'blur(160px)', opacity: 0.08, borderRadius: '50%' }} />
@@ -104,7 +165,6 @@ const ChildPermissionWizard = () => {
           <h2 style={{ color: '#fff', fontSize: '26px', fontWeight: '800', marginBottom: '8px' }}>Setup Complete!</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '28px' }}>Your device is now ready for monitoring.</p>
 
-          {/* Checklist */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '32px', textAlign: 'left' }}>
             {PERMISSIONS.map((p, i) => {
               const s = statuses[p.id];
@@ -137,8 +197,8 @@ const ChildPermissionWizard = () => {
             })}
           </div>
 
-          <button onClick={handleFinish} style={{ width: '100%', padding: '16px', background: '#10b981', border: 'none', borderRadius: '14px', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16,185,129,0.3)' }}>
-            Continue to Device View
+          <button onClick={handleFinish} disabled={!allGranted} style={{ width: '100%', padding: '16px', background: allGranted ? '#10b981' : '#475569', border: 'none', borderRadius: '14px', color: allGranted ? '#fff' : '#94a3b8', fontWeight: '700', fontSize: '16px', cursor: allGranted ? 'pointer' : 'not-allowed', boxShadow: allGranted ? '0 4px 20px rgba(16,185,129,0.3)' : 'none', transition: 'all 0.2s' }}>
+            {allGranted ? 'Continue to Device View' : 'Must Allow All Permissions'}
           </button>
         </div>
       </div>
@@ -150,7 +210,6 @@ const ChildPermissionWizard = () => {
       <div style={{ position: 'fixed', top: '10%', right: '10%', width: '400px', height: '400px', background: perm.color, filter: 'blur(160px)', opacity: 0.08, borderRadius: '50%', transition: 'all 0.5s' }} />
 
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '460px', padding: '40px 32px', position: 'relative', zIndex: 1 }}>
-        {/* Progress */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <span style={{ fontSize: '12px', color: '#475569', fontWeight: '700', letterSpacing: '0.1em' }}>STEP {step + 1} OF {PERMISSIONS.length}</span>
           <div style={{ display: 'flex', gap: '4px' }}>
@@ -160,7 +219,6 @@ const ChildPermissionWizard = () => {
           </div>
         </div>
 
-        {/* Icon */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
           <div style={{ width: '80px', height: '80px', borderRadius: '24px', background: `${perm.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${perm.color}30` }}>
             <perm.icon size={40} color={perm.color} />
@@ -170,7 +228,6 @@ const ChildPermissionWizard = () => {
         <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '8px' }}>{perm.title}</h2>
         <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '14px', lineHeight: 1.7, marginBottom: '28px' }}>{perm.desc}</p>
 
-        {/* Status badge */}
         {status && (
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
             {status === 'granted' || status === 'info' ? (
@@ -178,22 +235,35 @@ const ChildPermissionWizard = () => {
                 <CheckCircle size={16} /> {status === 'info' ? 'Acknowledged' : 'Granted'}
               </span>
             ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '20px', color: '#ef4444', fontWeight: '700', fontSize: '13px' }}>
-                <XCircle size={16} /> Not Granted
-              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '20px', color: '#ef4444', fontWeight: '700', fontSize: '13px' }}>
+                  <XCircle size={16} /> Not Granted
+                </span>
+                <span style={{ fontSize: '12px', color: '#ef4444', maxWidth: '320px', lineHeight: '1.5' }}>
+                  {perm.id === 'location' 
+                    ? 'Location permission is blocked. Please allow Location from browser Site Settings and reload the page.'
+                    : `Permission is blocked. Please allow ${perm.title} from browser settings and reload.`}
+                </span>
+              </div>
             )}
           </div>
         )}
 
-        {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {perm.request ? (
-            <button onClick={handleRequest} disabled={requesting || status === 'granted'}
-              style={{ width: '100%', padding: '16px', background: status === 'granted' ? 'rgba(16,185,129,0.15)' : perm.color, border: 'none', borderRadius: '14px', color: status === 'granted' ? '#10b981' : '#0f172a', fontWeight: '700', fontSize: '15px', cursor: requesting || status === 'granted' ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: status === 'granted' ? 'none' : `0 4px 20px ${perm.color}40`, transition: 'all 0.2s' }}>
-              {requesting ? <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Requesting...</> :
-               status === 'granted' ? <><CheckCircle size={16} /> Permission Granted</> :
-               'Allow Permission'}
-            </button>
+            status === 'denied' ? (
+              <button onClick={handleTryAgain} disabled={requesting}
+                style={{ width: '100%', padding: '16px', background: 'rgba(239,68,68,0.15)', border: `1px solid rgba(239,68,68,0.4)`, borderRadius: '14px', color: '#ef4444', fontWeight: '700', fontSize: '15px', cursor: requesting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+                {requesting ? <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Checking...</> : 'Try Again'}
+              </button>
+            ) : (
+              <button onClick={handleRequest} disabled={requesting || status === 'granted'}
+                style={{ width: '100%', padding: '16px', background: status === 'granted' ? 'rgba(16,185,129,0.15)' : perm.color, border: 'none', borderRadius: '14px', color: status === 'granted' ? '#10b981' : '#0f172a', fontWeight: '700', fontSize: '15px', cursor: requesting || status === 'granted' ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: status === 'granted' ? 'none' : `0 4px 20px ${perm.color}40`, transition: 'all 0.2s' }}>
+                {requesting ? <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Requesting...</> :
+                 status === 'granted' ? <><CheckCircle size={16} /> Permission Granted</> :
+                 'Allow Permission'}
+              </button>
+            )
           ) : (
             <button onClick={() => { setStatuses(s => ({ ...s, [perm.id]: 'info' })); }}
               disabled={status === 'info'}
@@ -202,10 +272,16 @@ const ChildPermissionWizard = () => {
             </button>
           )}
 
-          <button onClick={handleNext}
-            style={{ width: '100%', padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: '#94a3b8', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <button onClick={handleNext} disabled={status !== 'granted' && status !== 'info'}
+            style={{ width: '100%', padding: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', color: (status === 'granted' || status === 'info') ? '#94a3b8' : 'rgba(148,163,184,0.3)', fontWeight: '600', fontSize: '14px', cursor: (status === 'granted' || status === 'info') ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             {isLast ? 'Finish Setup' : 'Next'} <ChevronRight size={16} />
           </button>
+          
+          {(status === 'denied' || status === undefined) && (
+            <div style={{ textAlign: 'center', fontSize: '12px', color: '#ef4444', marginTop: '4px', fontWeight: '600' }}>
+              ⚠️ You must allow this permission to continue.
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -213,3 +289,4 @@ const ChildPermissionWizard = () => {
 };
 
 export default ChildPermissionWizard;
+

@@ -9,6 +9,6 @@ const ParentSchema = new mongoose.Schema({
   phone: { type: String },
   parentControlPasswordHash: { type: String, required: true },
   needsPasswordSetup: { type: Boolean, default: false }
-}, { timestamps: true });
+}, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 module.exports = mongoose.model('Parent', ParentSchema);

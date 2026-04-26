@@ -3,7 +3,6 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const sim = require('../services/SimulationService');
 const { Child, Activity, FaceEvent } = require('../db');
-const { Op } = require('sequelize');
 
 sim.setModels({ Activity, FaceEvent });
 router.use(auth);
@@ -87,52 +86,62 @@ router.get('/dashboard', async (req, res) => {
   const childId = req.query.childId;
   if(!childId) return res.status(400).json({ error: 'childId required' });
   const isDemoMode = req.query.demo === 'true';
-  
-  try {
-    const count = await Activity.count({ where: { childId } });
-    if (count === 0 && isDemoMode) {
-      await sim.generateDemoActivities(childId, Activity);
-    }
-  } catch(err) { console.error('Auto-demo err:', err.message); }
 
-  const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
-  
-  const dashData = await getRealDashboardData(childId, isDemoMode);
-  dashData.childName = child ? child.name : 'Child';
-  dashData.parentName = req.user.fullName || 'Parent';
-  dashData.limit = child ? `${child.dailyLimitHours}h 00m` : '5h 00m';
-  dashData.limitMinutes = child ? child.dailyLimitHours * 60 : 300;
-  dashData.isPaired = child ? child.isPaired : false;
-  
-  if (child && child.timerEndTime) {
-    dashData.timerEndTime = child.timerEndTime;
-    dashData.timerDurationMinutes = child.timerDurationMinutes;
+  try {
+    try {
+      const count = await Activity.count({ where: { childId } });
+      if (count === 0 && isDemoMode) {
+        await sim.generateDemoActivities(childId, Activity);
+      }
+    } catch(err) { console.error('Auto-demo err:', err.message); }
+
+    const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
+
+    const dashData = await getRealDashboardData(childId, isDemoMode);
+    dashData.childName = child ? child.name : 'Child';
+    dashData.parentName = req.user.fullName || 'Parent';
+    dashData.limit = child ? `${child.dailyLimitHours}h 00m` : '5h 00m';
+    dashData.limitMinutes = child ? child.dailyLimitHours * 60 : 300;
+    dashData.isPaired = child ? child.isPaired : false;
+
+    if (child && child.timerEndTime) {
+      dashData.timerEndTime = child.timerEndTime;
+      dashData.timerDurationMinutes = child.timerDurationMinutes;
+    }
+
+    res.json({ success: true, data: dashData });
+  } catch (err) {
+    console.error('[dashboard]', err.message);
+    res.status(500).json({ error: err.message });
   }
-  
-  res.json({ success: true, data: dashData });
 });
 
 router.get('/history', async (req, res) => {
-  const childId = req.query.childId;
-  const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
-  if(!child) return res.json({ success: true, data: [] });
-  
-  const acts = await Activity.findAll({ where: { childId }, order: [['createdAt', 'DESC']], limit: 50 });
-  
-  let data = acts.map(a => ({
-    id: a.id, app: a.app, title: a.title, category: a.category,
-    startTime: a.time, duration: `${a.durationMinutes}m`, risk: a.riskTag,
-    alerts: (() => {
-      try { return a.alerts ? JSON.parse(a.alerts) : []; }
-      catch { return []; }
-    })()
-  }));
-  
-  if(req.query.category) {
-    data = data.filter(item => item.category?.toLowerCase() === req.query.category.toLowerCase());
+  try {
+    const childId = req.query.childId;
+    const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
+    if(!child) return res.json({ success: true, data: [] });
+
+    const acts = await Activity.findAll({ where: { childId }, order: [['createdAt', 'DESC']], limit: 50 });
+
+    let data = acts.map(a => ({
+      id: a.id, app: a.app, title: a.title, category: a.category,
+      startTime: a.time, duration: `${a.durationMinutes}m`, risk: a.riskTag,
+      alerts: (() => {
+        try { return a.alerts ? JSON.parse(a.alerts) : []; }
+        catch { return []; }
+      })()
+    }));
+
+    if(req.query.category) {
+      data = data.filter(item => item.category?.toLowerCase() === req.query.category.toLowerCase());
+    }
+
+    res.json({ success: true, data });
+  } catch(err) {
+    console.error('[history]', err.message);
+    res.status(500).json({ error: err.message });
   }
-  
-  res.json({ success: true, data });
 });
 
 router.get('/insights', async (req, res) => {

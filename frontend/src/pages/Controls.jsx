@@ -42,6 +42,7 @@ const Controls = () => {
   const [showUnpairPass, setShowUnpairPass] = useState(false);
   const [unpairError, setUnpairError] = useState('');
   const [isUnpairing, setIsUnpairing] = useState(false);
+  const [unpairStep, setUnpairStep] = useState('password');
   const [enforcingState, setEnforcingState] = useState(null);
   const [enforceMsg, setEnforceMsg] = useState('');
   const webcamRef = useRef(null);
@@ -257,27 +258,111 @@ const Controls = () => {
       {deviceLock && <LockScreen onUnlock={() => setDeviceLock(false)} />}
       
       {showUnpair && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.8)', backdropFilter:'blur(5px)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-            <ShieldAlert size={48} color="var(--accent-red)" style={{ margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: '20px', color: 'var(--accent-red)', marginBottom: '8px' }}>Disconnect Device</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>This will sever the connection to {activeChild.name}'s device. Enter Parent Password to confirm.</p>
-            {unpairError && <div style={{ color: '#ef4444', marginBottom: '16px', fontSize: '13px' }}>{unpairError}</div>}
+        <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.8)', backdropFilter:'blur(5px)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding: '20px' }}>
+          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '400px', textAlign: 'center', boxSizing: 'border-box' }}>
             
-            <div style={{ position: 'relative', marginBottom: '16px' }}>
-              <input type={showUnpairPass ? "text" : "password"} value={unpairPass} onChange={e=>setUnpairPass(e.target.value)} placeholder="Parent Password" style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239,68,68,0.3)', padding: '12px 40px 12px 12px', borderRadius: '8px', color: '#fff', outline: 'none' }} />
-              <div 
-                onClick={() => setShowUnpairPass(!showUnpairPass)} 
-                style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}
-              >
-                {showUnpairPass ? <EyeOff size={18} /> : <Eye size={18} />}
-              </div>
-            </div>
+            {/* STEP 1: Enter password */}
+            {(!unpairStep || unpairStep === 'password') && (
+              <>
+                <ShieldAlert size={48} color="var(--accent-red)" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: '20px', color: 'var(--accent-red)', marginBottom: '8px' }}>Disconnect Device</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>This will sever the connection to {activeChild.name}'s device. Enter Parent Password to confirm.</p>
+                {unpairError && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', marginBottom: '16px', fontSize: '13px', padding: '10px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{unpairError}</div>}
+                
+                <div style={{ position: 'relative', marginBottom: '16px' }}>
+                  <input 
+                    type={showUnpairPass ? "text" : "password"} 
+                    value={unpairPass} 
+                    onChange={e=>setUnpairPass(e.target.value)} 
+                    placeholder="Parent Password" 
+                    autoFocus
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239,68,68,0.3)', padding: '14px 40px 14px 14px', borderRadius: '10px', color: '#fff', outline: 'none', boxSizing: 'border-box', textAlign: 'center' }} 
+                    onKeyDown={async e => {
+                      if (e.key === 'Enter') {
+                        if (!unpairPass) return setUnpairError('Password required');
+                        setIsUnpairing(true); setUnpairError('');
+                        try {
+                          const r = await fetch('/api/auth/verify-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ parentControlPassword: unpairPass }) });
+                          const d = await r.json();
+                          if (r.ok && d.success) { setUnpairStep('confirm'); } else { setUnpairError(d.error || 'Incorrect password.'); }
+                        } catch(err) { setUnpairError('Connection failed.'); }
+                        setIsUnpairing(false);
+                      }
+                    }}
+                  />
+                  <div 
+                    onClick={() => setShowUnpairPass(!showUnpairPass)} 
+                    style={{ position: 'absolute', right: '14px', top: '14px', cursor: 'pointer', color: 'var(--text-muted)' }}
+                  >
+                    {showUnpairPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </div>
+                </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
-               <button onClick={() => setShowUnpair(false)} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
-               <button onClick={handleUnpair} disabled={isUnpairing} style={{ flex: 1, padding: '12px', background: 'var(--accent-red)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }}>{isUnpairing ? 'Disconnecting...' : 'Disconnect'}</button>
-            </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                   <button onClick={() => {setShowUnpair(false); setUnpairStep('password'); setUnpairPass(''); setUnpairError('');}} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
+                   <button onClick={async () => {
+                        if (!unpairPass) return setUnpairError('Password required');
+                        setIsUnpairing(true); setUnpairError('');
+                        try {
+                          const r = await fetch('/api/auth/verify-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ parentControlPassword: unpairPass }) });
+                          const d = await r.json();
+                          if (r.ok && d.success) { setUnpairStep('confirm'); } else { setUnpairError(d.error || 'Incorrect password.'); }
+                        } catch(err) { setUnpairError('Connection failed.'); }
+                        setIsUnpairing(false);
+                   }} disabled={isUnpairing} style={{ flex: 1, padding: '12px', background: 'var(--accent-red)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '10px', cursor: 'pointer' }}>{isUnpairing ? 'Verifying...' : 'Verify'}</button>
+                </div>
+              </>
+            )}
+
+            {/* STEP 2: Confirmation */}
+            {unpairStep === 'confirm' && (
+              <>
+                <ShieldAlert size={40} color="var(--accent-red)" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px', fontWeight: '800' }}>Before you continue</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
+                  You may lose access to this child’s data. Do you want to download a report before continuing?
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button onClick={() => {
+                      const reportData = `ChildShield Report\n\nParent: ${user?.fullName}\nChild: ${activeChild?.name}\nDate: ${new Date().toLocaleString()}\n\nNote: Detailed analytics available in the dashboard.`;
+                      const blob = new Blob([reportData], { type: 'text/plain' });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `ChildShield_Device_Report_${new Date().getTime()}.txt`;
+                      a.click();
+                      setUnpairStep('downloaded');
+                    }}
+                    style={{ background: 'var(--accent-blue)', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    Download Report
+                  </button>
+                  <button onClick={handleUnpair}
+                    style={{ background: 'var(--accent-red)', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    Continue Without Download
+                  </button>
+                  <button onClick={() => {setShowUnpair(false); setUnpairStep('password'); setUnpairPass(''); setUnpairError('');}}
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px' }}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* STEP 3: Post Download */}
+            {unpairStep === 'downloaded' && (
+              <>
+                <CheckCircle size={40} color="var(--accent-green)" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px', fontWeight: '800' }}>Report downloaded.</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
+                  Continue to disconnect device?
+                </p>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                   <button onClick={() => {setShowUnpair(false); setUnpairStep('password'); setUnpairPass(''); setUnpairError('');}} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
+                   <button onClick={handleUnpair} disabled={isUnpairing} style={{ flex: 1, padding: '12px', background: 'var(--accent-red)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '10px', cursor: 'pointer' }}>{isUnpairing ? 'Disconnecting...' : 'Disconnect'}</button>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       )}

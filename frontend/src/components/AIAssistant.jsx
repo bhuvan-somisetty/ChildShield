@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Sparkles, Minimize2 } from 'lucide-react';
+import { X, Send, Sparkles, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { getVolume, setVolume } from '../hooks/VoiceAssistant';
 
 const QUICK_REPLIES = [
   'How do I pair a child device?',
@@ -54,14 +55,21 @@ const AIAssistant = () => {
 
   // Mute logic
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolumeState] = useState(() => getVolume());
+
   useEffect(() => {
     // Sync mute state on mount
     setIsMuted(localStorage.getItem('samantha_muted') === 'true');
     
     // Listen for cross-tab or external mute toggles
     const handleMuteToggle = () => setIsMuted(localStorage.getItem('samantha_muted') === 'true');
+    const handleVolumeChanged = (e) => setVolumeState(e.detail);
     window.addEventListener('samantha-mute-changed', handleMuteToggle);
-    return () => window.removeEventListener('samantha-mute-changed', handleMuteToggle);
+    window.addEventListener('samantha-volume-changed', handleVolumeChanged);
+    return () => {
+      window.removeEventListener('samantha-mute-changed', handleMuteToggle);
+      window.removeEventListener('samantha-volume-changed', handleVolumeChanged);
+    };
   }, []);
 
   const toggleMute = () => {
@@ -72,6 +80,12 @@ const AIAssistant = () => {
     if (newState) window.speechSynthesis.cancel();
     window.dispatchEvent(new Event('samantha-mute-changed'));
   };
+
+  useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener('open-ai-assistant', handleOpen);
+    return () => window.removeEventListener('open-ai-assistant', handleOpen);
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -169,8 +183,19 @@ const AIAssistant = () => {
             </div>
             {/* MUTED TOGGLE */}
             <button onClick={toggleMute} style={{ background: isMuted ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (isMuted ? 'rgba(239,68,68,0.3)' : 'transparent'), borderRadius: '10px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: isMuted ? '#ef4444' : '#fff', fontSize: '11px', fontWeight: 'bold' }}>
-              {isMuted ? '🔇 Muted' : '🔊 Voice'}
+              {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+              {isMuted ? 'Muted' : 'Voice'}
             </button>
+            {/* VOLUME SLIDER — only visible when not muted */}
+            {!isMuted && (
+              <input
+                type="range" min="0" max="1" step="0.05"
+                value={volume}
+                onChange={e => { const v = parseFloat(e.target.value); setVolumeState(v); setVolume(v); }}
+                title={`Volume: ${Math.round(volume * 100)}%`}
+                style={{ width: '64px', accentColor: 'var(--accent-cyan)', cursor: 'pointer' }}
+              />
+            )}
             <button onClick={() => setOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '10px', padding: '8px', cursor: 'pointer', display: 'flex' }}>
               <Minimize2 size={16} color="#94a3b8" />
             </button>

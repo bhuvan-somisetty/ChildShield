@@ -32,7 +32,11 @@ const OAuthCallback = () => {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
         loginWithToken(token, user);   // store token + user in AuthContext
-        navigate('/dashboard', { replace: true });
+        if (user.needsPasswordSetup) {
+          navigate('/onboarding', { replace: true });
+        } else {
+          navigate('/controls', { replace: true });
+        }
       } catch {
         setError('Invalid login response. Please try again.');
         setTimeout(() => navigate('/login'), 3000);

@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const ChildSchema = new mongoose.Schema({
   _id: { type: String, default: uuidv4 },
-  parentId: { type: String, ref: 'Parent', required: true },
+  parentId: { type: String, ref: 'Parent', required: false },
   name: { type: String, required: true },
   age: { type: Number, required: true },
   gender: { type: String, enum: ['boy', 'girl', 'other'] },
@@ -29,6 +29,6 @@ const ChildSchema = new mongoose.Schema({
   timerEndTime: { type: Date },
   timerDurationMinutes: { type: Number },
   lockedApps: { type: Array, default: [] }
-}, { timestamps: true });
+}, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 module.exports = mongoose.model('Child', ChildSchema);

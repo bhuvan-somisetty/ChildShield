@@ -28,12 +28,14 @@ const findOrCreateSocial = async (provider, profile, email, name) => {
 // Ensure absolute URLs are used to prevent redirect_uri_mismatch errors
 const getGoogleCallback = () => {
   if (process.env.GOOGLE_CALLBACK_URL) return process.env.GOOGLE_CALLBACK_URL;
-  return `${RENDER_URL}/auth/google/callback`;
+  const isDev = process.env.NODE_ENV !== 'production';
+  return isDev ? 'http://localhost:5000/auth/google/callback' : `${RENDER_URL}/auth/google/callback`;
 };
 
 const getFacebookCallback = () => {
   if (process.env.FACEBOOK_CALLBACK_URL) return process.env.FACEBOOK_CALLBACK_URL;
-  return `${RENDER_URL}/auth/facebook/callback`;
+  const isDev = process.env.NODE_ENV !== 'production';
+  return isDev ? 'http://localhost:5000/auth/facebook/callback' : `${RENDER_URL}/auth/facebook/callback`;
 };
 
 if (process.env.GOOGLE_CLIENT_ID) {

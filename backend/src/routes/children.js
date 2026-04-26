@@ -69,7 +69,11 @@ router.post('/:id/face', auth, async (req, res) => {
     child.faceEnrollment1 = faces.length > 0 ? faces[0].image : null;
     child.faceEnrollment2 = faces.length > 1 ? faces[1].image : null;
 
-    child.changed('authorizedFaces', true);
+    if (child.markModified) {
+      child.markModified('authorizedFaces');
+    } else if (child.changed) {
+      child.changed('authorizedFaces', true);
+    }
     await child.save();
     
     res.json({ success: true, count: faces.length, child });
@@ -83,7 +87,8 @@ router.put('/:id', auth, async (req, res) => {
   try {
     const child = await Child.findOne({ where: { id: req.params.id, parentId: req.user.id } });
     if (!child) return res.status(404).json({ error: 'Child not found' });
-    await child.update(req.body);
+    Object.assign(child, req.body);
+    await child.save();
     res.json({ child });
   } catch(err) {
     res.status(500).json({ error: err.message });
@@ -95,7 +100,7 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     const child = await Child.findOne({ where: { id: req.params.id, parentId: req.user.id } });
     if (!child) return res.status(404).json({ error: 'Child not found' });
-    await child.destroy();
+    await Child.destroy({ where: { id: child.id || child._id } });
     res.json({ success: true });
   } catch(err) {
     res.status(500).json({ error: err.message });
