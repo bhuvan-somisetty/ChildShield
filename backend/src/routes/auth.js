@@ -22,6 +22,10 @@ router.post('/register', async (req, res) => {
   try {
     const { fullName, email, password, phone, parentControlPassword } = req.body;
     
+    if (!fullName || !email || !password || !parentControlPassword) {
+      return res.status(400).json({ error: 'All required fields must be provided.' });
+    }
+
     const existing = await Parent.findOne({ where: { email } });
     if (existing) return res.status(400).json({ error: 'Email already exists.' });
 
@@ -45,6 +49,8 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
+
     const parent = await Parent.findOne({ where: { email } });
     if (!parent) return res.status(400).json({ error: 'Invalid credentials.' });
 
@@ -62,6 +68,7 @@ router.post('/login', async (req, res) => {
 router.post('/verify-parent-lock', auth, async (req, res) => {
   try {
     const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password required' });
     const parent = await Parent.findByPk(req.user.id);
     const validPass = await bcrypt.compare(password, parent.parentControlPasswordHash);
     if (!validPass) return res.status(400).json({ error: 'Incorrect Parent Control Password' });
@@ -70,6 +77,22 @@ router.post('/verify-parent-lock', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Verify Parent Control Password (used by Navbar sign-out + child logout)
+router.post('/verify-password', auth, async (req, res) => {
+  try {
+    const { parentControlPassword } = req.body;
+    if (!parentControlPassword) return res.status(400).json({ error: 'Password required' });
+    const parent = await Parent.findByPk(req.user.id);
+    if (!parent) return res.status(404).json({ error: 'User not found' });
+    const valid = await bcrypt.compare(parentControlPassword, parent.parentControlPasswordHash);
+    if (!valid) return res.status(400).json({ success: false, error: 'Incorrect password.' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Get Me
 router.get('/me', auth, async (req, res) => {
@@ -138,6 +161,45 @@ router.post('/change-password', auth, async (req, res) => {
 
     res.json({ success: true });
   } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Delete Account ────────────────────────────────────────────────────────────
+router.delete('/me', auth, async (req, res) => {
+  try {
+    const parent = await Parent.findByPk(req.user.id);
+    if (!parent) return res.status(404).json({ error: 'Account not found' });
+    
+    // Delete all children associated with this parent
+    const children = await Child.findAll({ where: { parentId: req.user.id } });
+    for (let child of children) {
+      await child.destroy();
+    }
+    
+    await parent.destroy();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Setup Password (For Social Logins) ──────────────────────────────────────
+router.post('/set-control-password', auth, async (req, res) => {
+  try {
+    const { parentControlPassword } = req.body;
+    if (!parentControlPassword) return res.status(400).json({ error: 'Password is required' });
+
+    const parent = await Parent.findByPk(req.user.id);
+    if (!parent) return res.status(404).json({ error: 'Account not found' });
+
+    const salt = await bcrypt.genSalt(10);
+    parent.parentControlPasswordHash = await bcrypt.hash(parentControlPassword, salt);
+    parent.needsPasswordSetup = false;
+    await parent.save();
+
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -370,7 +432,9 @@ router.put('/update-profile', auth, async (req, res) => {
       if (existing) return res.status(400).json({ error: 'Email already in use by another account.' });
     }
 
-    await parent.update({ fullName, email });
+    parent.fullName = fullName;
+    parent.email = email;
+    await parent.save();
 
     res.json({
       success: true,

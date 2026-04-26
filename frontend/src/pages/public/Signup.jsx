@@ -15,7 +15,7 @@ const Signup = () => {
   const [error,      setError]      = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (user) return <Navigate to="/dashboard" />;
+  if (user) return <Navigate to="/controls" />;
 
   const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
   const toggleShow   = k => setShow(s => ({ ...s, [k]: !s[k] }));
@@ -203,4 +203,3 @@ const Signup = () => {
 };
 
 export default Signup;
-

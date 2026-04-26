@@ -19,6 +19,7 @@ const Login = () => {
   const oauthErrorMap = {
     facebook_not_configured: '⚠️ Facebook login needs setup — add your FACEBOOK_APP_ID to backend/.env',
     twitter_not_configured:  '⚠️ X (Twitter) login needs setup — add your TWITTER_CONSUMER_KEY to backend/.env',
+    google_not_configured:   '⚠️ Google login needs setup — add your GOOGLE_CLIENT_ID to backend/.env',
     facebook_failed: 'Facebook login failed. Check your App ID & redirect URI in Facebook Developers.',
     twitter_failed:  'X (Twitter) login failed. Check your API Key & callback URL in Twitter Developer Portal.',
     google_failed:   'Google login failed. Check your Client ID & redirect URI in Google Cloud Console.',
@@ -29,7 +30,7 @@ const Login = () => {
   const [error, setError] = useState(initialErr);
 
   if (loading) return <div>Loading...</div>;
-  if (user) return <Navigate to="/dashboard" />;
+  if (user) return <Navigate to="/controls" />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

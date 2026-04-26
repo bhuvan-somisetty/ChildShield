@@ -4,10 +4,10 @@ import { LayoutDashboard, History, PieChart, Shield, FileText, Activity, Setting
 
 const Sidebar = () => {
   const mainNav = [
+    { name: 'Controls',          icon: Shield,          path: '/controls' },
     { name: 'Dashboard',        icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Watch History',     icon: History,         path: '/history' },
     { name: 'Analytics',         icon: PieChart,        path: '/analytics' },
-    { name: 'Controls',          icon: Shield,          path: '/controls' },
     { name: 'Reports',           icon: FileText,        path: '/reports' },
     { name: 'Location',          icon: MapPin,          path: '/location' },
   ];
@@ -75,7 +75,11 @@ const Sidebar = () => {
         {monitoringNav.map(renderLink)}
 
         {/* Settings at bottom of nav */}
-        <div style={{ marginTop: 'auto', marginBottom: '24px' }}>
+        <div style={{ marginTop: 'auto', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <button onClick={() => window.dispatchEvent(new Event('open-ai-assistant'))} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderRadius: 'var(--radius-md)', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: '500', width: '100%', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#00f0ff'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
+            <span style={{ marginRight: '16px' }}>✨</span>
+            Voice Assistant
+          </button>
           {renderLink({ name: 'Account Settings', icon: Settings, path: '/account-settings' })}
         </div>
       </div>

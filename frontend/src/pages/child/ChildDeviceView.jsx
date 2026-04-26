@@ -4,11 +4,20 @@ import {
   ShieldCheck, LogOut, Clock, Wifi, WifiOff,
   Lock, Eye, Volume2, Shield, AlertTriangle,
   User, Moon, Pause, Activity, CheckCircle2,
-  Camera, Mic, Monitor
+  Camera, Mic, Monitor, MapPin, Phone, Trash2, Loader2
 } from 'lucide-react';
 import SessionLockOverlay from './SessionLockOverlay';
 import { VoiceEvents } from '../../hooks/VoiceAssistant';
 import { useWebRTC } from '../../hooks/useWebRTC';
+
+const haversine = (lat1, lon1, lat2, lon2) => {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+const formatDist = (m) => m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
 
 // ─── Countdown formatter ───────────────────────────────────────────────────────
 const formatTime = (secs) => {
@@ -86,11 +95,51 @@ const ChildDeviceView = () => {
   const [parentPin, setParentPin] = useState('');
   const [logoutErr, setLogoutErr] = useState('');
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [logoutRequestStatus, setLogoutRequestStatus] = useState('idle'); // idle, pending, approved, denied
 
   // SOS Emergency modal state
   const [sosResult, setSosResult] = useState(null); // { facilities: [], lat, lon, status: 'success'|'no-gps'|'no-geo' }
 
+  // Child's Safe Zones & Location
+  const [safeZones, setSafeZones] = useState([]);
+  const [currentLoc, setCurrentLoc] = useState(null);
+
+  // Main Contacts
+  const [contacts, setContacts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('child_contacts') || '[]'); } catch { return []; }
+  });
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [newContact, setNewContact] = useState({ name: '', phone: '' });
+
   const navigate = useNavigate();
+  const parentName = session?.parentName || status?.parentName || 'Parent';
+  const childName = session?.childName || status?.name || 'Child';
+  const childId = session?.childId;
+  // ─── Poll for logout request status when pending ──────────────────────────────
+  useEffect(() => {
+    if (logoutRequestStatus !== 'pending' || !session?.childId) return;
+    const iv = setInterval(async () => {
+      try {
+        const r = await fetch(`/api/device/logout-request/${session.childId}`);
+        const d = await r.json();
+        if (d.success && d.request) {
+          if (d.request.status === 'approved') {
+            setLogoutRequestStatus('approved');
+            clearInterval(iv);
+            // Auto-logout after showing message
+            setTimeout(() => {
+              localStorage.removeItem('child_session');
+              navigate('/child-setup');
+            }, 2500);
+          } else if (d.request.status === 'denied') {
+            setLogoutRequestStatus('denied');
+            clearInterval(iv);
+          }
+        }
+      } catch {}
+    }, 2000);
+    return () => clearInterval(iv);
+  }, [logoutRequestStatus, session?.childId, navigate]);
 
   // ─── beforeunload protection ──────────────────────────────────────────────────
   useEffect(() => {
@@ -161,12 +210,16 @@ const ChildDeviceView = () => {
 
   // ─── GPS Location Tracker ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (!status?.locationTrackingEnabled || !session?.childId) return;
+    if (!session?.childId) return;
 
     let watchId;
     if ('geolocation' in navigator) {
       watchId = navigator.geolocation.watchPosition(
         async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setCurrentLoc(prev => ({ ...prev, lat, lng }));
+
           let battery = null;
           if ('getBattery' in navigator) {
             try {
@@ -175,18 +228,20 @@ const ChildDeviceView = () => {
             } catch (e) {}
           }
 
-          fetch('/api/device/location', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              childId: session.childId,
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-              speed: position.coords.speed,
-              battery
-            })
-          }).catch(() => { });
+          if (status?.locationTrackingEnabled) {
+            fetch('/api/device/location', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                childId: session.childId,
+                latitude: lat,
+                longitude: lng,
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed,
+                battery
+              })
+            }).catch(() => { });
+          }
         },
         (error) => {
           console.warn('GPS tracking error', error);
@@ -199,6 +254,30 @@ const ChildDeviceView = () => {
       if (watchId !== undefined && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     };
   }, [status?.locationTrackingEnabled, session?.childId]);
+
+  // ─── Reverse geocode child's current location ─────────────────────────────────
+  const lastGeoKeyRef = useRef('');
+  useEffect(() => {
+    if (!currentLoc?.lat) return;
+    const key = `${currentLoc.lat.toFixed(3)},${currentLoc.lng.toFixed(3)}`;
+    if (lastGeoKeyRef.current === key) return;
+    lastGeoKeyRef.current = key;
+    fetch(`/api/device/reverse-geocode?lat=${currentLoc.lat}&lon=${currentLoc.lng}`)
+      .then(r => r.json())
+      .then(g => {
+        if (g.success) setCurrentLoc(prev => ({ ...prev, address: g.displayName, city: g.city, locality: g.locality }));
+      }).catch(() => {});
+  }, [currentLoc?.lat, currentLoc?.lng]);
+
+  // ─── Fetch safe zones for child ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!session?.childId) return;
+    // Try fetching safe zones without auth (child doesn't have parent token)
+    fetch(`/api/device/child-safe-zones/${session.childId}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setSafeZones(d.zones || []); })
+      .catch(() => {});
+  }, [session?.childId]);
 
   // ─── WebRTC Responder (Camera / Audio / Screen) ───────────────────────────────
   const { connectSocket, handleOffer: rtcHandleOffer, socket: socketRef, pcRef } = useWebRTC(session?.childId, 'child');
@@ -339,9 +418,6 @@ const ChildDeviceView = () => {
   );
 
   const isPaused = status.deviceState === 'paused';
-  const parentName = session?.parentName || status?.parentName || 'Parent';
-  const childName = session?.childName || status?.name || 'Child';
-  const childId = session?.childId;   // ← used by the Security Lock modal
   const stateColor = isPaused ? '#f59e0b' : 'var(--accent-green)';
   const totalSecs = (status.timerDurationMinutes || 0) * 60;
   const timerPct = totalSecs > 0 && countdown !== null ? (countdown / totalSecs) * 100 : 100;
@@ -381,14 +457,7 @@ const ChildDeviceView = () => {
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', boxShadow: '0 0 5px currentColor', animation: connected ? 'pulse-dot 2s infinite' : 'none' }} />
             {connected && !syncError ? 'LIVE' : 'OFFLINE'}
           </div>
-          <button onClick={async () => {
-            setShowLogoutModal(true);
-            // Instantly alert the parent that child is trying to tamper/logout
-            fetch('/api/device/disconnect-attempt', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ childId })
-            }).catch(() => { });
-          }}
+          <button onClick={() => setShowLogoutModal(true)}
             style={{ background: 'transparent', border: 'none', color: '#334155', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }}
             onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
             onMouseOut={e => e.currentTarget.style.color = '#334155'}
@@ -401,49 +470,93 @@ const ChildDeviceView = () => {
       {showLogoutModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#0f172a', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '360px', textAlign: 'center', boxShadow: '0 10px 40px rgba(239, 68, 68, 0.2)' }}>
-            <ShieldCheck size={48} color="#ef4444" style={{ marginBottom: '16px' }} />
-            <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Security Lock</h3>
-            <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px' }}>Enter Parent Control Password to disconnect this device.</p>
 
-            {logoutErr && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '8px', fontSize: '13px', marginBottom: '15px' }}>{logoutErr}</div>}
+            {/* STEP 1: Password entry */}
+            {logoutRequestStatus === 'idle' && (
+              <>
+                <ShieldCheck size={48} color="#ef4444" style={{ marginBottom: '16px' }} />
+                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Security Lock</h3>
+                <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px' }}>Enter Parent Control Password to request sign-out.</p>
 
-            <input type="password" value={parentPin} onChange={e => setParentPin(e.target.value)} placeholder="Parent Password"
-              style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', fontSize: '16px', marginBottom: '20px', textAlign: 'center', outline: 'none' }}
-              onKeyDown={async e => {
-                if (e.key === 'Enter') document.getElementById('btn-unlock').click();
-              }}
-            />
+                {logoutErr && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '8px', fontSize: '13px', marginBottom: '15px' }}>{logoutErr}</div>}
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => { setShowLogoutModal(false); setParentPin(''); setLogoutErr(''); }}
-                style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer' }}>Cancel</button>
-              <button id="btn-unlock" disabled={logoutLoading} onClick={async () => {
-                if (!parentPin) return setLogoutErr('Password required');
-                if (!childId) return setLogoutErr('Session error: childId missing. Please refresh the page.');
-                setLogoutLoading(true); setLogoutErr('');
-                try {
-                  const r = await fetch('/api/device/disconnect', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ childId, parentControlPassword: parentPin })
-                  });
-                  const d = await r.json();
-                  if (r.ok && d.success) {
-                    localStorage.removeItem('child_session');
-                    navigate('/child-setup');
-                  } else {
-                    setLogoutErr(d.error || 'Incorrect password. Try again.');
-                    // Alert parent of failed pin attempt
-                    fetch('/api/device/disconnect-attempt', {
-                      method: 'POST', headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ childId })
-                    }).catch(() => { });
-                  }
-                } catch (e) { setLogoutErr(`Connection failed: ${e.message}. Is the backend running?`); }
-                setLogoutLoading(false);
-              }} style={{ flex: 2, background: '#ef4444', border: 'none', padding: '12px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: logoutLoading ? 'not-allowed' : 'pointer', opacity: logoutLoading ? 0.7 : 1 }}>
-                {logoutLoading ? 'Verifying...' : 'Disconnect'}
-              </button>
-            </div>
+                <input type="password" value={parentPin} onChange={e => setParentPin(e.target.value)} placeholder="Parent Password"
+                  style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', fontSize: '16px', marginBottom: '20px', textAlign: 'center', outline: 'none' }}
+                  onKeyDown={e => { if (e.key === 'Enter') document.getElementById('btn-unlock')?.click(); }}
+                />
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => { setShowLogoutModal(false); setParentPin(''); setLogoutErr(''); setLogoutRequestStatus('idle'); }}
+                    style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer' }}>Cancel</button>
+                  <button id="btn-unlock" disabled={logoutLoading} onClick={async () => {
+                    if (!parentPin) return setLogoutErr('Password required');
+                    if (!childId) return setLogoutErr('Session error');
+                    setLogoutLoading(true); setLogoutErr('');
+                    try {
+                      const r = await fetch('/api/device/logout-request', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ childId, parentControlPassword: parentPin })
+                      });
+                      const d = await r.json();
+                      if (r.ok && d.success) {
+                        setLogoutRequestStatus('pending');
+                      } else {
+                        setLogoutErr(d.error || 'Incorrect password.');
+                        // Alert parent of failed pin attempt
+                        fetch('/api/device/disconnect-attempt', {
+                          method: 'POST', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ childId })
+                        }).catch(() => { });
+                      }
+                    } catch (e) { setLogoutErr(`Connection failed: ${e.message}`); }
+                    setLogoutLoading(false);
+                  }} style={{ flex: 2, background: '#ef4444', border: 'none', padding: '12px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: logoutLoading ? 'not-allowed' : 'pointer', opacity: logoutLoading ? 0.7 : 1 }}>
+                    {logoutLoading ? 'Verifying...' : 'Request Sign-out'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* STEP 2: Waiting for parent approval */}
+            {logoutRequestStatus === 'pending' && (
+              <>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(245,158,11,0.15)', border: '2px solid rgba(245,158,11,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', animation: 'pulse-dot 2s infinite' }}>
+                  <Clock size={28} color="#f59e0b" />
+                </div>
+                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Request Sent</h3>
+                <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px' }}>Ok, please wait until verification from <strong style={{ color: '#f59e0b' }}>{parentName}</strong>...</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', fontSize: '13px', fontWeight: '600' }}>
+                  <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Waiting for parent response...
+                </div>
+                <button onClick={() => { setShowLogoutModal(false); setLogoutRequestStatus('idle'); setParentPin(''); }}
+                  style={{ marginTop: '24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 24px', borderRadius: '10px', color: '#64748b', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+              </>
+            )}
+
+            {/* STEP 3: APPROVED */}
+            {logoutRequestStatus === 'approved' && (
+              <>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <CheckCircle2 size={32} color="#10b981" />
+                </div>
+                <h3 style={{ color: '#10b981', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Approved! ✅</h3>
+                <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px' }}>You got approval from <strong style={{ color: '#10b981' }}>{parentName}</strong>. Device logging out...</p>
+              </>
+            )}
+
+            {/* STEP 4: DENIED */}
+            {logoutRequestStatus === 'denied' && (
+              <>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239,68,68,0.15)', border: '2px solid rgba(239,68,68,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Lock size={32} color="#ef4444" />
+                </div>
+                <h3 style={{ color: '#ef4444', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Access Declined</h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '20px' }}>I'm sorry <strong style={{ color: '#fff' }}>{childName}</strong>, access declined by father.</p>
+                <button onClick={() => { setShowLogoutModal(false); setLogoutRequestStatus('idle'); setParentPin(''); }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 32px', borderRadius: '10px', color: '#fff', cursor: 'pointer', fontWeight: '600' }}>OK</button>
+              </>
+            )}
+
           </div>
         </div>
       )}
@@ -612,6 +725,111 @@ const ChildDeviceView = () => {
           </div>
         )}
 
+        {/* ── MY LOCATION ────────────────────────────────────────────────── */}
+        <div style={{ marginTop: '16px', background: 'rgba(0,240,255,0.04)', border: '1px solid rgba(0,240,255,0.15)', borderRadius: '16px', padding: '16px 20px' }}>
+          <div style={{ fontSize: '10px', color: '#00f0ff', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '12px' }}>📍 MY LOCATION</div>
+          {currentLoc?.address ? (
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>{currentLoc.locality || currentLoc.city || 'Your Area'}</div>
+              <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.5' }}>{currentLoc.address}</div>
+            </div>
+          ) : currentLoc?.lat ? (
+            <div style={{ fontSize: '13px', color: '#94a3b8' }}>Fetching address...</div>
+          ) : (
+            <div style={{ fontSize: '13px', color: '#64748b' }}>Waiting for GPS...</div>
+          )}
+        </div>
+
+        {/* ── SAVED PLACES ───────────────────────────────────────────────── */}
+        {safeZones.length > 0 && (
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '12px' }}>SAVED PLACES</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {safeZones.map(z => {
+                const icons = { home: '🏠', school: '🏫', relative: '👨‍👩‍👧', hospital: '🏥', custom: '📍' };
+                const dist = currentLoc?.lat ? haversine(currentLoc.lat, currentLoc.lng, z.latitude, z.longitude) : null;
+                return (
+                  <div key={z.id} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${z.latitude},${z.longitude}&travelmode=driving`, '_blank')} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    <div style={{ fontSize: '24px', flexShrink: 0 }}>{icons[z.type] || '📍'}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{z.name}</div>
+                      {z.address && <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.address}</div>}
+                    </div>
+                    {dist !== null && (
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#00f0ff', flexShrink: 0 }}>{formatDist(dist)}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── MAIN CONTACTS ──────────────────────────────────────────────── */}
+        <div style={{ marginTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em' }}>MAIN CONTACTS</div>
+            <button onClick={() => { setShowAddContact(true); setNewContact({ name: '', phone: '' }); }} style={{ padding: '6px 14px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: '8px', color: '#00f0ff', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>+ Add</button>
+          </div>
+          {contacts.length === 0 ? (
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '32px 16px', textAlign: 'center' }}>
+              <Phone size={28} color="#334155" style={{ marginBottom: '8px' }} />
+              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>No contacts saved yet</div>
+              <div style={{ fontSize: '11px', color: '#475569', marginTop: '4px' }}>Add important numbers for quick calling</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {contacts.map((c, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <User size={18} color="#10b981" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{c.name}</div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{c.phone}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <a href={`tel:${c.phone}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', textDecoration: 'none' }}>
+                      <Phone size={18} color="#10b981" />
+                    </a>
+                    <button onClick={() => { if (!window.confirm(`Delete contact "${c.name}"?`)) return; const updated = contacts.filter((_, idx) => idx !== i); setContacts(updated); localStorage.setItem('child_contacts', JSON.stringify(updated)); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', cursor: 'pointer' }}>
+                      <Trash2 size={16} color="#ef4444" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Add Contact Modal ────────────────────────────────────────────── */}
+        {showAddContact && (
+          <>
+            <div onClick={() => setShowAddContact(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9998 }} />
+            <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', background: '#0f172a', borderRadius: '24px 24px 0 0', padding: '24px', zIndex: 9999, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 40px rgba(0,0,0,0.5)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <span style={{ fontSize: '18px', fontWeight: '700', color: '#fff' }}>Add Contact</span>
+                <button onClick={() => setShowAddContact(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '22px' }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input placeholder="Contact name (e.g. Mom, Dad, Uncle)" value={newContact.name} onChange={e => setNewContact(c => ({ ...c, name: e.target.value }))} style={{ width: '100%', padding: '14px 16px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none' }} />
+                <input placeholder="10-digit phone number" type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={10} value={newContact.phone} onChange={e => { const v = e.target.value.replace(/\D/g, '').slice(0, 10); setNewContact(c => ({ ...c, phone: v })); }} style={{ width: '100%', padding: '14px 16px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none', letterSpacing: '1px' }} />
+                {newContact.phone && newContact.phone.length < 10 && <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', paddingLeft: '4px' }}>{10 - newContact.phone.length} more digit{10 - newContact.phone.length !== 1 ? 's' : ''} needed</div>}
+                <button onClick={() => {
+                  if (!newContact.name || newContact.phone.length !== 10) return;
+                  const updated = [...contacts, { name: newContact.name, phone: newContact.phone }];
+                  setContacts(updated);
+                  localStorage.setItem('child_contacts', JSON.stringify(updated));
+                  setShowAddContact(false);
+                  setNewContact({ name: '', phone: '' });
+                }} disabled={!newContact.name || newContact.phone.length !== 10} style={{ padding: '16px', background: !newContact.name || newContact.phone.length !== 10 ? '#334155' : '#10b981', border: 'none', borderRadius: '14px', color: '#fff', fontWeight: '700', fontSize: '15px', cursor: !newContact.name || newContact.phone.length !== 10 ? 'not-allowed' : 'pointer' }}>
+                  Save Contact
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* ── SOS EMERGENCY BUTTON ──────────────────────────────────────────── */}
         <div style={{ marginTop: '32px' }}>
           <button
@@ -704,14 +922,40 @@ const ChildDeviceView = () => {
               <p style={{ color: '#94a3b8', fontSize: '13px' }}>Your parent has been alerted immediately.</p>
             </div>
 
-            {sosResult.status === 'no-gps' && (
-              <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '12px', marginBottom: '16px', fontSize: '13px', color: '#f59e0b', textAlign: 'center' }}>
-                ⚠️ Could not get GPS. Enable location services.
-              </div>
-            )}
-            {sosResult.status === 'no-geo' && (
-              <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '12px', marginBottom: '16px', fontSize: '13px', color: '#f59e0b', textAlign: 'center' }}>
-                ⚠️ Geolocation not supported on this device.
+            {(sosResult.status === 'no-gps' || sosResult.status === 'no-geo') && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '14px', marginBottom: '10px', fontSize: '13px', color: '#f59e0b', textAlign: 'center' }}>
+                  ⚠️ Location permission not granted. Allow location to find nearby help.
+                </div>
+                <button onClick={async () => {
+                  try {
+                    const pos = await new Promise((resolve, reject) => {
+                      navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 });
+                    });
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    setCurrentLoc(prev => ({ ...prev, lat, lng: lon }));
+                    // Retry SOS with location
+                    try {
+                      const [policeRes, hospitalRes] = await Promise.all([
+                        fetch(`/api/device/nearby-facilities?lat=${lat}&lon=${lon}&type=police`),
+                        fetch(`/api/device/nearby-facilities?lat=${lat}&lon=${lon}&type=hospital`)
+                      ]);
+                      const [policeData, hospitalData] = await Promise.all([policeRes.json(), hospitalRes.json()]);
+                      const facilities = [];
+                      if (policeData.success) facilities.push(...(policeData.facilities || []).slice(0, 2));
+                      if (hospitalData.success) facilities.push(...(hospitalData.facilities || []).slice(0, 2));
+                      facilities.sort((a, b) => a.distance - b.distance);
+                      setSosResult({ facilities, lat, lon, status: 'success' });
+                    } catch {
+                      setSosResult({ facilities: [], lat, lon, status: 'success' });
+                    }
+                  } catch {
+                    alert('Location permission was denied. Please tap the 🔒 lock icon in your browser address bar → Allow Location → then try again.');
+                  }
+                }} style={{ width: '100%', padding: '14px', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.4)', borderRadius: '14px', color: '#60a5fa', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                  <MapPin size={18} /> Allow Location & Retry
+                </button>
               </div>
             )}
 
@@ -719,14 +963,31 @@ const ChildDeviceView = () => {
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700', marginBottom: '10px' }}>Nearest Help</div>
                 {sosResult.facilities.map((f, i) => (
-                  <div key={i} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '10px', color: '#60a5fa', fontWeight: '800', textTransform: 'uppercase' }}>{f.type} • {f.distanceText}</div>
-                      <div style={{ fontSize: '14px', color: '#fff', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
+                  <div key={i} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', padding: '12px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '10px', color: '#60a5fa', fontWeight: '800', textTransform: 'uppercase' }}>{f.type} • {f.distanceText}</div>
+                        <div style={{ fontSize: '14px', color: '#fff', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.address}</div>
+                      </div>
+                      <a href={`tel:112`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '6px 12px', borderRadius: '8px', color: '#10b981', textDecoration: 'none', fontSize: '12px', fontWeight: '700', marginLeft: '8px', flexShrink: 0 }}>
+                        <Phone size={14} style={{ marginRight: '4px' }} /> Call
+                      </a>
                     </div>
-                    <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}&travelmode=walking`, '_blank')} style={{ background: 'rgba(59,130,246,0.2)', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}>
-                      <Activity size={16} color="#60a5fa" />
-                    </button>
+                    <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+                      <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}&travelmode=driving`, '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', color: '#60a5fa', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                        <MapPin size={12} /> Maps
+                      </button>
+                      <button onClick={() => window.open(`https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${f.lat}&dropoff[longitude]=${f.lon}`, '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.4)', border: '1px solid #334155', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', color: '#fff', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                        Uber
+                      </button>
+                      <button onClick={() => window.open(`https://book.olacabs.com/?lat=${f.lat}&lng=${f.lon}`, '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(163,230,53,0.15)', border: '1px solid rgba(163,230,53,0.3)', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', color: '#a3e635', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                        Ola
+                      </button>
+                      <button onClick={() => window.open(`intent://app/launch?lat=${f.lat}&lng=${f.lon}#Intent;scheme=rapido;package=com.rapido.passenger;end;`, '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(250,204,21,0.15)', border: '1px solid rgba(250,204,21,0.3)', padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', color: '#facc15', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                        Rapido
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

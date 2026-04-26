@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Bell, User, LogOut, Settings, ChevronDown, Zap } from 'lucide-react';
+import { Bell, User, LogOut, Settings, ChevronDown, Zap, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLivePolling } from '../../hooks/useLivePolling';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
-  const { user, logout, activeChild, childrenList, setActiveChild, isDemoMode, setIsDemoMode } = useAuth();
+  const { user, logout, activeChild, childrenList, setActiveChild, isDemoMode, setIsDemoMode, token } = useAuth();
   const notifications = useLivePolling('/api/notifications') || [];
   const navigate = useNavigate();
 
@@ -13,11 +13,69 @@ const Navbar = () => {
   const [childSelectOpen, setChildSelectOpen] = useState(false);
   const [notiOpen, setNotiOpen] = useState(false);
 
+  // Logout modal state — step: 'password' | 'confirm'
+  const [logoutStep, setLogoutStep] = useState('password');
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [logoutPin, setLogoutPin] = useState('');
+  const [logoutErr, setLogoutErr] = useState('');
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const openLogout = () => {
+    setLogoutModalOpen(true);
+    setLogoutStep('password');
+    setLogoutPin('');
+    setLogoutErr('');
+    setProfileOpen(false);
+  };
+
+  const closeLogout = () => {
+    setLogoutModalOpen(false);
+    setLogoutStep('password');
+    setLogoutPin('');
+    setLogoutErr('');
+  };
+
+  const handleVerifyPassword = async () => {
+    if (!logoutPin) return setLogoutErr('Password required');
+    setLogoutLoading(true);
+    setLogoutErr('');
+    try {
+      const tok = token || localStorage.getItem('cs_token');
+      const r = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+        body: JSON.stringify({ parentControlPassword: logoutPin })
+      });
+      const d = await r.json();
+      if (r.ok && d.success) {
+        setLogoutStep('confirm'); // move to confirmation step
+      } else {
+        setLogoutErr(d.error || 'Incorrect password.');
+      }
+    } catch (e) {
+      setLogoutErr('Could not connect to server. Please try again.');
+    }
+    setLogoutLoading(false);
+  };
+
+  const handleConfirmLogout = async () => {
+    try {
+      const tok = token || localStorage.getItem('cs_token');
+      await fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${tok}` } });
+    } catch (e) {
+      // ignore
+    }
+    closeLogout();
+    logout();
+    navigate('/login');
+  };
+
   return (
-    <header style={{
-      height: 'var(--navbar-height)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    <>
+      <header style={{
+        height: 'var(--navbar-height)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 32px', borderBottom: '1px solid rgba(255,255,255,0.05)',
       backgroundColor: 'transparent', backdropFilter: 'blur(10px)', zIndex: 50, position: 'relative'
     }}>
@@ -113,7 +171,7 @@ const Navbar = () => {
                 <Settings size={16} color="var(--text-muted)" /> Account Settings
               </div>
               <div
-                onClick={logout}
+                onClick={openLogout}
                 style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-red)', fontSize: '14px', marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.05)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -124,8 +182,119 @@ const Navbar = () => {
           )}
         </div>
       </div>
-    </header>
+      </header>
+
+      {/* ── Logout Modal ───────────────────────────────────────────────────────── */}
+      {logoutModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(239,68,68,0.4)', padding: '32px 28px', borderRadius: '20px', width: '100%', maxWidth: '380px', textAlign: 'center', boxShadow: '0 10px 40px rgba(239,68,68,0.2)', boxSizing: 'border-box' }}>
+
+            {/* STEP 1: Enter password */}
+            {logoutStep === 'password' && (
+              <>
+                <LogOut size={44} color="#ef4444" style={{ marginBottom: '14px' }} />
+                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '6px' }}>Sign Out</h3>
+                <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px', lineHeight: 1.5 }}>
+                  Enter your Parent Control Password to sign out.
+                </p>
+
+                {logoutErr && (
+                  <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '14px', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    {logoutErr}
+                  </div>
+                )}
+
+                <input
+                  type="password"
+                  value={logoutPin}
+                  onChange={e => setLogoutPin(e.target.value)}
+                  placeholder="Parent Control Password"
+                  autoFocus
+                  style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', fontSize: '15px', marginBottom: '20px', textAlign: 'center', outline: 'none', boxSizing: 'border-box' }}
+                  onKeyDown={e => { if (e.key === 'Enter') handleVerifyPassword(); }}
+                />
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={closeLogout}
+                    style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleVerifyPassword} disabled={logoutLoading}
+                    style={{ flex: 2, background: '#ef4444', border: 'none', padding: '12px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: logoutLoading ? 'not-allowed' : 'pointer', fontSize: '14px', opacity: logoutLoading ? 0.7 : 1 }}>
+                    {logoutLoading ? 'Verifying...' : 'Verify & Continue'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* STEP 2: Confirmation */}
+            {logoutStep === 'confirm' && (
+              <>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '2px solid rgba(239,68,68,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <AlertTriangle size={32} color="#ef4444" />
+                </div>
+                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Before you continue</h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '28px', lineHeight: 1.6 }}>
+                  Do you want to download a session report before signing out?
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button onClick={() => {
+                      const reportData = `ChildShield Report\n\nParent: ${user?.fullName}\nChild: ${activeChild?.name || 'All'}\nDate: ${new Date().toLocaleString()}\n\nNote: Detailed analytics available in the dashboard.`;
+                      const blob = new Blob([reportData], { type: 'text/plain' });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `ChildShield_Report_${new Date().getTime()}.txt`;
+                      a.click();
+                      setLogoutStep('downloaded');
+                    }}
+                    style={{ background: 'var(--accent-blue)', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    Download Report
+                  </button>
+                  <button onClick={handleConfirmLogout}
+                    style={{ background: '#ef4444', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    Continue Without Download
+                  </button>
+                  <button onClick={closeLogout}
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px' }}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* STEP 3: Post Download Confirmation */}
+            {logoutStep === 'downloaded' && (
+              <>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16,185,129,0.1)', border: '2px solid rgba(16,185,129,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <ShieldCheck size={32} color="#10b981" />
+                </div>
+                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Report downloaded.</h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '28px', lineHeight: 1.6 }}>
+                  Continue to logout?
+                </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={closeLogout}
+                    style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px' }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleConfirmLogout}
+                    style={{ flex: 2, background: '#ef4444', border: 'none', padding: '12px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    Logout
+                  </button>
+                </div>
+              </>
+            )}
+
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
 export default Navbar;
+
+
+

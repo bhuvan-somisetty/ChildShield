@@ -4,7 +4,7 @@ import {
   HelpCircle, MessageCircle, Palette, LogOut, ChevronRight,
   ShieldCheck, ArrowLeft, Smartphone, CheckCircle, AlertCircle,
   Info, ExternalLink, Mail, Save, Moon, Sun, Monitor, ToggleLeft, ToggleRight,
-  BookOpen, Video, Wifi, MapPin, Clock, Zap, Star, Send, Phone, ChevronDown
+  BookOpen, Video, Wifi, MapPin, Clock, Zap, Star, Send, Phone, ChevronDown, Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -992,9 +992,20 @@ const AccountSettings = () => {
         <Row icon={MessageCircle} iconColor="#3b82f6" iconBg="rgba(59,130,246,0.1)" label="Contact Us"     desc="Email, chat & send feedback"        onClick={() => setView('contact')} />
       </Card>
 
-      <Card>
+      <Card title="Danger Zone">
         <Row icon={LogOut} label="Sign Out" desc="Log out of your parent account" danger
           onClick={() => { if (window.confirm('Sign out of ChildShield AI?')) logout(); }}
+        />
+        <Row icon={Trash2} label="Delete Account" desc="Permanently wipe all data and unpair devices" danger
+          onClick={async () => { 
+            if (window.confirm('WARNING: This will permanently delete your account, wipe all tracking data, and unpair all child devices. This action cannot be undone. Type "DELETE" to confirm?')) {
+              try {
+                const res = await fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if(res.ok) { alert('Account deleted successfully.'); logout(); }
+                else { alert('Failed to delete account.'); }
+              } catch(e) { alert('Network error. Could not delete.'); }
+            }
+          }}
         />
       </Card>
 

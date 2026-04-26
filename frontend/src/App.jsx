@@ -6,6 +6,7 @@ import BottomNav from './components/layout/BottomNav';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AIAssistant from './components/AIAssistant';
 import EmergencyListener from './components/EmergencyListener';
+import LogoutApprovalListener from './components/LogoutApprovalListener';
 import PermissionRequest from './components/PermissionRequest';
 import PasswordSetupModal from './components/PasswordSetupModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -71,6 +72,7 @@ const AppLayout = () => {
   return (
     <div className="app-container">
       <EmergencyListener />
+      <LogoutApprovalListener />
       <PermissionRequest />
       {!isMobile && <Sidebar />}
       <div className="main-content">
@@ -88,7 +90,7 @@ const AppLayout = () => {
               <Route path="/audio" element={<AudioListener />} />
               <Route path="/screen" element={<ScreenView />} />
               <Route path="/account-settings" element={<AccountSettings />} />
-              <Route path="*" element={<Navigate to="/dashboard" />} />
+              <Route path="*" element={<Navigate to="/controls" />} />
             </Routes>
           </React.Suspense>
         </main>

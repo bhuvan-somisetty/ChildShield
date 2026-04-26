@@ -6,6 +6,18 @@
 let _voicesLoaded = false;
 let _preferredVoice = null;
 
+// ─── Volume control (0.0 – 1.0, persisted in localStorage) ──────────────────
+export const getVolume = () => {
+  const v = parseFloat(localStorage.getItem('samantha_volume'));
+  return isNaN(v) ? 1.0 : Math.min(1, Math.max(0, v));
+};
+
+export const setVolume = (v) => {
+  const clamped = Math.min(1, Math.max(0, v));
+  localStorage.setItem('samantha_volume', String(clamped));
+  window.dispatchEvent(new CustomEvent('samantha-volume-changed', { detail: clamped }));
+};
+
 // Pre-load voices as soon as the browser is ready (avoids empty array bug)
 const _loadVoices = () => {
   const voices = window.speechSynthesis.getVoices();
@@ -39,7 +51,7 @@ export const speak = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.pitch = 1.05;
     utterance.rate = 0.92;   // calm, clear delivery
-    utterance.volume = 1;
+    utterance.volume = getVolume();
 
     if (_preferredVoice) {
       utterance.voice = _preferredVoice;
@@ -80,3 +92,4 @@ export const VoiceEvents = {
   TIME_WARNING_1:  () => speak("Device will lock in 1 minute. Please save your work."),
   DEVICE_LINKED:   () => speak("This device is now connected and protected by ChildShield A.I."),
 };
+

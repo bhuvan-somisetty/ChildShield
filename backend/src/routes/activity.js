@@ -14,10 +14,13 @@ router.get('/:childId', auth, async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
 
+    const { isMongo } = require('../db');
+    const dateFilter = isMongo ? { $gte: dateStr } : { [Op.gte]: dateStr };
+
     const activities = await Activity.findAll({
       where: {
         childId: req.params.childId,
-        date: { [Op.gte]: dateStr }
+        date: dateFilter
       },
       order: [['date', 'DESC'], ['createdAt', 'DESC']],
       limit: 500
@@ -90,11 +93,14 @@ router.get('/:childId/summary', auth, async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
 
+    const { isMongo } = require('../db');
+    const dateFilter = isMongo ? { $gte: dateStr } : { [Op.gte]: dateStr };
+
     const activities = await Activity.findAll({
       where: {
         childId: req.params.childId,
-        date: { [Op.gte]: dateStr }
-      }
+        date: dateFilter
+      },
     });
 
     // Aggregations
