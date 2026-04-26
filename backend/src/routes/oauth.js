@@ -26,7 +26,7 @@ const issueJWT = (req, res) => {
     id: req.user.id, fullName: req.user.fullName, email: req.user.email, needsPasswordSetup: req.user.needsPasswordSetup
   }));
   // Redirect to a dedicated callback page in the frontend
-  res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}&user=${user}`);
+  res.redirect(`${FRONTEND_URL}/oauth-callback?token=${token}&user=${user}`);
 };
 
 // ── safe wrapper: catches crashes from missing credentials ─────────────────────
