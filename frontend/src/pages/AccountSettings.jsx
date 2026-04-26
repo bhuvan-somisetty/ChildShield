@@ -916,6 +916,54 @@ const AccountSettings = () => {
 
   const initials = name => name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'P';
 
+  const [dangerAction, setDangerAction] = useState(null); // 'logout' | 'delete' | null
+  const [dangerStep, setDangerStep] = useState('password'); // 'password' | 'report'
+  const [dangerPassword, setDangerPassword] = useState('');
+  const [dangerError, setDangerError] = useState('');
+  const [isDangerLoading, setIsDangerLoading] = useState(false);
+
+  const handleDangerVerify = async () => {
+    setIsDangerLoading(true); setDangerError('');
+    try {
+      const res = await fetch('/api/auth/verify-parent-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ password: dangerPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Verification failed');
+      setDangerStep('report');
+    } catch (err) {
+      setDangerError(err.message);
+    } finally {
+      setIsDangerLoading(false);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    const reportData = {
+      parentProfile: user,
+      timestamp: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `childshield_report_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+  };
+
+  const executeDangerAction = async () => {
+    if (dangerAction === 'logout') {
+      logout();
+    } else if (dangerAction === 'delete') {
+      try {
+        const res = await fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if(res.ok) { logout(); }
+        else { setDangerError('Failed to delete account.'); }
+      } catch(e) { setDangerError('Network error. Could not delete.'); }
+    }
+  };
+
   const views = {
     password:    <PasswordView    user={user} token={token}  onBack={() => setView('main')} />,
     profile:     <ProfileView     user={user} token={token}  onBack={() => setView('main')} />,
@@ -994,22 +1042,73 @@ const AccountSettings = () => {
 
       <Card title="Danger Zone">
         <Row icon={LogOut} label="Sign Out" desc="Log out of your parent account" danger
-          onClick={() => { if (window.confirm('Sign out of ChildShield AI?')) logout(); }}
+          onClick={() => setDangerAction('logout')}
         />
         <Row icon={Trash2} label="Delete Account" desc="Permanently wipe all data and unpair devices" danger
-          onClick={async () => { 
-            if (window.confirm('WARNING: This will permanently delete your account, wipe all tracking data, and unpair all child devices. This action cannot be undone. Type "DELETE" to confirm?')) {
-              try {
-                const res = await fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                if(res.ok) { alert('Account deleted successfully.'); logout(); }
-                else { alert('Failed to delete account.'); }
-              } catch(e) { alert('Network error. Could not delete.'); }
-            }
-          }}
+          onClick={() => setDangerAction('delete')}
         />
       </Card>
 
       <div style={{ textAlign: 'center', fontSize: '12px', color: '#1e293b', paddingBottom: '16px' }}>ChildShield AI · Family Safety Platform · v1.0.0</div>
+
+      {/* ── Danger Action Modal (Logout & Delete) ─────────────────────────── */}
+      {dangerAction && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
+            <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>
+              {dangerAction === 'logout' ? 'Sign Out Confirmation' : 'Delete Account Permanently'}
+            </h3>
+            
+            {dangerStep === 'password' && (
+              <>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+                  Please enter your Parent Control Password to authorize this action.
+                </p>
+                <input 
+                  type="password" 
+                  placeholder="Parent Control Password" 
+                  value={dangerPassword}
+                  onChange={e => setDangerPassword(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239,68,68,0.3)', padding: '14px', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none', marginBottom: '16px', textAlign: 'center', letterSpacing: '2px' }}
+                />
+                {dangerError && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px' }}>{dangerError}</div>}
+                
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button onClick={() => { setDangerAction(null); setDangerPassword(''); setDangerError(''); }} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
+                  <button onClick={handleDangerVerify} disabled={isDangerLoading || !dangerPassword} style={{ flex: 1, padding: '12px', background: '#ef4444', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '8px', cursor: isDangerLoading || !dangerPassword ? 'not-allowed' : 'pointer', opacity: isDangerLoading || !dangerPassword ? 0.7 : 1 }}>
+                    {isDangerLoading ? 'Verifying...' : 'Verify'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {dangerStep === 'report' && (
+              <>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
+                  {dangerAction === 'delete' 
+                    ? 'WARNING: Deleting your account will wipe all child data, logs, and settings permanently. This cannot be undone.'
+                    : 'You are about to sign out. Before leaving, would you like to download a summary report of your child\'s activity?'}
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button onClick={() => { handleDownloadReport(); executeDangerAction(); }} style={{ padding: '14px', background: 'var(--accent-cyan)', border: 'none', color: '#0f172a', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <Save size={18} /> Download Report & {dangerAction === 'logout' ? 'Sign Out' : 'Delete'}
+                  </button>
+                  
+                  <button onClick={executeDangerAction} style={{ padding: '14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }}>
+                    {dangerAction === 'logout' ? 'Sign Out Without Report' : 'Delete Account Immediately'}
+                  </button>
+
+                  <button onClick={() => { setDangerAction(null); setDangerStep('password'); setDangerPassword(''); }} style={{ padding: '12px', background: 'transparent', border: 'none', color: '#94a3b8', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

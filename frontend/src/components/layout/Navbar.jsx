@@ -43,10 +43,10 @@ const Navbar = () => {
     setLogoutErr('');
     try {
       const tok = token || localStorage.getItem('cs_token');
-      const r = await fetch('/api/auth/verify-password', {
+      const r = await fetch('/api/auth/verify-parent-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
-        body: JSON.stringify({ parentControlPassword: logoutPin })
+        body: JSON.stringify({ password: logoutPin })
       });
       const d = await r.json();
       if (r.ok && d.success) {
@@ -60,13 +60,7 @@ const Navbar = () => {
     setLogoutLoading(false);
   };
 
-  const handleConfirmLogout = async () => {
-    try {
-      const tok = token || localStorage.getItem('cs_token');
-      await fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${tok}` } });
-    } catch (e) {
-      // ignore
-    }
+  const handleConfirmLogout = () => {
     closeLogout();
     logout();
     navigate('/login');

@@ -1,21 +1,35 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Navigate, Link } from 'react-router-dom';
-import { Shield, User, Lock, Mail, Key, Eye, EyeOff } from 'lucide-react';
+import { Navigate, Link, useNavigate } from 'react-router-dom';
+import { Shield, User, Lock, Mail, Key, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const BACKEND = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : 'https://childshield-1sd6.onrender.com';
-const oauthRedirect = (provider) => { window.location.href = `${BACKEND}/auth/${provider}`; };
-
 
 const Signup = () => {
   const { register, user } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '', parentControlPassword: '' });
   const [show, setShow] = useState({ pass: false, confirm: false, parent: false });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [error,      setError]      = useState('');
+  const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isWakingServer, setIsWakingServer] = useState(false);
 
   if (user) return <Navigate to="/controls" />;
+
+  const oauthRedirect = async (provider) => {
+    setIsWakingServer(true);
+    let attempts = 0;
+    while (attempts < 25) {
+      try {
+        const res = await fetch(`${BACKEND}/api/health`, { cache: 'no-store' });
+        if (res.ok) break;
+      } catch (err) {}
+      await new Promise(r => setTimeout(r, 3000));
+      attempts++;
+    }
+    window.location.href = `${BACKEND}/auth/${provider}`;
+  };
 
   const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
   const toggleShow   = k => setShow(s => ({ ...s, [k]: !s[k] }));
