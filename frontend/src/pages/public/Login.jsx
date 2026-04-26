@@ -4,8 +4,6 @@ import { Navigate, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
 const BACKEND = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : 'https://childshield-1sd6.onrender.com';
-// /auth/* is unprotected — bypasses api.js global auth middleware
-const oauthRedirect = (provider) => { window.location.href = `${BACKEND}/auth/${provider}`; };
 
 const Login = () => {
   const { login, user, loading } = useAuth();
@@ -15,6 +13,21 @@ const Login = () => {
   const [password,   setPassword]   = useState('');
   const [showPass,   setShowPass]   = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isWakingServer, setIsWakingServer] = useState(false);
+
+  const oauthRedirect = async (provider) => {
+    setIsWakingServer(true);
+    let attempts = 0;
+    while (attempts < 25) {
+      try {
+        const res = await fetch(`${BACKEND}/api/health`, { cache: 'no-store' });
+        if (res.ok) break;
+      } catch (err) {}
+      await new Promise(r => setTimeout(r, 3000));
+      attempts++;
+    }
+    window.location.href = `${BACKEND}/auth/${provider}`;
+  };
 
   // Read ?error= from OAuth redirect-back
   const oauthErrorMap = {
@@ -30,7 +43,12 @@ const Login = () => {
   const initialErr  = urlError ? (oauthErrorMap[urlError] || `Login error: ${urlError}`) : '';
   const [error, setError] = useState(initialErr);
 
-  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}><div style={{ width: '40px', height: '40px', border: '3px solid rgba(0,240,255,0.2)', borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>;
+  if (loading || isWakingServer) return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+      <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0,240,255,0.2)', borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '16px' }} />
+      {isWakingServer && <p style={{ color: 'var(--accent-cyan)', fontWeight: '600' }}>Starting secure login server… please wait</p>}
+    </div>
+  );
   if (user) return <Navigate to="/controls" />;
 
   const handleSubmit = async (e) => {

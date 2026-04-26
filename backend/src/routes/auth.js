@@ -251,6 +251,24 @@ router.post('/send-otp', async (req, res) => {
   }
 });
 
+// Verify Parent Control Password (used for Danger Actions)
+router.post('/verify-parent-password', auth, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password required' });
+    
+    const parent = await Parent.findByPk(req.user.id);
+    if (!parent || !parent.parentControlPasswordHash) return res.status(404).json({ error: 'Parent account not configured' });
+    
+    const valid = await bcrypt.compare(password, parent.parentControlPasswordHash);
+    if (!valid) return res.status(400).json({ error: 'Incorrect Parent Control Password' });
+    
+    res.json({ success: true });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Verify OTP before reset
 router.post('/verify-otp', async (req, res) => {
   try {

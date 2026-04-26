@@ -116,6 +116,32 @@ const Controls = () => {
     setIsLinking(false);
   };
 
+  const handleUnpair = async () => {
+    setIsUnpairing(true);
+    setUnpairError('');
+    try {
+      const res = await fetch(`/api/device/unpair/${activeChild.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ password: unpairPass })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setShowUnpair(false);
+        setUnpairStep('password');
+        setUnpairPass('');
+        // Refresh children list to remove the unpaired child
+        await fetchChildren(token);
+        setActiveChild(null);
+      } else {
+        setUnpairError(data.error || 'Failed to unpair device');
+      }
+    } catch(err) {
+      setUnpairError('Network error. Could not unpair.');
+    }
+    setIsUnpairing(false);
+  };
+
   const renderLinkingInterface = () => (
     <div className="glass-panel" style={{ padding: '32px', textAlign: 'left', width: '100%' }}>
       <h3 style={{ fontSize: '18px', marginBottom: '16px', color: '#fff' }}>Link New Device</h3>
@@ -282,7 +308,7 @@ const Controls = () => {
                         if (!unpairPass) return setUnpairError('Password required');
                         setIsUnpairing(true); setUnpairError('');
                         try {
-                          const r = await fetch('/api/auth/verify-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ parentControlPassword: unpairPass }) });
+                          const r = await fetch('/api/auth/verify-parent-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ password: unpairPass }) });
                           const d = await r.json();
                           if (r.ok && d.success) { setUnpairStep('confirm'); } else { setUnpairError(d.error || 'Incorrect password.'); }
                         } catch(err) { setUnpairError('Connection failed.'); }
@@ -304,7 +330,7 @@ const Controls = () => {
                         if (!unpairPass) return setUnpairError('Password required');
                         setIsUnpairing(true); setUnpairError('');
                         try {
-                          const r = await fetch('/api/auth/verify-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ parentControlPassword: unpairPass }) });
+                          const r = await fetch('/api/auth/verify-parent-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ password: unpairPass }) });
                           const d = await r.json();
                           if (r.ok && d.success) { setUnpairStep('confirm'); } else { setUnpairError(d.error || 'Incorrect password.'); }
                         } catch(err) { setUnpairError('Connection failed.'); }

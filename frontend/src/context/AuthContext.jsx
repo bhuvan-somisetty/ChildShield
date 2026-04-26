@@ -157,8 +157,8 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setChildrenList([]);
     setActiveChild(null);
-    localStorage.removeItem('cs_token');
-    localStorage.removeItem('child_session');
+    localStorage.clear();
+    sessionStorage.clear();
     validatedRef.current = false;
   }, []);
 
