@@ -201,25 +201,6 @@ const Controls = () => {
     );
   }
 
-  const handleUnpair = async () => {
-    if (!unpairPass) return setUnpairError('Password required');
-    setIsUnpairing(true);
-    setUnpairError('');
-    try {
-      const res = await fetch(`/api/device/unpair/${activeChild.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ password: unpairPass })
-      });
-      const data = await res.json();
-      if(res.ok && data.success) {
-        window.location.reload(); 
-      } else {
-        setUnpairError(data.error || 'Failed to unpair');
-      }
-    } catch(err) { setUnpairError(err.message); }
-    setIsUnpairing(false);
-  };
 
   const generateCode = async () => {
     try {
