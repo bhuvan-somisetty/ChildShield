@@ -8,7 +8,6 @@ import AIAssistant from './components/AIAssistant';
 import EmergencyListener from './components/EmergencyListener';
 import LogoutApprovalListener from './components/LogoutApprovalListener';
 import PermissionRequest from './components/PermissionRequest';
-import PasswordSetupModal from './components/PasswordSetupModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Pages
@@ -30,6 +29,7 @@ import Landing from './pages/public/Landing';
 import Login from './pages/public/Login';
 import Signup from './pages/public/Signup';
 import OAuthCallback from './pages/public/OAuthCallback';
+import SetupPassword from './pages/public/SetupPassword';
 import ChildSetup from './pages/public/ChildSetup';
 import ChildPairing from './pages/public/ChildPairing';
 import PairingSetup from './pages/child/PairingSetup';
@@ -50,11 +50,11 @@ const useIsMobile = () => {
 const AppLayout = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const [isLoader, setIsLoader] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoader(false), 800);
+    const timer = setTimeout(() => setIsLoader(false), 600);
     return () => clearTimeout(timer);
   }, []);
 
@@ -62,11 +62,11 @@ const AppLayout = () => {
     return (
       <div style={{ height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
         <div style={{
-          width: '50px', height: '50px', border: '3px solid rgba(0, 240, 255, 0.2)', 
-          borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 1s linear infinite'
+          width: '46px', height: '46px', border: '3px solid rgba(0, 240, 255, 0.15)',
+          borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite'
         }}></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -78,7 +78,7 @@ const AppLayout = () => {
       <div className="main-content">
         <Navbar />
         <main className="page-content" style={isMobile ? { paddingBottom: '80px' } : undefined}>
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>}>
             <Routes location={location} key={location.pathname}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/history" element={<WatchHistory />} />
@@ -99,11 +99,6 @@ const AppLayout = () => {
 
       {/* Floating AI Assistant */}
       <AIAssistant />
-
-      {/* Password setup modal for Google OAuth users */}
-      {user?.needsPasswordSetup && (
-        <PasswordSetupModal onComplete={() => updateUser({ needsPasswordSetup: false })} />
-      )}
     </div>
   );
 };
@@ -118,17 +113,22 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<Welcome />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/role-selection" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
+        {/* Password setup — standalone page, requires JWT but no password yet */}
+        <Route path="/setup-password" element={<SetupPassword />} />
+        {/* Child device routes */}
         <Route path="/child-setup" element={<ChildSetup />} />
         <Route path="/child-pairing" element={<ChildPairing />} />
         <Route path="/child/setup" element={<PairingSetup />} />
         <Route path="/child/permissions" element={<ChildPermissionWizard />} />
         <Route path="/child/device" element={<ChildDeviceView />} />
+        {/* Protected parent routes */}
         <Route path="/*" element={
           <ProtectedRoute>
             <AppLayout />

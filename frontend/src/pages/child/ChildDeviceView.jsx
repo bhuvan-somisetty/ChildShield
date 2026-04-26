@@ -4,11 +4,24 @@ import {
   ShieldCheck, LogOut, Clock, Wifi, WifiOff,
   Lock, Eye, Volume2, Shield, AlertTriangle,
   User, Moon, Pause, Activity, CheckCircle2,
-  Camera, Mic, Monitor, MapPin, Phone, Trash2, Loader2
+  Camera, Mic, Monitor, MapPin, Phone, Trash2, Loader2, AppWindow, LockKeyhole, Unlock
 } from 'lucide-react';
 import SessionLockOverlay from './SessionLockOverlay';
 import { VoiceEvents } from '../../hooks/VoiceAssistant';
 import { useWebRTC } from '../../hooks/useWebRTC';
+
+const INSTALLED_APPS = [
+  { name: 'YouTube', icon: '📺', category: 'Entertainment', color: '#ef4444' },
+  { name: 'Instagram', icon: '📸', category: 'Social', color: '#e91e8c' },
+  { name: 'WhatsApp', icon: '💬', category: 'Messaging', color: '#10b981' },
+  { name: 'TikTok', icon: '🎵', category: 'Entertainment', color: '#000' },
+  { name: 'Snapchat', icon: '👻', category: 'Social', color: '#f59e0b' },
+  { name: 'Chrome', icon: '🌐', category: 'Browser', color: '#3b82f6' },
+  { name: 'Roblox', icon: '🎮', category: 'Gaming', color: '#8b5cf6' },
+  { name: 'Spotify', icon: '🎧', category: 'Music', color: '#10b981' },
+  { name: 'Telegram', icon: '✈️', category: 'Messaging', color: '#0891b2' },
+  { name: 'Gallery', icon: '🖼️', category: 'System', color: '#6366f1' },
+];
 
 const haversine = (lat1, lon1, lat2, lon2) => {
   const R = 6371000;
@@ -100,6 +113,13 @@ const ChildDeviceView = () => {
   // SOS Emergency modal state
   const [sosResult, setSosResult] = useState(null); // { facilities: [], lat, lon, status: 'success'|'no-gps'|'no-geo' }
 
+  // App Locker state
+  const [lockedApps, setLockedApps] = useState([]);
+  const [unlockAppTarget, setUnlockAppTarget] = useState(null);
+  const [unlockAppPin, setUnlockAppPin] = useState('');
+  const [unlockAppErr, setUnlockAppErr] = useState('');
+  const [unlockAppLoading, setUnlockAppLoading] = useState(false);
+
   // Child's Safe Zones & Location
   const [safeZones, setSafeZones] = useState([]);
   const [currentLoc, setCurrentLoc] = useState(null);
@@ -176,9 +196,18 @@ const ChildDeviceView = () => {
 
     const poll = async () => {
       try {
-        const res = await fetch(`/api/device/status/${session.childId}`);
+        const [res, appRes] = await Promise.all([
+          fetch(`/api/device/status/${session.childId}`),
+          fetch(`/api/device/check-app-lock/${session.childId}`)
+        ]);
         const data = await res.json();
+        const appData = await appRes.json();
+        
         if (!mounted) return;
+        
+        if (appData.success) {
+          setLockedApps(appData.lockedApps || []);
+        }
         if (data.success) {
           setStatus(data.status);
           setConnected(data.connected === true);
@@ -830,32 +859,105 @@ const ChildDeviceView = () => {
           </>
         )}
 
+        {/* ── APP LAUNCHER ──────────────────────────────────────────────── */}
+        <div style={{ marginTop: '32px' }}>
+          <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '16px' }}>INSTALLED APPS</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 12px' }}>
+            {INSTALLED_APPS.map(app => {
+              const isLocked = lockedApps.some(a => a.appName === app.name);
+              return (
+                <div key={app.name} 
+                  onClick={() => {
+                    if (isLocked) {
+                      setUnlockAppTarget(app);
+                      setUnlockAppPin('');
+                      setUnlockAppErr('');
+                    } else {
+                      alert(`Launching ${app.name}...`);
+                    }
+                  }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', position: 'relative' }}
+                >
+                  <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: `${app.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', border: `1px solid ${app.color}30` }}>
+                    {app.icon}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: '600', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                    {app.name}
+                  </div>
+                  {isLocked && (
+                    <div style={{ position: 'absolute', top: '-4px', right: '4px', background: '#ef4444', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg-primary)' }}>
+                      <LockKeyhole size={10} color="#fff" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* ── SOS EMERGENCY BUTTON ──────────────────────────────────────────── */}
         <div style={{ marginTop: '32px' }}>
           <button
             onClick={async () => {
-               let lat = null, lon = null, locationFailed = false;
-               
-               if (navigator.geolocation) {
+               let lat = null, lon = null;
+               let failReason = null;
+
+               // STEP 1: Use already-cached location from watchPosition (no permission prompt needed)
+               if (currentLoc?.lat && currentLoc?.lng) {
+                 lat = currentLoc.lat;
+                 lon = currentLoc.lng;
+               } else if (!navigator.geolocation) {
+                 failReason = 'unavailable';
+               } else {
+                 // STEP 2: Check permission state first — do NOT call getCurrentPosition if denied
+                 let permState = 'prompt';
                  try {
-                   const pos = await new Promise((resolve, reject) => {
-                     navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-                   });
-                   lat = pos.coords.latitude;
-                   lon = pos.coords.longitude;
-                 } catch(e) {
-                   locationFailed = true;
+                   if (navigator.permissions) {
+                     const ps = await navigator.permissions.query({ name: 'geolocation' });
+                     permState = ps.state; // 'granted', 'denied', or 'prompt'
+                   }
+                 } catch (_) { /* permissions API not supported */ }
+
+                 if (permState === 'denied') {
+                   failReason = 'denied';
+                 } else {
+                   // STEP 3: Try to get fresh location (only if not denied)
+                   try {
+                     const pos = await new Promise((resolve, reject) => {
+                       navigator.geolocation.getCurrentPosition(resolve, reject, {
+                         timeout: 8000,
+                         enableHighAccuracy: true,
+                         maximumAge: 30000 // Accept up to 30s cached position
+                       });
+                     });
+                     lat = pos.coords.latitude;
+                     lon = pos.coords.longitude;
+                   } catch (e) {
+                     if (e.code === 1) failReason = 'denied';
+                     else if (e.code === 3) failReason = 'timeout';
+                     else failReason = 'unavailable';
+                   }
                  }
                }
-               
-               if (socketRef.current && session?.childId) {
-                 socketRef.current.emit('command', { 
-                   childId: session.childId, 
-                   command: 'emergency', 
-                   payload: lat && lon ? { lat, lon } : {} 
+
+               // STEP 4: ALWAYS send SOS to parent, even without location
+               // The alert is what matters — parent must know immediately
+               const sock = socketRef?.current;
+               if (sock && session?.childId) {
+                 sock.emit('command', {
+                   childId: session.childId,
+                   command: 'emergency',
+                   payload: {
+                     lat,
+                     lon,
+                     reason: failReason,
+                     childName: session.childName || 'Child',
+                     time: new Date().toISOString()
+                   }
                  });
                }
 
+               // STEP 5: Find nearby facilities if we have location
                if (lat && lon) {
                  try {
                    const [policeRes, hospitalRes] = await Promise.all([
@@ -868,13 +970,11 @@ const ChildDeviceView = () => {
                    if (hospitalData.success) facilities.push(...(hospitalData.facilities || []).slice(0, 2));
                    facilities.sort((a, b) => a.distance - b.distance);
                    setSosResult({ facilities, lat, lon, status: 'success' });
-                 } catch(e) {
+                 } catch {
                    setSosResult({ facilities: [], lat, lon, status: 'success' });
                  }
-               } else if (locationFailed) {
-                 setSosResult({ facilities: [], lat: null, lon: null, status: 'no-gps' });
                } else {
-                 setSosResult({ facilities: [], lat: null, lon: null, status: 'no-geo' });
+                 setSosResult({ facilities: [], lat: null, lon: null, status: 'no-gps', reason: failReason });
                }
             }}
             style={{
@@ -925,17 +1025,34 @@ const ChildDeviceView = () => {
             {(sosResult.status === 'no-gps' || sosResult.status === 'no-geo') && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '14px', marginBottom: '10px', fontSize: '13px', color: '#f59e0b', textAlign: 'center' }}>
-                  ⚠️ Location permission not granted. Allow location to find nearby help.
+                  {sosResult.reason === 'denied' ? '⚠️ Location permission denied. Please allow it in settings.' :
+                   sosResult.reason === 'timeout' ? '⚠️ GPS signal timeout. Try moving to an open area.' :
+                   '⚠️ Location unavailable. Allow location to find nearby help.'}
                 </div>
                 <button onClick={async () => {
+                  if (sosResult.reason === 'denied') {
+                    // For denied: can't force permission — guide user to browser settings
+                    setSosResult(prev => ({ ...prev, reason: 'denied_instructions' }));
+                    return;
+                  }
+                  // For timeout/unavailable: retry with relaxed settings + cached position
                   try {
                     const pos = await new Promise((resolve, reject) => {
-                      navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 });
+                      navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: false, // Less strict = faster
+                        timeout: 12000,
+                        maximumAge: 60000 // Accept up to 1min old cached position
+                      });
                     });
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
                     setCurrentLoc(prev => ({ ...prev, lat, lng: lon }));
-                    // Retry SOS with location
+
+                    const sock = socketRef?.current;
+                    if (sock && session?.childId) {
+                      sock.emit('command', { childId: session.childId, command: 'emergency', payload: { lat, lon, childName: session.childName || 'Child', time: new Date().toISOString() } });
+                    }
+
                     try {
                       const [policeRes, hospitalRes] = await Promise.all([
                         fetch(`/api/device/nearby-facilities?lat=${lat}&lon=${lon}&type=police`),
@@ -951,11 +1068,17 @@ const ChildDeviceView = () => {
                       setSosResult({ facilities: [], lat, lon, status: 'success' });
                     }
                   } catch {
-                    alert('Location permission was denied. Please tap the 🔒 lock icon in your browser address bar → Allow Location → then try again.');
+                    setSosResult(prev => ({ ...prev, reason: 'denied_instructions' }));
                   }
                 }} style={{ width: '100%', padding: '14px', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.4)', borderRadius: '14px', color: '#60a5fa', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                  <MapPin size={18} /> Allow Location & Retry
+                  <MapPin size={18} /> {sosResult.reason === 'denied' ? 'Open Location Settings' : 'Retry with Location'}
                 </button>
+                {sosResult.reason === 'denied_instructions' && (
+                  <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '10px', fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 }}>
+                    📋 <strong style={{ color: '#fff' }}>To allow location:</strong><br />
+                    Tap the 🔒 lock icon in browser → Site settings → Location → Allow → then come back and press SOS again.
+                  </div>
+                )}
               </div>
             )}
 
@@ -996,6 +1119,55 @@ const ChildDeviceView = () => {
             <button onClick={() => setSosResult(null)} style={{ width: '100%', padding: '14px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', color: '#fff', fontWeight: '700', fontSize: '15px', cursor: 'pointer' }}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── APP UNLOCK MODAL ────────────────────────────────────────────── */}
+      {unlockAppTarget && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '360px', textAlign: 'center', boxShadow: '0 10px 40px rgba(239, 68, 68, 0.2)' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: `${unlockAppTarget.color}15`, border: `2px solid ${unlockAppTarget.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', margin: '0 auto 16px' }}>
+              {unlockAppTarget.icon}
+            </div>
+            <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>App Locked</h3>
+            <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px' }}>{unlockAppTarget.name} is locked. Enter Parent Password to unlock.</p>
+
+            {unlockAppErr && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '10px', borderRadius: '8px', fontSize: '13px', marginBottom: '15px' }}>{unlockAppErr}</div>}
+
+            <input type="password" value={unlockAppPin} onChange={e => setUnlockAppPin(e.target.value)} placeholder="Parent Password"
+              style={{ width: '100%', padding: '14px', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', fontSize: '16px', marginBottom: '20px', textAlign: 'center', outline: 'none' }}
+              onKeyDown={async e => { 
+                if (e.key === 'Enter') {
+                  document.getElementById('btn-unlock-app')?.click();
+                } 
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => { setUnlockAppTarget(null); setUnlockAppPin(''); setUnlockAppErr(''); }}
+                style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer' }}>Cancel</button>
+              <button id="btn-unlock-app" disabled={unlockAppLoading} onClick={async () => {
+                if (!unlockAppPin) return setUnlockAppErr('Password required');
+                setUnlockAppLoading(true); setUnlockAppErr('');
+                try {
+                  const r = await fetch('/api/device/unlock-app-child', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ childId: session.childId, appName: unlockAppTarget.name, parentPassword: unlockAppPin })
+                  });
+                  const d = await r.json();
+                  if (r.ok && d.success) {
+                    setLockedApps(d.lockedApps || []);
+                    setUnlockAppTarget(null);
+                  } else {
+                    setUnlockAppErr(d.error || 'Incorrect password.');
+                  }
+                } catch (e) { setUnlockAppErr('Connection failed.'); }
+                setUnlockAppLoading(false);
+              }} style={{ flex: 2, background: '#ef4444', border: 'none', padding: '12px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: unlockAppLoading ? 'not-allowed' : 'pointer', opacity: unlockAppLoading ? 0.7 : 1 }}>
+                {unlockAppLoading ? 'Verifying...' : 'Unlock App'}
+              </button>
+            </div>
           </div>
         </div>
       )}
