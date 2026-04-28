@@ -32,6 +32,10 @@ module.exports = (sequelize) => {
     needsPasswordSetup: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    subscriptionPlan: {
+      type: DataTypes.ENUM('free', 'premium'),
+      defaultValue: 'free'
     }
   });
 };

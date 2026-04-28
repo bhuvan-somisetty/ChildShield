@@ -3,7 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { Shield, User, Lock, Mail, Key, Eye, EyeOff, Loader2 } from 'lucide-react';
 
-const BACKEND = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : 'https://childshield-1sd6.onrender.com';
+const BACKEND = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? 'http://localhost:5000' 
+  : 'https://childshield-1sd6.onrender.com';
 
 const Signup = () => {
   const { register, user } = useAuth();

@@ -16,6 +16,7 @@ import WatchHistory from './pages/WatchHistory';
 import Analytics from './pages/Analytics';
 import Controls from './pages/Controls';
 import Reports from './pages/Reports';
+import AIInsights from './pages/AIInsights';
 import LocationTracker from './pages/LocationTracker';
 import AccountSettings from './pages/AccountSettings';
 import CameraView from './pages/CameraView';
@@ -60,11 +61,12 @@ const AppLayout = () => {
 
   if (isLoader) {
     return (
-      <div style={{ height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+      <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a0f', gap: '16px' }}>
         <div style={{
-          width: '46px', height: '46px', border: '3px solid rgba(0, 240, 255, 0.15)',
-          borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite'
+          width: '48px', height: '48px', border: '3px solid rgba(201, 168, 76, 0.15)',
+          borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 0.8s linear infinite'
         }}></div>
+        <div style={{ color: '#c9a84c', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>AlphaGuard AI</div>
       </div>
     );
   }
@@ -85,6 +87,7 @@ const AppLayout = () => {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/controls" element={<Controls />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/ai-insights" element={<AIInsights />} />
               <Route path="/location" element={<LocationTracker />} />
               <Route path="/camera" element={<CameraView />} />
               <Route path="/audio" element={<AudioListener />} />
@@ -106,7 +109,7 @@ const AppLayout = () => {
 function App() {
   // Apply saved theme on app boot
   useEffect(() => {
-    const saved = localStorage.getItem('cs_theme') || 'dark';
+    const saved = localStorage.getItem('ag_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', saved);
   }, []);
 

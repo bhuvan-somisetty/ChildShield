@@ -8,7 +8,8 @@ const ParentSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   phone: { type: String },
   parentControlPasswordHash: { type: String, required: true },
-  needsPasswordSetup: { type: Boolean, default: false }
+  needsPasswordSetup: { type: Boolean, default: false },
+  subscriptionPlan: { type: String, enum: ['free', 'premium'], default: 'free' }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 module.exports = mongoose.model('Parent', ParentSchema);

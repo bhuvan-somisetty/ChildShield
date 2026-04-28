@@ -1,13 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, ChevronRight, Activity, MapPin, Lock } from 'lucide-react';
+import { Shield, ChevronRight, Activity, Brain, Zap } from 'lucide-react';
 
 const Welcome = () => {
   const navigate = useNavigate();
-
-  const handleContinue = () => {
-    navigate('/onboarding');
-  };
 
   return (
     <div style={{ 
@@ -16,175 +12,145 @@ const Welcome = () => {
       flexDirection: 'column', 
       alignItems: 'center', 
       justifyContent: 'center', 
-      background: 'var(--bg-primary)',
+      background: '#0a0a0f',
       overflow: 'hidden',
       position: 'relative'
     }}>
-      {/* Dynamic Background Blobs */}
+      {/* Gold ambient glow */}
       <div style={{ 
-        position: 'absolute', 
-        top: '20%', 
-        left: '10%', 
-        width: '500px', 
-        height: '500px', 
-        background: 'radial-gradient(circle, var(--accent-cyan) 0%, transparent 70%)', 
-        opacity: 0.1, 
-        filter: 'blur(100px)',
-        animation: 'pulse 10s infinite alternate'
+        position: 'absolute', top: '15%', left: '5%',
+        width: '500px', height: '500px', 
+        background: 'radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%)', 
+        filter: 'blur(80px)', pointerEvents: 'none'
       }} />
+      {/* Red ambient glow */}
       <div style={{ 
-        position: 'absolute', 
-        bottom: '20%', 
-        right: '10%', 
-        width: '600px', 
-        height: '600px', 
-        background: 'radial-gradient(circle, var(--accent-purple) 0%, transparent 70%)', 
-        opacity: 0.1, 
-        filter: 'blur(100px)',
-        animation: 'pulse 8s infinite alternate-reverse'
+        position: 'absolute', bottom: '10%', right: '5%',
+        width: '600px', height: '600px', 
+        background: 'radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 70%)', 
+        filter: 'blur(100px)', pointerEvents: 'none'
+      }} />
+      {/* Subtle grid overlay */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: 'linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px)',
+        backgroundSize: '60px 60px', pointerEvents: 'none'
       }} />
 
-      <div className="animate-fade-in" style={{ 
-        zIndex: 10, 
-        textAlign: 'center', 
-        padding: '0 24px', 
-        maxWidth: '600px' 
-      }}>
+      <div className="animate-fade-in" style={{ zIndex: 10, textAlign: 'center', padding: '0 24px', maxWidth: '640px' }}>
+        
         {/* Animated Shield Logo */}
-        <div style={{ 
-          marginBottom: '40px',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
+        <div style={{ marginBottom: '40px', display: 'flex', justifyContent: 'center' }}>
           <div style={{ 
-            width: '100px', 
-            height: '100px', 
-            borderRadius: '30px', 
-            background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 240, 255, 0.3)',
-            animation: 'float 4s ease-in-out infinite'
+            width: '100px', height: '100px', borderRadius: '28px', 
+            background: 'linear-gradient(135deg, rgba(201,168,76,0.2) 0%, rgba(239,68,68,0.15) 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 40px rgba(201,168,76,0.25), 0 20px 60px rgba(0,0,0,0.6)',
+            border: '1px solid rgba(201,168,76,0.35)',
+            animation: 'agFloat 4s ease-in-out infinite'
           }}>
-            <Shield size={50} color="#fff" />
+            <Shield size={50} color="#c9a84c" />
           </div>
+        </div>
+
+        {/* AI Pill Badge */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
+          background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)',
+          borderRadius: '100px', padding: '6px 16px', marginBottom: '28px'
+        }}>
+          <Brain size={13} color="#c9a84c" />
+          <span style={{ fontSize: '12px', fontWeight: '700', color: '#c9a84c', letterSpacing: '0.5px' }}>
+            Smart AI Parenting for Gen Alpha
+          </span>
         </div>
 
         {/* Hero Text */}
         <h1 style={{ 
-          fontSize: 'clamp(32px, 8vw, 48px)', 
-          fontWeight: '900', 
-          color: '#fff', 
-          marginBottom: '20px',
-          letterSpacing: '-0.03em',
-          lineHeight: '1.1'
+          fontSize: 'clamp(34px, 8vw, 52px)', fontWeight: '900', color: '#fff', 
+          marginBottom: '20px', letterSpacing: '-0.03em', lineHeight: '1.1'
         }}>
-          Welcome to <span style={{ 
-            background: 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: '900'
-          }}>ChildShield AI</span>
+          Welcome to{' '}
+          <span style={{ 
+            background: 'linear-gradient(90deg, #c9a84c, #f0d080, #c9a84c)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            backgroundSize: '200% auto', animation: 'agShimmer 3s linear infinite'
+          }}>AlphaGuard</span>
+          <span style={{ color: 'rgba(201,168,76,0.5)' }}> AI</span>
         </h1>
         
         <p style={{ 
-          fontSize: '18px', 
-          color: 'var(--text-secondary)', 
-          marginBottom: '48px',
-          lineHeight: '1.6',
-          maxWidth: '480px',
-          marginInline: 'auto'
+          fontSize: '17px', color: '#64748b', marginBottom: '48px',
+          lineHeight: '1.7', maxWidth: '480px', marginInline: 'auto'
         }}>
-          The next generation of parental control, powered by advanced AI to keep your children safe in the digital world.
+          Not just parental controls — an <strong style={{ color: '#94a3b8' }}>AI-powered behavior + safety system</strong> built for the next generation.
         </p>
 
-        {/* Feature Highlights (Micro-animations) */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '20px', 
-          justifyContent: 'center', 
-          marginBottom: '60px',
-          flexWrap: 'wrap'
-        }}>
+        {/* Feature Pills */}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '60px', flexWrap: 'wrap' }}>
           {[
-            { icon: MapPin, label: 'Live Tracking', color: 'var(--accent-cyan)' },
-            { icon: Activity, label: 'AI Monitoring', color: 'var(--accent-purple)' },
-            { icon: Lock, label: 'Safe Zones', color: 'var(--accent-green)' }
+            { icon: Brain, label: 'AI Behavior Insights', color: '#c9a84c' },
+            { icon: Activity, label: 'Smart Monitoring', color: '#ef4444' },
+            { icon: Zap, label: 'Focus Mode', color: '#f59e0b' }
           ].map((feature, i) => (
             <div key={i} style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              padding: '10px 16px', 
-              background: 'rgba(255, 255, 255, 0.05)', 
-              borderRadius: '100px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              animation: `fadeIn 0.5s ease-out ${0.2 + i * 0.1}s forwards`,
-              opacity: 0
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              padding: '10px 18px', background: 'rgba(255,255,255,0.04)', 
+              borderRadius: '100px', border: '1px solid rgba(255,255,255,0.08)',
+              animation: `agFadeIn 0.5s ease-out ${0.2 + i * 0.1}s forwards`, opacity: 0
             }}>
-              <feature.icon size={16} color={feature.color} />
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{feature.label}</span>
+              <feature.icon size={15} color={feature.color} />
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{feature.label}</span>
             </div>
           ))}
         </div>
 
         {/* Primary CTA */}
         <button 
-          onClick={handleContinue}
+          onClick={() => navigate('/onboarding')}
+          id="welcome-get-started"
           style={{ 
-            background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
-            color: '#fff',
-            border: 'none',
-            padding: '20px 48px',
-            borderRadius: '100px',
-            fontSize: '18px',
-            fontWeight: '800',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            boxShadow: '0 10px 30px rgba(0, 240, 255, 0.3)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            marginInline: 'auto'
+            background: 'linear-gradient(135deg, #c9a84c, #f0d080)',
+            color: '#0a0a0f', border: 'none', padding: '18px 52px',
+            borderRadius: '100px', fontSize: '17px', fontWeight: '800',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px',
+            boxShadow: '0 10px 40px rgba(201,168,76,0.35)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', marginInline: 'auto'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-            e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 240, 255, 0.4)';
+            e.currentTarget.style.boxShadow = '0 16px 50px rgba(201,168,76,0.5)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0) scale(1)';
-            e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 240, 255, 0.3)';
+            e.currentTarget.style.boxShadow = '0 10px 40px rgba(201,168,76,0.35)';
           }}
         >
           Get Started
-          <ChevronRight size={24} strokeWidth={3} />
+          <ChevronRight size={22} strokeWidth={3} />
         </button>
       </div>
 
-      {/* Footer Info */}
+      {/* Footer */}
       <div style={{ 
-        position: 'absolute', 
-        bottom: '30px', 
-        fontSize: '12px', 
-        color: 'var(--text-muted)',
-        opacity: 0.6
+        position: 'absolute', bottom: '28px', fontSize: '12px', 
+        color: 'rgba(255, 255, 255, 0.4)'
       }}>
-        © {new Date().getFullYear()} ChildShield AI. All rights reserved.
+        © {new Date().getFullYear()} AlphaGuard AI · All rights reserved
       </div>
 
       <style>{`
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 0.05; }
-          100% { transform: scale(1.1); opacity: 0.15; }
+        @keyframes agFloat {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-14px) rotate(1deg); }
         }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-15px); }
-        }
-        @keyframes fadeIn {
+        @keyframes agFadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes agShimmer {
+          0% { background-position: 0% center; }
+          100% { background-position: 200% center; }
         }
       `}</style>
     </div>
