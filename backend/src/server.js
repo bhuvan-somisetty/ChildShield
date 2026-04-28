@@ -15,6 +15,7 @@ const childRoutes    = require('./routes/children');
 const apiRoutes      = require('./routes/api');
 const deviceRoutes   = require('./routes/device');
 const activityRoutes = require('./routes/activity');
+const aiRoutes       = require('./routes/ai');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,7 +34,13 @@ process.on('uncaughtException', (err) => {
 const server = http.createServer(app);
 const io = new SocketServer(server, {
   cors: {
-    origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'],
+    origin: function (origin, callback) {
+      if (!origin || origin.startsWith('http://localhost:') || [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'].includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -46,7 +53,13 @@ initSignaling(io);
 
 // ── CORS & body parsing ────────────────────────────────────────────────────────
 app.use(cors({
-  origin: [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    if (!origin || origin.startsWith('http://localhost:') || [FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'].includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -66,7 +79,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'childshield_session_secret_prod',
+  secret: process.env.SESSION_SECRET || 'alphaguard_session_secret_prod',
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false, maxAge: 10 * 60 * 1000 },
@@ -115,10 +128,11 @@ app.use('/api/auth',     authRoutes);
 app.use('/api/children', childRoutes);
 app.use('/api/device',   deviceRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/ai',       aiRoutes);
 app.use('/api',          apiRoutes);
 
 // ── Health Check (always responds, even if DB is down) ────────────────────────
-app.get('/', (req, res) => res.send('ChildShield AI Backend is running!'));
+app.get('/', (req, res) => res.send('AlphaGuard AI Backend is running! 🛡️'));
 
 app.get('/health', (req, res) => {
   const db = getDBStatus();
@@ -161,7 +175,7 @@ const startServer = async () => {
     }
 
     server.listen(PORT, () => {
-      console.log(`[ChildShield] ✅ Server running on port ${PORT}`);
+      console.log(`[AlphaGuard AI] ✅ Server running on port ${PORT}`);
     });
   } catch (err) {
     console.error('[Server] Failed to start:', err.message);

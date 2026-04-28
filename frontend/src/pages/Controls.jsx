@@ -539,7 +539,34 @@ const Controls = () => {
         </div>
 
         {/* ─── App Manager ─────────────────────────────────────────────────── */}
-        <AppManager childId={activeChild?.id} token={token} childName={activeChild?.name} />
+        {user?.subscriptionPlan === 'premium' ? (
+          <AppManager childId={activeChild?.id} token={token} childName={activeChild?.name} />
+        ) : (
+          <div style={{ marginTop: '32px' }} className="glass-card">
+            <div style={{ padding: '32px', textAlign: 'center' }}>
+              <AppWindow size={48} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+              <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>App Management Locked</h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px' }}>
+                Upgrade to Premium to track specific app usage and instantly lock individual apps on your child's device.
+              </p>
+              <button 
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/auth/upgrade-plan', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                    const d = await res.json();
+                    if (d.success) window.location.reload();
+                  } catch (e) {}
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #c9a84c, #ef4444)',
+                  color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '20px',
+                  fontWeight: 'bold', cursor: 'pointer'
+                }}>
+                Upgrade to Premium
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
 

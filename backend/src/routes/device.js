@@ -3,6 +3,48 @@ const router = express.Router();
 const { Child, FaceEvent, Parent, Location, SafeZone } = require('../db');
 const auth = require('../middleware/auth');
 
+// ─── In-memory Reaction store ────────────────────────────────────────────────
+// childId -> [ { id, type, emoji, text, timestamp } ]
+const childReactions = new Map();
+
+// Parent sends reaction to child
+router.post('/send-reaction/:childId', auth, async (req, res) => {
+  try {
+    const { childId } = req.params;
+    const { type, emoji, text } = req.body;
+    
+    if (!childReactions.has(childId)) {
+      childReactions.set(childId, []);
+    }
+    
+    const reaction = { id: Date.now().toString(), type, emoji, text, timestamp: Date.now() };
+    const reactions = childReactions.get(childId);
+    reactions.push(reaction);
+    
+    // Keep only last 5
+    if (reactions.length > 5) reactions.shift();
+    
+    res.json({ success: true, reaction });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Child polls for reactions
+router.get('/reactions/:childId', async (req, res) => {
+  try {
+    const { childId } = req.params;
+    const reactions = childReactions.get(childId) || [];
+    
+    // Clear them once fetched
+    childReactions.set(childId, []);
+    
+    res.json({ success: true, reactions });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── In-memory logout request store ──────────────────────────────────────────
 // childId -> { status: 'pending'|'approved'|'denied', timestamp, childName }
 const logoutRequests = new Map();

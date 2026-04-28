@@ -19,6 +19,8 @@
   --accent-green: #10b981;
   --accent-red: #ef4444;
   --accent-yellow: #f59e0b;
+  --accent-gold: #c9a84c;
+  --accent-gold-light: #f0d080;
 
   /* Radii & Shadows */
   --radius-md: 12px;
@@ -390,7 +392,7 @@ div[style*="position:relative"] > input {
   border-bottom: 1px solid rgba(255,255,255,0.05);
   flex-shrink: 0;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 [data-theme="light"] .navbar {

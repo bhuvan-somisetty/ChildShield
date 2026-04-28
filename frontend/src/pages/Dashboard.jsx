@@ -10,13 +10,24 @@ const Dashboard = () => {
   if (!activeChild) {
     return (
       <div className="glass-card" style={{ padding: '40px 24px', textAlign: 'center', marginTop: '40px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>Welcome to ChildShield</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>Welcome to AlphaGuard AI</h2>
         <p style={{ color: 'var(--text-muted)', marginTop: '16px' }}>Please connect a child device to begin monitoring.</p>
       </div>
     );
   }
 
   if (!data) return <div style={{ padding: '24px', color: '#fff' }}>Loading Data...</div>;
+
+  const sendReaction = async (type, emoji, text) => {
+    try {
+      await fetch(`/api/device/send-reaction/${activeChild.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('alphaguard_token')}` },
+        body: JSON.stringify({ type, emoji, text })
+      });
+      // maybe show a toast
+    } catch (e) {}
+  };
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '80px' }}>
@@ -83,6 +94,38 @@ const Dashboard = () => {
                   </li>
                 )) : <li style={{ color: 'var(--text-muted)' }}>No category data found.</li>}
               </ul>
+            </div>
+          </div>
+
+          {/* Quick Reactions */}
+          <div className="glass-card" style={{ padding: '24px', marginTop: '24px' }}>
+            <h3 style={{ fontSize: '18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>❤️</span> Quick Reactions
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>Send a real-time message to {activeChild.name}'s screen.</p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {[
+                { type: 'love', emoji: '❤️', text: 'Love you!' },
+                { type: 'proud', emoji: '🌟', text: 'So proud of you!' },
+                { type: 'thumbsUp', emoji: '👍', text: 'Great job!' },
+                { type: 'time', emoji: '⏰', text: 'Time to wrap up!' },
+                { type: 'dinner', emoji: '🍽️', text: 'Dinner is ready!' }
+              ].map(reaction => (
+                <button
+                  key={reaction.type}
+                  onClick={() => sendReaction(reaction.type, reaction.emoji, reaction.text)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '12px 20px', background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px',
+                    color: '#fff', cursor: 'pointer', transition: 'all 0.2s', fontWeight: 'bold'
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'translateY(0)' }}
+                >
+                  <span style={{ fontSize: '18px' }}>{reaction.emoji}</span> {reaction.text}
+                </button>
+              ))}
             </div>
           </div>
         </>

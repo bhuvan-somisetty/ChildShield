@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
 
     const token = jwt.sign({ id: parent.id }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ token, user: { id: parent.id, fullName: parent.fullName, email: parent.email } });
+    res.json({ token, user: { id: parent.id, fullName: parent.fullName, email: parent.email, subscriptionPlan: parent.subscriptionPlan || 'free' } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -58,7 +58,7 @@ router.post('/login', async (req, res) => {
     if (!validPass) return res.status(400).json({ error: 'Invalid credentials.' });
 
     const token = jwt.sign({ id: parent.id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: parent.id, fullName: parent.fullName, email: parent.email } });
+    res.json({ token, user: { id: parent.id, fullName: parent.fullName, email: parent.email, subscriptionPlan: parent.subscriptionPlan || 'free' } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -101,7 +101,7 @@ router.get('/me', auth, async (req, res) => {
     // Check if the user was created via OAuth (random password) and hasn't set a real control password
     const isOAuthUser = parent.passwordHash && parent.parentControlPasswordHash && 
       parent.passwordHash.length > 50; // All users have hashes, so check a flag instead
-    res.json({ user: { id: parent.id, fullName: parent.fullName, email: parent.email, needsPasswordSetup: parent.needsPasswordSetup || false } });
+    res.json({ user: { id: parent.id, fullName: parent.fullName, email: parent.email, needsPasswordSetup: parent.needsPasswordSetup || false, subscriptionPlan: parent.subscriptionPlan || 'free' } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -139,7 +139,21 @@ router.put('/profile', auth, async (req, res) => {
       parent.parentControlPasswordHash = await bcrypt.hash(parentControlPassword, salt);
     }
     await parent.save();
-    res.json({ success: true, user: { id: parent.id, fullName: parent.fullName, email: parent.email } });
+    res.json({ success: true, user: { id: parent.id, fullName: parent.fullName, email: parent.email, subscriptionPlan: parent.subscriptionPlan || 'free' } });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Upgrade Subscription Plan
+router.post('/upgrade-plan', auth, async (req, res) => {
+  try {
+    const parent = await Parent.findByPk(req.user.id);
+    if (!parent) return res.status(404).json({ error: 'User not found' });
+
+    parent.subscriptionPlan = 'premium';
+    await parent.save();
+    res.json({ success: true, user: { id: parent.id, fullName: parent.fullName, email: parent.email, subscriptionPlan: parent.subscriptionPlan } });
   } catch(err) {
     res.status(500).json({ error: err.message });
   }
@@ -406,7 +420,7 @@ router.post('/social-login', async (req, res) => {
     const jwtToken = jwt.sign({ id: parent.id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({
       token: jwtToken,
-      user: { id: parent.id, fullName: parent.fullName, email: parent.email }
+      user: { id: parent.id, fullName: parent.fullName, email: parent.email, subscriptionPlan: parent.subscriptionPlan || 'free' }
     });
 
   } catch (err) {
@@ -436,7 +450,7 @@ router.put('/update-profile', auth, async (req, res) => {
 
     res.json({
       success: true,
-      user: { id: parent.id, fullName: parent.fullName, email: parent.email }
+      user: { id: parent.id, fullName: parent.fullName, email: parent.email, subscriptionPlan: parent.subscriptionPlan || 'free' }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
