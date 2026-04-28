@@ -95,9 +95,7 @@ router.post('/logout-respond/:childId', auth, async (req, res) => {
       // Actually disconnect the child
       const child = await Child.findByPk(req.params.childId);
       if (child) {
-        child.isPaired = false;
-        child.parentId = null;
-        await child.save();
+        await child.destroy();
       }
     } else {
       logoutRequests.set(childId, { ...request, status: 'denied' });
@@ -184,8 +182,14 @@ router.post('/unpair/:childId', auth, async (req, res) => {
     const child = await Child.findOne({ where: { id: req.params.childId, parentId: req.user.id } });
     if (!child) return res.status(404).json({ error: 'Child not found' });
 
+    const { Activity, Location, FaceEvent, SafeZone } = require('../db');
+    
     // Destroy child record completely to ensure data is lost and starts fresh as requested
-    await child.destroy();
+    await Activity.destroy({ where: { childId: child.id } });
+    await Location.destroy({ where: { childId: child.id } });
+    await FaceEvent.destroy({ where: { childId: child.id } });
+    await SafeZone.destroy({ where: { childId: child.id } });
+    await Child.destroy({ where: { id: child.id } });
 
     res.json({ success: true });
   } catch (err) {

@@ -96,13 +96,14 @@ router.get('/dashboard', async (req, res) => {
     } catch(err) { console.error('Auto-demo err:', err.message); }
 
     const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
+    if (!child) return res.status(404).json({ error: 'Child not found or unauthorized' });
 
     const dashData = await getRealDashboardData(childId, isDemoMode);
-    dashData.childName = child ? child.name : 'Child';
+    dashData.childName = child.name;
     dashData.parentName = req.user.fullName || 'Parent';
-    dashData.limit = child ? `${child.dailyLimitHours}h 00m` : '5h 00m';
-    dashData.limitMinutes = child ? child.dailyLimitHours * 60 : 300;
-    dashData.isPaired = child ? child.isPaired : false;
+    dashData.limit = `${child.dailyLimitHours}h 00m`;
+    dashData.limitMinutes = child.dailyLimitHours * 60;
+    dashData.isPaired = child.isPaired;
 
     if (child && child.timerEndTime) {
       dashData.timerEndTime = child.timerEndTime;
@@ -145,17 +146,30 @@ router.get('/history', async (req, res) => {
 });
 
 router.get('/insights', async (req, res) => {
-  res.json({ success: true, data: sim.getChildState(req.query.childId).insights });
+  const childId = req.query.childId;
+  if (!childId) return res.json({ success: true, data: [] });
+  const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
+  if (!child) return res.status(404).json({ error: 'Child not found or unauthorized' });
+
+  res.json({ success: true, data: sim.getChildState(childId).insights });
 });
 
 router.get('/notifications', async (req, res) => {
-  res.json({ success: true, data: sim.getChildState(req.query.childId).notifications });
+  const childId = req.query.childId;
+  if (!childId) return res.json({ success: true, data: [] });
+  const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
+  if (!child) return res.status(404).json({ error: 'Child not found or unauthorized' });
+
+  res.json({ success: true, data: sim.getChildState(childId).notifications });
 });
 
 router.get('/analytics', async (req, res) => {
   const childId = req.query.childId;
   if (!childId) return res.json({ success: true, data: {} });
   
+  const child = await Child.findOne({ where: { id: childId, parentId: req.user.id }});
+  if (!child) return res.status(404).json({ error: 'Child not found or unauthorized' });
+
   const isDemoMode = req.query.demo === 'true';
   const dashData = await getRealDashboardData(childId, isDemoMode);
   
@@ -171,11 +185,16 @@ router.get('/analytics', async (req, res) => {
   });
 });
 
-router.get('/reports/insights', (req, res) => {
+router.get('/reports/insights', async (req, res) => {
+  const child = await Child.findOne({ where: { id: req.query.childId, parentId: req.user.id }});
+  if (!child) return res.status(404).json({ error: 'Child not found or unauthorized' });
   res.json({ success: true, data: sim.getReportData(req.query.childId) });
 });
 
 router.get('/reports/full', async (req, res) => {
+  const child = await Child.findOne({ where: { id: req.query.childId, parentId: req.user.id }});
+  if (!child) return res.status(404).json({ error: 'Child not found or unauthorized' });
+
   const reportData = sim.getReportData(req.query.childId);
   try {
     const faceEventCount = await FaceEvent.count({ where: { childId: req.query.childId } });

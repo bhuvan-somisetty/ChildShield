@@ -48,7 +48,13 @@ const Navbar = () => {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
         body: JSON.stringify({ password: logoutPin })
       });
-      const d = await r.json();
+      let d;
+      try {
+        const text = await r.text();
+        d = JSON.parse(text);
+      } catch (e) {
+        throw new Error('Server unavailable');
+      }
       if (r.ok && d.success) {
         setLogoutStep('confirm'); // move to confirmation step
       } else {
@@ -90,6 +96,13 @@ const Navbar = () => {
                       {child.name}
                     </div>
                   ))}
+                  <div onClick={() => { setActiveChild(null); setChildSelectOpen(false); navigate('/controls'); }}
+                    style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontSize: '13px', marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>+</div>
+                    Add Child Device
+                  </div>
                 </div>
               )}
             </div>
@@ -155,17 +168,52 @@ const Navbar = () => {
                   <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
                 </div>
+                {/* Multi-Account List */}
+                {accounts && accounts.length > 0 && (
+                  <div style={{ marginBottom: '6px', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                    {accounts.map(acc => (
+                      <div key={acc.user.email} onClick={() => { switchAccount(acc.token); setProfileOpen(false); }}
+                        style={{ padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', background: acc.user.email === user?.email ? 'rgba(255,255,255,0.08)' : 'transparent', color: acc.user.email === user?.email ? '#fff' : 'var(--text-secondary)' }}
+                        onMouseEnter={e => { if (acc.user.email !== user?.email) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                        onMouseLeave={e => { if (acc.user.email !== user?.email) e.currentTarget.style.background = 'transparent'; }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '10px' }}>
+                          {acc.user.fullName.charAt(0)}
+                        </div>
+                        <div style={{ overflow: 'hidden' }}>
+                          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: acc.user.email === user?.email ? 'bold' : 'normal' }}>{acc.user.fullName}</div>
+                        </div>
+                        {acc.user.email === user?.email && <ShieldCheck size={14} color="var(--accent-cyan)" style={{ marginLeft: 'auto' }} />}
+                      </div>
+                    ))}
+                    <div onClick={() => { navigate('/login'); setProfileOpen(false); }}
+                      style={{ padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--text-primary)', marginTop: '4px' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>+</div>
+                      Add Account
+                    </div>
+                  </div>
+                )}
+
                 <div onClick={() => { navigate('/account-settings'); setProfileOpen(false); }}
                   style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', fontSize: '14px', transition: 'background 0.2s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <Settings size={15} color="var(--text-muted)" /> Account Settings
                 </div>
+                
+                <div onClick={() => { logout(); navigate('/login'); }}
+                  style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px', transition: 'background 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <LogOut size={15} color="var(--text-muted)" /> Sign Out
+                </div>
+
                 <div onClick={openLogout}
                   style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-red)', fontSize: '14px', marginTop: '2px', borderTop: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.05)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <LogOut size={15} /> Sign Out
+                  <AlertTriangle size={15} /> Delete Account
                 </div>
               </div>
             )}
@@ -181,10 +229,10 @@ const Navbar = () => {
             {/* STEP 1: Enter password */}
             {logoutStep === 'password' && (
               <>
-                <LogOut size={44} color="#ef4444" style={{ marginBottom: '14px' }} />
-                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '6px' }}>Sign Out</h3>
+                <AlertTriangle size={44} color="#ef4444" style={{ marginBottom: '14px' }} />
+                <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '6px' }}>Delete Account</h3>
                 <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px', lineHeight: 1.5 }}>
-                  Enter your Parent Control Password to sign out.
+                  Enter your Parent Control Password to authorize account deletion.
                 </p>
 
                 {logoutErr && (
@@ -224,7 +272,7 @@ const Navbar = () => {
                 </div>
                 <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Before you continue</h3>
                 <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '28px', lineHeight: 1.6 }}>
-                  Do you want to download a session report before signing out?
+                  Do you want to download a session report before deleting your account?
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -241,9 +289,15 @@ const Navbar = () => {
                     style={{ background: 'var(--accent-blue)', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
                     Download Report
                   </button>
-                  <button onClick={handleConfirmLogout}
+                  <button onClick={async () => {
+                      try {
+                        const tok = token || localStorage.getItem('cs_token');
+                        await fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${tok}` } });
+                      } catch(e) {}
+                      handleConfirmLogout();
+                    }}
                     style={{ background: '#ef4444', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                    Continue Without Download
+                    Skip & Delete Account
                   </button>
                   <button onClick={closeLogout}
                     style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px' }}>
@@ -261,16 +315,22 @@ const Navbar = () => {
                 </div>
                 <h3 style={{ color: '#fff', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Report downloaded.</h3>
                 <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '28px', lineHeight: 1.6 }}>
-                  Continue to logout?
+                  Continue to delete account?
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={closeLogout}
                     style={{ flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px' }}>
                     Cancel
                   </button>
-                  <button onClick={handleConfirmLogout}
+                  <button onClick={async () => {
+                      try {
+                        const tok = token || localStorage.getItem('cs_token');
+                        await fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${tok}` } });
+                      } catch(e) {}
+                      handleConfirmLogout();
+                    }}
                     style={{ flex: 2, background: '#ef4444', border: 'none', padding: '12px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                    Logout
+                    Delete Account
                   </button>
                 </div>
               </>

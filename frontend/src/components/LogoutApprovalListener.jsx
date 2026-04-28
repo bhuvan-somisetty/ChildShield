@@ -61,11 +61,11 @@ const LogoutApprovalListener = () => {
             <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(245,158,11,0.15)', border: '2px solid rgba(245,158,11,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', animation: 'pulse-dot 2s infinite' }}>
               <LogOut size={32} color="#f59e0b" />
             </div>
-            <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: '900', marginBottom: '8px' }}>Sign-out Request</h2>
+            <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: '900', marginBottom: '8px' }}>Delete Account Request</h2>
             <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px' }}>
-              <strong style={{ color: '#f59e0b', fontSize: '16px' }}>{pendingRequest.childName}</strong> is trying to sign out.
+              <strong style={{ color: '#f59e0b', fontSize: '16px' }}>{pendingRequest.childName}</strong> is trying to delete their account.
             </p>
-            <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '28px' }}>Do you want to allow the sign-out or keep the device connected?</p>
+            <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '28px' }}>Do you want to allow the deletion or keep the device connected?</p>
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => setConfirmAction('deny')} disabled={responding}
@@ -74,7 +74,7 @@ const LogoutApprovalListener = () => {
               </button>
               <button onClick={() => setConfirmAction('approve')} disabled={responding}
                 style={{ flex: 1, padding: '16px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)', borderRadius: '14px', color: '#10b981', fontWeight: '800', fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
-                ✓ Allow Logout
+                ✓ Allow Deletion
               </button>
             </div>
           </>
@@ -86,20 +86,32 @@ const LogoutApprovalListener = () => {
             <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <ShieldCheck size={32} color="#10b981" />
             </div>
-            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '900', marginBottom: '12px' }}>Are you sure you wanna tap yes?</h2>
+            <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: '900', marginBottom: '12px' }}>Before you approve</h2>
             <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px' }}>
-              After you click <strong style={{ color: '#10b981' }}>Yes</strong>, device will get logout by <strong style={{ color: '#f59e0b' }}>{pendingRequest.childName}</strong> so u wanna log out?
+              After you click <strong style={{ color: '#10b981' }}>Yes</strong>, all data for <strong style={{ color: '#f59e0b' }}>{pendingRequest.childName}</strong> will be permanently deleted.
             </p>
-            <p style={{ color: '#64748b', fontSize: '12px', marginBottom: '24px' }}>The child will need to reconnect to your account after this.</p>
+            <p style={{ color: '#64748b', fontSize: '12px', marginBottom: '24px' }}>Would you like to download a session report before deleting the account?</p>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => setConfirmAction(null)}
-                style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#94a3b8', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
-                Go Back
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button onClick={() => {
+                const reportData = { childName: pendingRequest.childName, timestamp: new Date().toISOString() };
+                const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `childshield_report_${pendingRequest.childName}_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                respond(true);
+              }} disabled={responding}
+                style={{ width: '100%', padding: '14px', background: 'var(--accent-cyan)', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '800', fontSize: '14px', cursor: responding ? 'not-allowed' : 'pointer', opacity: responding ? 0.7 : 1 }}>
+                Download Report & Delete
               </button>
               <button onClick={() => respond(true)} disabled={responding}
-                style={{ flex: 1, padding: '14px', background: '#10b981', border: 'none', borderRadius: '12px', color: '#000', fontWeight: '800', fontSize: '14px', cursor: responding ? 'not-allowed' : 'pointer', opacity: responding ? 0.7 : 1 }}>
-                {responding ? 'Processing...' : 'Yes, Logout Child'}
+                style={{ width: '100%', padding: '14px', background: '#ef4444', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '800', fontSize: '14px', cursor: responding ? 'not-allowed' : 'pointer', opacity: responding ? 0.7 : 1 }}>
+                Delete Without Report
+              </button>
+              <button onClick={() => setConfirmAction(null)}
+                style={{ width: '100%', padding: '12px', background: 'transparent', border: 'none', borderRadius: '12px', color: '#94a3b8', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
+                Cancel
               </button>
             </div>
           </>
