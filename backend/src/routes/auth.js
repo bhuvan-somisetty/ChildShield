@@ -93,11 +93,27 @@ router.post('/verify-password', auth, async (req, res) => {
   }
 });
 
+// Verify Login Password
+router.post('/verify-login-password', auth, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password required' });
+    const parent = await Parent.findByPk(req.user.id);
+    if (!parent) return res.status(404).json({ error: 'User not found' });
+    const valid = await bcrypt.compare(password, parent.passwordHash);
+    if (!valid) return res.status(400).json({ success: false, error: 'Incorrect login password.' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Get Me
 router.get('/me', auth, async (req, res) => {
   try {
     const parent = await Parent.findByPk(req.user.id);
+    if (!parent) return res.status(404).json({ error: 'User not found' });
     // Check if the user was created via OAuth (random password) and hasn't set a real control password
     const isOAuthUser = parent.passwordHash && parent.parentControlPasswordHash && 
       parent.passwordHash.length > 50; // All users have hashes, so check a flag instead
@@ -185,13 +201,19 @@ router.delete('/me', auth, async (req, res) => {
     const parent = await Parent.findByPk(req.user.id);
     if (!parent) return res.status(404).json({ error: 'Account not found' });
     
+    const { Activity, Location, FaceEvent, SafeZone } = require('../db');
+    
     // Delete all children associated with this parent
     const children = await Child.findAll({ where: { parentId: req.user.id } });
     for (let child of children) {
-      await child.destroy();
+      await Activity.destroy({ where: { childId: child.id } });
+      await Location.destroy({ where: { childId: child.id } });
+      await FaceEvent.destroy({ where: { childId: child.id } });
+      await SafeZone.destroy({ where: { childId: child.id } });
+      await Child.destroy({ where: { id: child.id } });
     }
     
-    await parent.destroy();
+    await Parent.destroy({ where: { id: parent.id } });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

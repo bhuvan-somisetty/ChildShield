@@ -358,8 +358,10 @@ const ProfileSettingsModal = ({ onClose }) => {
               {/* Sign Out */}
               <SectionCard>
                 <SettingRow
-                  icon={LogOut} label="Sign Out" desc="Log out of your parent account"
-                  danger onClick={() => { if (window.confirm('Sign out of ChildShield AI?')) { logout(); onClose(); } }}
+                  icon={LogOut} label="Delete Account" desc="Permanently wipe all data and unpair devices"
+                  danger onClick={() => { if (window.confirm('WARNING: Deleting your account will wipe all child data, logs, and settings permanently. This cannot be undone. Proceed?')) { 
+                    fetch('/api/auth/me', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }).then(() => { logout(); onClose(); });
+                   } }}
                 />
               </SectionCard>
 

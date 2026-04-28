@@ -4,7 +4,7 @@ import {
   HelpCircle, MessageCircle, Palette, LogOut, ChevronRight,
   ShieldCheck, ArrowLeft, Smartphone, CheckCircle, AlertCircle,
   Info, ExternalLink, Mail, Save, Moon, Sun, Monitor, ToggleLeft, ToggleRight,
-  BookOpen, Video, Wifi, MapPin, Clock, Zap, Star, Send, Phone, ChevronDown, Trash2
+  BookOpen, Video, Wifi, MapPin, Clock, Zap, Star, Send, Phone, ChevronDown, Trash2, Edit2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -587,36 +587,144 @@ const AppearanceView = ({ onBack }) => {
 
 // ─── CONNECTED DEVICES VIEW ──────────────────────────────────────────────────
 const DevicesView = ({ onBack }) => {
-  const { childrenList } = useAuth();
+  const { childrenList, token, fetchChildren, setActiveChild } = useAuth();
   const navigate = useNavigate();
+  
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [removeId, setRemoveId] = useState(null);
+  const [removePass, setRemovePass] = useState('');
+  const [removeError, setRemoveError] = useState('');
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const handleRename = async (id) => {
+    if(!editName.trim()) return setEditingId(null);
+    try {
+      await fetch(`/api/children/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: editName })
+      });
+      fetchChildren(token);
+    } catch(e) {}
+    setEditingId(null);
+  };
+
+  const handleRemove = async () => {
+    if(!removePass) return setRemoveError('Password required');
+    setIsRemoving(true);
+    setRemoveError('');
+    try {
+      const res = await fetch(`/api/device/unpair/${removeId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ password: removePass })
+      });
+      const data = await res.json();
+      if(res.ok && data.success) {
+        setRemoveId(null);
+        setRemovePass('');
+        fetchChildren(token);
+        setActiveChild(null);
+      } else {
+        setRemoveError(data.error || 'Incorrect password');
+      }
+    } catch(e) {
+      setRemoveError('Connection failed');
+    }
+    setIsRemoving(false);
+  };
+
   return (
-    <div style={{ maxWidth: '560px' }}>
+    <div style={{ maxWidth: '600px' }}>
       <SubHeader title="Connected Devices" desc="Child devices paired to your parent account." onBack={onBack} />
+      
       {childrenList.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 20px', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '18px' }}>
           <Smartphone size={40} color="#334155" style={{ marginBottom: '12px' }} />
           <div style={{ fontSize: '16px', fontWeight: '600', color: '#64748b', marginBottom: '8px' }}>No devices linked yet</div>
           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '20px' }}>Pair a child device from the Controls page</div>
-          <button onClick={() => navigate('/controls')} style={{ padding: '12px 24px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: '12px', color: '#00f0ff', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>Go to Controls →</button>
+          <button onClick={() => { setActiveChild(null); navigate('/controls'); }} style={{ padding: '12px 24px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: '12px', color: '#00f0ff', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>Add Device</button>
         </div>
       ) : (
-        <Card title={`Paired Devices (${childrenList.length})`}>
-          {childrenList.map((child, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px', borderBottom: i < childrenList.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Smartphone size={20} color="#10b981" />
+        <>
+          <Card title={`Paired Devices (${childrenList.length})`}>
+            {childrenList.map((child, i) => (
+              <div key={child.id} style={{ display: 'flex', flexDirection: 'column', padding: '16px 20px', borderBottom: i < childrenList.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Smartphone size={20} color="#10b981" />
+                  </div>
+                  
+                  <div style={{ flex: 1, overflow: 'hidden' }}>
+                    {editingId === child.id ? (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input 
+                          type="text" 
+                          value={editName} 
+                          onChange={e => setEditName(e.target.value)}
+                          onKeyDown={e => { if(e.key === 'Enter') handleRename(child.id); }}
+                          autoFocus
+                          style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--accent-cyan)', color: '#fff', padding: '6px 10px', borderRadius: '6px', fontSize: '14px', outline: 'none' }}
+                        />
+                        <button onClick={() => handleRename(child.id)} style={{ background: 'var(--accent-cyan)', color: '#0f172a', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Save</button>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '15px', fontWeight: '600', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{child.name}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>ID: {child.id.substring(0,8)}...</div>
+                      </>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button onClick={() => { setEditingId(child.id); setEditName(child.name); }} title="Rename" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Edit2 size={14} color="#94a3b8" />
+                    </button>
+                    <button onClick={() => { setActiveChild(child); navigate('/controls'); }} title="View Controls" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(0,240,255,0.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Eye size={14} color="#00f0ff" />
+                    </button>
+                    <button onClick={() => setRemoveId(child.id)} title="Remove Device" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Trash2 size={14} color="#ef4444" />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '15px', fontWeight: '600', color: '#fff' }}>{child.name}</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Paired device</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '10px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981' }} />
-                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: '600' }}>Connected</span>
-              </div>
+            ))}
+          </Card>
+          
+          <button onClick={() => { setActiveChild(null); navigate('/controls'); }} style={{ width: '100%', padding: '14px', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '12px', color: '#fff', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+            <span style={{ fontSize: '18px', fontWeight: '300' }}>+</span> Add Another Device
+          </button>
+        </>
+      )}
+
+      {/* Unpair Modal */}
+      {removeId && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '380px', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
+            <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>Remove Device</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>Enter Parent Control Password to disconnect this device.</p>
+            
+            <input 
+              type="password" 
+              placeholder="Parent Control Password" 
+              value={removePass}
+              onChange={e => setRemovePass(e.target.value)}
+              autoFocus
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239,68,68,0.3)', padding: '14px', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none', marginBottom: '16px', textAlign: 'center' }}
+            />
+            {removeError && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px' }}>{removeError}</div>}
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => { setRemoveId(null); setRemovePass(''); setRemoveError(''); }} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
+              <button onClick={handleRemove} disabled={isRemoving || !removePass} style={{ flex: 1, padding: '12px', background: '#ef4444', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '8px', cursor: isRemoving || !removePass ? 'not-allowed' : 'pointer', opacity: isRemoving || !removePass ? 0.7 : 1 }}>
+                {isRemoving ? 'Removing...' : 'Remove'}
+              </button>
             </div>
-          ))}
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -929,7 +1037,13 @@ const AccountSettings = () => {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ password: dangerPassword })
       });
-      const data = await res.json();
+      let data;
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error('Server is waking up or unavailable. Please try again.');
+      }
       if (!res.ok) throw new Error(data.error || 'Verification failed');
       setDangerStep('report');
     } catch (err) {
@@ -1040,9 +1154,9 @@ const AccountSettings = () => {
         <Row icon={MessageCircle} iconColor="#3b82f6" iconBg="rgba(59,130,246,0.1)" label="Contact Us"     desc="Email, chat & send feedback"        onClick={() => setView('contact')} />
       </Card>
 
-      <Card title="Danger Zone">
-        <Row icon={LogOut} label="Sign Out" desc="Log out of your parent account" danger
-          onClick={() => setDangerAction('logout')}
+      <Card title="Account Management">
+        <Row icon={LogOut} label="Sign Out" desc="Log out of this account" 
+          onClick={() => { logout(); }}
         />
         <Row icon={Trash2} label="Delete Account" desc="Permanently wipe all data and unpair devices" danger
           onClick={() => setDangerAction('delete')}
@@ -1057,7 +1171,7 @@ const AccountSettings = () => {
           <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
             <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
             <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>
-              {dangerAction === 'logout' ? 'Sign Out Confirmation' : 'Delete Account Permanently'}
+              {dangerAction === 'delete' && 'Delete Account Permanently'}
             </h3>
             
             {dangerStep === 'password' && (
@@ -1086,18 +1200,16 @@ const AccountSettings = () => {
             {dangerStep === 'report' && (
               <>
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
-                  {dangerAction === 'delete' 
-                    ? 'WARNING: Deleting your account will wipe all child data, logs, and settings permanently. This cannot be undone.'
-                    : 'You are about to sign out. Before leaving, would you like to download a summary report of your child\'s activity?'}
+                  WARNING: Deleting your account will wipe all child data, logs, and settings permanently. This cannot be undone. Would you like to download a summary report before proceeding?
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <button onClick={() => { handleDownloadReport(); executeDangerAction(); }} style={{ padding: '14px', background: 'var(--accent-cyan)', border: 'none', color: '#0f172a', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <Save size={18} /> Download Report & {dangerAction === 'logout' ? 'Sign Out' : 'Delete'}
+                    <Save size={18} /> Download Report & Delete
                   </button>
                   
                   <button onClick={executeDangerAction} style={{ padding: '14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer' }}>
-                    {dangerAction === 'logout' ? 'Sign Out Without Report' : 'Delete Account Immediately'}
+                    Delete Account Immediately
                   </button>
 
                   <button onClick={() => { setDangerAction(null); setDangerStep('password'); setDangerPassword(''); }} style={{ padding: '12px', background: 'transparent', border: 'none', color: '#94a3b8', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>

@@ -22,24 +22,24 @@ const apiFetch = async (url, options = {}, retries = 2) => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser]               = useState(null);
   const [token, setToken]             = useState(() => localStorage.getItem('cs_token') || null);
+  const [accounts, setAccounts]       = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cs_accounts')) || []; }
+    catch { return []; }
+  });
   const [loading, setLoading]         = useState(true);
   const [childrenList, setChildrenList] = useState([]);
   const [activeChild, setActiveChild] = useState(null);
   const [isDemoMode, setIsDemoMode]   = useState(false);
 
-  // Track whether we've done the initial validation already
   const validatedRef = useRef(false);
 
-  // ── Token persistence ──────────────────────────────────────────────────────
+  // ── Token & Accounts persistence ───────────────────────────────────────────
   useEffect(() => {
-    if (token) {
-      localStorage.setItem('cs_token', token);
-    } else {
-      localStorage.removeItem('cs_token');
-      setUser(null);
-      setLoading(false);
-    }
-  }, [token]);
+    if (token) localStorage.setItem('cs_token', token);
+    else localStorage.removeItem('cs_token');
+    
+    localStorage.setItem('cs_accounts', JSON.stringify(accounts));
+  }, [token, accounts]);
 
   // ── Initial validation (runs once on mount) ────────────────────────────────
   useEffect(() => {
@@ -80,9 +80,21 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
       if (data.user) {
         setUser(data.user);
+        
+        // Update account list
+        setAccounts(prev => {
+          const exists = prev.find(a => a.user.email === data.user.email);
+          if (exists) {
+            return prev.map(a => a.user.email === data.user.email ? { token: jwt, user: data.user } : a);
+          } else {
+            return [...prev, { token: jwt, user: data.user }];
+          }
+        });
+
         await fetchChildren(jwt);
       } else {
         setToken(null);
+        setUser(null);
       }
     } catch (err) {
       // Network error (server down, no internet) — DO NOT clear the token.
@@ -122,7 +134,14 @@ export const AuthProvider = ({ children }) => {
     const data = await res.json();
     if (res.ok) {
       setToken(data.token);
-      if (data.user) setUser(data.user);
+      if (data.user) {
+        setUser(data.user);
+        setAccounts(prev => {
+          const exists = prev.find(a => a.user.email === data.user.email);
+          if (exists) return prev.map(a => a.user.email === data.user.email ? { token: data.token, user: data.user } : a);
+          return [...prev, { token: data.token, user: data.user }];
+        });
+      }
       await fetchChildren(data.token);
       return true;
     }
@@ -138,7 +157,10 @@ export const AuthProvider = ({ children }) => {
     const data = await res.json();
     if (res.ok) {
       setToken(data.token);
-      if (data.user) setUser(data.user);
+      if (data.user) {
+        setUser(data.user);
+        setAccounts(prev => [...prev.filter(a => a.user.email !== data.user.email), { token: data.token, user: data.user }]);
+      }
       return true;
     }
     throw new Error(data.error || 'Registration failed');
@@ -148,23 +170,51 @@ export const AuthProvider = ({ children }) => {
   const loginWithToken = useCallback((jwt, userObj) => {
     localStorage.setItem('cs_token', jwt);
     setToken(jwt);
-    if (userObj) setUser(userObj);
+    if (userObj) {
+      setUser(userObj);
+      setAccounts(prev => {
+        const exists = prev.find(a => a.user.email === userObj.email);
+        if (exists) return prev.map(a => a.user.email === userObj.email ? { token: jwt, user: userObj } : a);
+        return [...prev, { token: jwt, user: userObj }];
+      });
+    }
     fetchChildren(jwt);
   }, [fetchChildren]);
 
+  const switchAccount = useCallback(async (accountToken) => {
+    setLoading(true);
+    setToken(accountToken);
+    await validateToken(accountToken);
+    setLoading(false);
+  }, [validateToken]);
+
   const logout = useCallback(() => {
-    setToken(null);
-    setUser(null);
-    setChildrenList([]);
-    setActiveChild(null);
-    localStorage.clear();
-    sessionStorage.clear();
-    validatedRef.current = false;
-  }, []);
+    // Remove the active account from accounts
+    setAccounts(prev => {
+      const newAccounts = prev.filter(a => a.token !== token);
+      if (newAccounts.length > 0) {
+        // Switch to the first available account
+        const nextAccount = newAccounts[0];
+        setToken(nextAccount.token);
+        setUser(nextAccount.user);
+        fetchChildren(nextAccount.token);
+      } else {
+        setToken(null);
+        setUser(null);
+        setChildrenList([]);
+        setActiveChild(null);
+      }
+      return newAccounts;
+    });
+  }, [token, fetchChildren]);
 
   // Update user in-memory after profile edits
   const updateUser = useCallback((updatedFields) => {
-    setUser(prev => ({ ...prev, ...updatedFields }));
+    setUser(prev => {
+      const newUser = { ...prev, ...updatedFields };
+      setAccounts(accts => accts.map(a => a.user.email === prev.email ? { ...a, user: newUser } : a));
+      return newUser;
+    });
   }, []);
 
   return (
@@ -174,6 +224,7 @@ export const AuthProvider = ({ children }) => {
       fetchChildren, updateUser,
       childrenList, activeChild, setActiveChild,
       isDemoMode, setIsDemoMode,
+      accounts, switchAccount
     }}>
       {children}
     </AuthContext.Provider>
