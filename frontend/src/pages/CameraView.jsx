@@ -10,10 +10,10 @@ const Toggle = ({ active, onChange, disabled }) => {
       onClick={() => { if (!disabled) onChange(!active); }}
       style={{
         width: '56px', height: '32px', borderRadius: '16px',
-        backgroundColor: active ? 'rgba(0, 240, 255, 0.4)' : 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: active ? 'rgba(37,99,235, 0.4)' : 'rgba(255, 255, 255, 0.1)',
         position: 'relative', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.3s',
         border: `1px solid ${active ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}`,
-        boxShadow: active && !disabled ? `0 0 10px rgba(0, 240, 255, 0.3)` : 'none',
+        boxShadow: active && !disabled ? `0 0 10px rgba(37,99,235, 0.3)` : 'none',
         opacity: disabled ? 0.5 : 1
       }}
     >
@@ -30,7 +30,7 @@ const Toggle = ({ active, onChange, disabled }) => {
 const ControlRow = ({ icon: Icon, title, description, control }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-      <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(0, 240, 255, 0.1)', border: '1px solid rgba(0,240,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(37,99,235, 0.1)', border: '1px solid rgba(37,99,235,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icon size={22} color="var(--accent-cyan)" />
       </div>
       <div>
@@ -137,7 +137,7 @@ const CameraView = () => {
         }
       `}</style>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px' }}>📷 Remote Camera</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px' }}>ðŸ“· Remote Camera</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View live camera feed from {activeChild?.name}'s device</p>
       </div>
 
@@ -145,7 +145,7 @@ const CameraView = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', background: streaming ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)', border: `1px solid ${streaming ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '14px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {streaming ? <Wifi size={18} color="#10b981" /> : <WifiOff size={18} color="#475569" />}
         <span style={{ fontSize: '14px', fontWeight: '600', color: streaming ? '#10b981' : '#475569' }}>
-          {streaming ? 'Camera Active — Live Feed' : peerConnected ? 'Connecting stream...' : connected ? 'Waiting for child device...' : 'Camera Inactive'}
+          {streaming ? 'Camera Active â€” Live Feed' : peerConnected ? 'Connecting stream...' : connected ? 'Waiting for child device...' : 'Camera Inactive'}
         </span>
         <div style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: streaming ? '#10b981' : '#334155', boxShadow: streaming ? '0 0 8px #10b981' : 'none', animation: streaming ? 'pulse-dot 2s infinite' : 'none' }} />
       </div>

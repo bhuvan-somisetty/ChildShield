@@ -20,7 +20,7 @@ const Welcome = () => {
       <div style={{ 
         position: 'absolute', top: '15%', left: '5%',
         width: '500px', height: '500px', 
-        background: 'radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%)', 
+        background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)', 
         filter: 'blur(80px)', pointerEvents: 'none'
       }} />
       {/* Red ambient glow */}
@@ -33,7 +33,7 @@ const Welcome = () => {
       {/* Subtle grid overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: 'linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px)',
+        backgroundImage: 'linear-gradient(rgba(37,99,235,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.03) 1px, transparent 1px)',
         backgroundSize: '60px 60px', pointerEvents: 'none'
       }} />
 
@@ -43,24 +43,24 @@ const Welcome = () => {
         <div style={{ marginBottom: '40px', display: 'flex', justifyContent: 'center' }}>
           <div style={{ 
             width: '100px', height: '100px', borderRadius: '28px', 
-            background: 'linear-gradient(135deg, rgba(201,168,76,0.2) 0%, rgba(239,68,68,0.15) 100%)',
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.2) 0%, rgba(239,68,68,0.15) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 40px rgba(201,168,76,0.25), 0 20px 60px rgba(0,0,0,0.6)',
-            border: '1px solid rgba(201,168,76,0.35)',
+            boxShadow: '0 0 40px rgba(37,99,235,0.25), 0 20px 60px rgba(0,0,0,0.6)',
+            border: '1px solid rgba(37,99,235,0.35)',
             animation: 'agFloat 4s ease-in-out infinite'
           }}>
-            <Shield size={50} color="#c9a84c" />
+            <Shield size={50} color="#2563eb" />
           </div>
         </div>
 
         {/* AI Pill Badge */}
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)',
+          background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)',
           borderRadius: '100px', padding: '6px 16px', marginBottom: '28px'
         }}>
-          <Brain size={13} color="#c9a84c" />
-          <span style={{ fontSize: '12px', fontWeight: '700', color: '#c9a84c', letterSpacing: '0.5px' }}>
+          <Brain size={13} color="#2563eb" />
+          <span style={{ fontSize: '12px', fontWeight: '700', color: '#2563eb', letterSpacing: '0.5px' }}>
             Smart AI Parenting for Gen Alpha
           </span>
         </div>
@@ -72,24 +72,24 @@ const Welcome = () => {
         }}>
           Welcome to{' '}
           <span style={{ 
-            background: 'linear-gradient(90deg, #c9a84c, #f0d080, #c9a84c)',
+            background: 'linear-gradient(90deg, #2563eb, #60a5fa, #2563eb)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             backgroundSize: '200% auto', animation: 'agShimmer 3s linear infinite'
           }}>AlphaGuard</span>
-          <span style={{ color: 'rgba(201,168,76,0.5)' }}> AI</span>
+          <span style={{ color: 'rgba(37,99,235,0.5)' }}> AI</span>
         </h1>
         
         <p style={{ 
           fontSize: '17px', color: '#64748b', marginBottom: '48px',
           lineHeight: '1.7', maxWidth: '480px', marginInline: 'auto'
         }}>
-          Not just parental controls — an <strong style={{ color: '#94a3b8' }}>AI-powered behavior + safety system</strong> built for the next generation.
+          Not just parental controls â€” an <strong style={{ color: '#94a3b8' }}>AI-powered behavior + safety system</strong> built for the next generation.
         </p>
 
         {/* Feature Pills */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '60px', flexWrap: 'wrap' }}>
           {[
-            { icon: Brain, label: 'AI Behavior Insights', color: '#c9a84c' },
+            { icon: Brain, label: 'AI Behavior Insights', color: '#2563eb' },
             { icon: Activity, label: 'Smart Monitoring', color: '#ef4444' },
             { icon: Zap, label: 'Focus Mode', color: '#f59e0b' }
           ].map((feature, i) => (
@@ -110,20 +110,20 @@ const Welcome = () => {
           onClick={() => navigate('/onboarding')}
           id="welcome-get-started"
           style={{ 
-            background: 'linear-gradient(135deg, #c9a84c, #f0d080)',
+            background: 'linear-gradient(135deg, #2563eb, #60a5fa)',
             color: '#0a0a0f', border: 'none', padding: '18px 52px',
             borderRadius: '100px', fontSize: '17px', fontWeight: '800',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px',
-            boxShadow: '0 10px 40px rgba(201,168,76,0.35)',
+            boxShadow: '0 10px 40px rgba(37,99,235,0.35)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', marginInline: 'auto'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-            e.currentTarget.style.boxShadow = '0 16px 50px rgba(201,168,76,0.5)';
+            e.currentTarget.style.boxShadow = '0 16px 50px rgba(37,99,235,0.5)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0) scale(1)';
-            e.currentTarget.style.boxShadow = '0 10px 40px rgba(201,168,76,0.35)';
+            e.currentTarget.style.boxShadow = '0 10px 40px rgba(37,99,235,0.35)';
           }}
         >
           Get Started
@@ -136,7 +136,7 @@ const Welcome = () => {
         position: 'absolute', bottom: '28px', fontSize: '12px', 
         color: 'rgba(255, 255, 255, 0.4)'
       }}>
-        © {new Date().getFullYear()} AlphaGuard AI · All rights reserved
+        Â© {new Date().getFullYear()} AlphaGuard AI Â· All rights reserved
       </div>
 
       <style>{`

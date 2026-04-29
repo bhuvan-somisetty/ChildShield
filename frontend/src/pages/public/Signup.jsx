@@ -59,7 +59,7 @@ const Signup = () => {
       {/* Ambience blobs */}
       <div style={{ position: 'absolute', top: '-10%', left: '50%', width: '600px', height: '600px', background: 'var(--accent-purple)', filter: 'blur(200px)', opacity: 0.15, borderRadius: '50%', transform: 'translateX(-50%)' }} />
 
-      {/* ── Confirm modal ───────────────────────────────────────────────────── */}
+      {/* â”€â”€ Confirm modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {showConfirmModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center' }}>
@@ -74,7 +74,7 @@ const Signup = () => {
                   <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{val}</div>
                 </div>
               ))}
-              <div style={{ padding: '8px', background: 'rgba(176,38,255,0.1)', borderLeft: '3px solid var(--accent-purple)', borderRadius: '4px' }}>
+              <div style={{ padding: '8px', background: 'rgba(37,99,235,0.1)', borderLeft: '3px solid var(--accent-purple)', borderRadius: '4px' }}>
                 <span style={{ fontSize: '12px', color: 'var(--accent-purple)', fontWeight: 'bold' }}>Important Warning:</span>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>If you lose your Parent Control Password, you will not be able to bypass local device locks. Please ensure you have memorized it.</div>
               </div>
@@ -83,17 +83,17 @@ const Signup = () => {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => setShowConfirmModal(false)} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Review Again</button>
               <button onClick={confirmRegistration} disabled={submitting} style={{ flex: 1, padding: '12px', background: 'var(--accent-purple)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', boxShadow: 'var(--shadow-neon-purple)', opacity: submitting ? 0.7 : 1 }}>
-                {submitting ? 'Creating…' : 'Confirm & Create'}
+                {submitting ? 'Creatingâ€¦' : 'Confirm & Create'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Main card ───────────────────────────────────────────────────────── */}
+      {/* â”€â”€ Main card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '40px', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <Shield size={40} color="var(--accent-cyan)" style={{ marginBottom: '16px', filter: 'drop-shadow(0 0 10px rgba(0,240,255,0.5))' }} />
+          <Shield size={40} color="var(--accent-cyan)" style={{ marginBottom: '16px', filter: 'drop-shadow(0 0 10px rgba(37,99,235,0.5))' }} />
           <h2 style={{ fontSize: '28px', fontWeight: '700' }}>Create Account</h2>
           <p style={{ color: 'var(--text-muted)', marginTop: '8px' }}>Start protecting your child's digital life</p>
         </div>
@@ -139,7 +139,7 @@ const Signup = () => {
                   <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', top: '14px', left: '16px' }} />
                   <input type={show[key] ? 'text' : 'password'} name={name} required onChange={handleChange}
                     style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 40px 12px 40px', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }}
-                    placeholder="••••••••" />
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
                   <div onClick={() => toggleShow(key)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}>
                     {show[key] ? <EyeOff size={18} /> : <Eye size={18} />}
                   </div>
@@ -155,7 +155,7 @@ const Signup = () => {
             <div style={{ position: 'relative' }}>
               <Key size={16} color="var(--accent-purple)" style={{ position: 'absolute', top: '14px', left: '16px' }} />
               <input type={show.parent ? 'text' : 'password'} name="parentControlPassword" required onChange={handleChange}
-                style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(176,38,255,0.3)', padding: '12px 44px 12px 44px', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }}
+                style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(37,99,235,0.3)', padding: '12px 44px 12px 44px', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }}
                 placeholder="Secure Override PIN/Password" />
               <div onClick={() => toggleShow('parent')} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 {show.parent ? <EyeOff size={18} /> : <Eye size={18} />}

@@ -1,13 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, History, MapPin, Shield, User } from 'lucide-react';
+import { LayoutDashboard, Shield, Smartphone, Bot, User } from 'lucide-react';
 
 const navItems = [
-  { name: 'Controls', path: '/controls',  Icon: Shield },
-  { name: 'Activity', path: '/history',   Icon: History },
-  { name: 'Location', path: '/location',  Icon: MapPin },
-  { name: 'Home',     path: '/dashboard', Icon: LayoutDashboard },
-  { name: 'Profile',  path: '/account-settings', Icon: User },
+  { name: 'Dashboard', path: '/dashboard', Icon: LayoutDashboard },
+  { name: 'Controls',  path: '/controls',  Icon: Shield },
+  { name: 'Devices',   path: '/devices',   Icon: Smartphone },
+  { name: 'AI',        path: '/ai-insights', Icon: Bot },
+  { name: 'Profile',   path: '/account-settings', Icon: User },
 ];
 
 const BottomNav = () => (
@@ -45,7 +45,7 @@ const BottomNav = () => (
                 height: '3px',
                 borderRadius: '0 0 3px 3px',
                 background: 'var(--accent-cyan)',
-                boxShadow: '0 2px 10px rgba(0,240,255,0.5)',
+                boxShadow: '0 2px 10px rgba(37,99,235,0.5)',
               }} />
             )}
             <Icon size={21} strokeWidth={isActive ? 2.5 : 1.8} />

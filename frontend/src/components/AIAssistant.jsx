@@ -15,34 +15,34 @@ const QUICK_REPLIES = [
 const getAIResponse = (msg) => {
   const q = msg.toLowerCase();
   if (q.includes('pair') || q.includes('connect') || q.includes('link'))
-    return "To pair a child device:\n1. On the child's phone, open ChildShield and select **Child Mode**\n2. Enter the child's name and gender\n3. A **6-digit code** and QR code will appear\n4. On your parent dashboard, go to **Controls** and enter the code\n5. The devices will sync automatically! ✅";
+    return "To pair a child device:\n1. On the child's phone, open ChildShield and select **Child Mode**\n2. Enter the child's name and gender\n3. A **6-digit code** and QR code will appear\n4. On your parent dashboard, go to **Controls** and enter the code\n5. The devices will sync automatically! âœ…";
   if (q.includes('screen time') || q.includes('time limit') || q.includes('timer'))
-    return "To set screen time limits:\n1. Go to **Controls** in your dashboard\n2. Find **Screen Time** section\n3. Set daily limit (e.g., 2 hours)\n4. You can also start a **countdown timer** for homework time\n5. The child will get warnings at 10, 5, and 1 minute before time's up ⏰";
+    return "To set screen time limits:\n1. Go to **Controls** in your dashboard\n2. Find **Screen Time** section\n3. Set daily limit (e.g., 2 hours)\n4. You can also start a **countdown timer** for homework time\n5. The child will get warnings at 10, 5, and 1 minute before time's up â°";
   if (q.includes('location') || q.includes('track') || q.includes('gps'))
-    return "Location tracking features:\n• **Live Location** — See where your child is right now on the map 📍\n• **Route History** — View where they've been throughout the day\n• **Safe Zones** — Set up Home, School, and custom zones with alerts\n• **Distance** — See how far your child is from you in real-time\n\nEnable tracking in **Controls → Location Tracking**";
+    return "Location tracking features:\nâ€¢ **Live Location** â€” See where your child is right now on the map ðŸ“\nâ€¢ **Route History** â€” View where they've been throughout the day\nâ€¢ **Safe Zones** â€” Set up Home, School, and custom zones with alerts\nâ€¢ **Distance** â€” See how far your child is from you in real-time\n\nEnable tracking in **Controls â†’ Location Tracking**";
   if (q.includes('face') || q.includes('guard'))
-    return "Face Guard monitors who is using the child's device:\n• It uses the **front camera** to detect faces\n• If an **unknown face** is detected, it can alert, pause, or lock the device\n• You can enroll authorized faces in **Controls → Face Guard**\n• All face data stays **local** and is never uploaded 🔒";
+    return "Face Guard monitors who is using the child's device:\nâ€¢ It uses the **front camera** to detect faces\nâ€¢ If an **unknown face** is detected, it can alert, pause, or lock the device\nâ€¢ You can enroll authorized faces in **Controls â†’ Face Guard**\nâ€¢ All face data stays **local** and is never uploaded ðŸ”’";
   if (q.includes('lock') || q.includes('app'))
-    return "To lock an app on the child's device:\n1. Go to **Controls** in your dashboard\n2. Find the **App Manager** section\n3. You'll see a list of apps the child uses\n4. Tap the **lock icon** next to any app\n5. The app will be locked for **24 hours** or until you manually unlock it 🔐";
+    return "To lock an app on the child's device:\n1. Go to **Controls** in your dashboard\n2. Find the **App Manager** section\n3. You'll see a list of apps the child uses\n4. Tap the **lock icon** next to any app\n5. The app will be locked for **24 hours** or until you manually unlock it ðŸ”";
   if (q.includes('camera'))
-    return "The Camera feature lets you:\n• View the child's camera **live** via the Camera page 📷\n• **Switch** between front and back cameras\n• Toggle the **flashlight**\n• Take a **screenshot** of the camera feed\n\nAll streaming is peer-to-peer and encrypted!";
+    return "The Camera feature lets you:\nâ€¢ View the child's camera **live** via the Camera page ðŸ“·\nâ€¢ **Switch** between front and back cameras\nâ€¢ Toggle the **flashlight**\nâ€¢ Take a **screenshot** of the camera feed\n\nAll streaming is peer-to-peer and encrypted!";
   if (q.includes('audio') || q.includes('listen') || q.includes('mic'))
-    return "Audio Listening lets you hear the child's surroundings:\n• Go to the **Audio** page in the sidebar\n• Tap **Start Listening** to begin\n• You'll see a live **audio visualizer** 🎵\n• Tap **Stop** when done\n\nThis uses the microphone permission granted during child setup.";
+    return "Audio Listening lets you hear the child's surroundings:\nâ€¢ Go to the **Audio** page in the sidebar\nâ€¢ Tap **Start Listening** to begin\nâ€¢ You'll see a live **audio visualizer** ðŸŽµ\nâ€¢ Tap **Stop** when done\n\nThis uses the microphone permission granted during child setup.";
   if (q.includes('screen') && (q.includes('shar') || q.includes('view')))
-    return "Screen View lets you see the child's screen live:\n• Go to **Screen View** in the sidebar\n• Tap **View Child Screen**\n• The child will see a system prompt asking to share\n• Once approved, you'll see their screen in real-time 🖥️\n• You can take screenshots too!";
+    return "Screen View lets you see the child's screen live:\nâ€¢ Go to **Screen View** in the sidebar\nâ€¢ Tap **View Child Screen**\nâ€¢ The child will see a system prompt asking to share\nâ€¢ Once approved, you'll see their screen in real-time ðŸ–¥ï¸\nâ€¢ You can take screenshots too!";
   if (q.includes('password') || q.includes('control'))
-    return "The **Parent Control Password** is separate from your login password. It's used for:\n• Unlocking child device\n• Approving logout requests\n• Unlocking locked apps\n\nYou can change it in **Account Settings → Security**";
+    return "The **Parent Control Password** is separate from your login password. It's used for:\nâ€¢ Unlocking child device\nâ€¢ Approving logout requests\nâ€¢ Unlocking locked apps\n\nYou can change it in **Account Settings â†’ Security**";
   if (q.includes('safe zone') || q.includes('geofence'))
-    return "Safe Zones let you define trusted areas:\n1. Go to **Location → Safe Zones** tab\n2. Tap **Add Zone** and enter details\n3. Choose type: Home, School, Relative, or Custom\n4. Set radius: 100m, 200m, or 500m\n5. Get alerts when child enters/exits zones 🛡️";
+    return "Safe Zones let you define trusted areas:\n1. Go to **Location â†’ Safe Zones** tab\n2. Tap **Add Zone** and enter details\n3. Choose type: Home, School, Relative, or Custom\n4. Set radius: 100m, 200m, or 500m\n5. Get alerts when child enters/exits zones ðŸ›¡ï¸";
   if (q.includes('hi') || q.includes('hello') || q.includes('hey'))
-    return "Hello! 👋 I'm your ChildShield AI assistant. I can help you with:\n• Device pairing\n• Screen time & controls\n• Location tracking & safe zones\n• Camera, audio & screen features\n• Security settings\n\nJust ask me anything!";
-  return "I can help you with ChildShield features! Try asking about:\n• **Pairing** a child device\n• Setting **screen time** limits\n• **Location** tracking & safe zones\n• **Camera**, **audio**, or **screen** viewing\n• **App locking** & security\n• **Face Guard** settings\n\nWhat would you like to know? 😊";
+    return "Hello! ðŸ‘‹ I'm your ChildShield AI assistant. I can help you with:\nâ€¢ Device pairing\nâ€¢ Screen time & controls\nâ€¢ Location tracking & safe zones\nâ€¢ Camera, audio & screen features\nâ€¢ Security settings\n\nJust ask me anything!";
+  return "I can help you with ChildShield features! Try asking about:\nâ€¢ **Pairing** a child device\nâ€¢ Setting **screen time** limits\nâ€¢ **Location** tracking & safe zones\nâ€¢ **Camera**, **audio**, or **screen** viewing\nâ€¢ **App locking** & security\nâ€¢ **Face Guard** settings\n\nWhat would you like to know? ðŸ˜Š";
 };
 
 const AIAssistant = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'ai', text: "Hi! 👋 I'm **Samantha**, your ChildShield AI assistant. How can I help you today?" }
+    { role: 'ai', text: "Hi! ðŸ‘‹ I'm **Samantha**, your ChildShield AI assistant. How can I help you today?" }
   ]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
@@ -150,8 +150,8 @@ const AIAssistant = () => {
             position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999,
             width: '64px', height: '64px', borderRadius: '50%',
             cursor: dragging ? 'grabbing' : 'grab',
-            boxShadow: '0 4px 24px rgba(0,240,255,0.3), 0 0 60px rgba(176,38,255,0.15)',
-            border: '2px solid rgba(0,240,255,0.4)',
+            boxShadow: '0 4px 24px rgba(37,99,235,0.3), 0 0 60px rgba(37,99,235,0.15)',
+            border: '2px solid rgba(37,99,235,0.4)',
             overflow: 'hidden', touchAction: 'none',
             animation: 'pulse-dot 3s infinite'
           }}
@@ -167,26 +167,26 @@ const AIAssistant = () => {
           width: '380px', maxWidth: 'calc(100vw - 32px)', height: '520px', maxHeight: 'calc(100vh - 60px)',
           background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '24px', display: 'flex', flexDirection: 'column',
-          boxShadow: '0 12px 48px rgba(0,0,0,0.5), 0 0 40px rgba(0,240,255,0.08)',
+          boxShadow: '0 12px 48px rgba(0,0,0,0.5), 0 0 40px rgba(37,99,235,0.08)',
           overflow: 'hidden'
         }}>
           {/* Header */}
-          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,240,255,0.03)' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(0,240,255,0.3)', flexShrink: 0 }}>
+          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(37,99,235,0.03)' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(37,99,235,0.3)', flexShrink: 0 }}>
               <img src="/disha.jpeg" alt="Samantha" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 Samantha <Sparkles size={14} color="#f59e0b" />
               </div>
-              <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '600' }}>● Online</div>
+              <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '600' }}>â— Online</div>
             </div>
             {/* MUTED TOGGLE */}
             <button onClick={toggleMute} style={{ background: isMuted ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (isMuted ? 'rgba(239,68,68,0.3)' : 'transparent'), borderRadius: '10px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: isMuted ? '#ef4444' : '#fff', fontSize: '11px', fontWeight: 'bold' }}>
               {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
               {isMuted ? 'Muted' : 'Voice'}
             </button>
-            {/* VOLUME SLIDER — only visible when not muted */}
+            {/* VOLUME SLIDER â€” only visible when not muted */}
             {!isMuted && (
               <input
                 type="range" min="0" max="1" step="0.05"
@@ -207,8 +207,8 @@ const AIAssistant = () => {
               <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '85%', padding: '12px 16px', borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  background: m.role === 'user' ? 'rgba(0,240,255,0.15)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${m.role === 'user' ? 'rgba(0,240,255,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                  background: m.role === 'user' ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${m.role === 'user' ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.06)'}`,
                   fontSize: '13px', lineHeight: 1.6, color: 'var(--text-primary)'
                 }}>
                   {renderText(m.text)}
@@ -229,7 +229,7 @@ const AIAssistant = () => {
           {messages.length <= 2 && (
             <div style={{ padding: '0 16px 8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {QUICK_REPLIES.slice(0, 3).map(q => (
-                <button key={q} onClick={() => handleSend(q)} style={{ padding: '6px 12px', background: 'rgba(0,240,255,0.06)', border: '1px solid rgba(0,240,255,0.15)', borderRadius: '20px', color: 'var(--accent-cyan)', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <button key={q} onClick={() => handleSend(q)} style={{ padding: '6px 12px', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '20px', color: 'var(--accent-cyan)', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {q}
                 </button>
               ))}

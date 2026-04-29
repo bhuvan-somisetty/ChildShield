@@ -9,7 +9,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-// ─── Shared helpers ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const Row = ({ icon: Icon, iconColor, iconBg, label, desc, right, onClick, danger, badge }) => (
   <button onClick={onClick} style={{
     display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px',
@@ -26,7 +26,7 @@ const Row = ({ icon: Icon, iconColor, iconBg, label, desc, right, onClick, dange
     <div style={{ flex: 1 }}>
       <div style={{ fontSize: '15px', fontWeight: '600', color: danger ? '#ef4444' : '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
         {label}
-        {badge && <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '10px', background: 'rgba(0,240,255,0.15)', color: '#00f0ff', border: '1px solid rgba(0,240,255,0.2)' }}>{badge}</span>}
+        {badge && <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '10px', background: 'rgba(37,99,235,0.15)', color: '#2563eb', border: '1px solid rgba(37,99,235,0.2)' }}>{badge}</span>}
       </div>
       {desc && <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{desc}</div>}
     </div>
@@ -52,7 +52,7 @@ const SubHeader = ({ title, desc, onBack }) => (
     </button>
     <h2 style={{ fontSize: '26px', fontWeight: '900', color: '#fff', marginBottom: '6px', letterSpacing: '-0.5px' }}>{title}</h2>
     {desc && <p style={{ color: '#64748b', fontSize: '14px', lineHeight: 1.6 }}>{desc}</p>}
-    <div style={{ height: '1px', background: 'linear-gradient(90deg, rgba(0,240,255,0.3), transparent)', marginTop: '20px' }} />
+    <div style={{ height: '1px', background: 'linear-gradient(90deg, rgba(37,99,235,0.3), transparent)', marginTop: '20px' }} />
   </div>
 );
 
@@ -61,7 +61,7 @@ const Alert = ({ type, msg }) => {
   const cfg = {
     error:   { bg: 'rgba(239,68,68,0.08)',   color: '#ef4444', border: 'rgba(239,68,68,0.2)',   Icon: AlertCircle },
     success: { bg: 'rgba(16,185,129,0.08)',  color: '#10b981', border: 'rgba(16,185,129,0.2)', Icon: CheckCircle },
-    info:    { bg: 'rgba(0,240,255,0.08)',   color: '#00f0ff', border: 'rgba(0,240,255,0.2)',   Icon: Info },
+    info:    { bg: 'rgba(37,99,235,0.08)',   color: '#2563eb', border: 'rgba(37,99,235,0.2)',   Icon: Info },
   }[type] || {};
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', borderRadius: '12px', fontSize: '14px', marginBottom: '20px', background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
@@ -77,7 +77,7 @@ const PremiumInput = ({ label, icon: Icon, iconColor, type = 'text', placeholder
       <Icon size={17} color={iconColor || '#475569'} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
       <input type={type} placeholder={placeholder} value={value} onChange={onChange} autoComplete="new-password"
         style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 48px 14px 46px', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none', transition: 'all 0.2s', letterSpacing: type === 'password' ? '3px' : 'normal' }}
-        onFocus={e => { e.target.style.borderColor = 'rgba(0,240,255,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(0,240,255,0.08)'; }}
+        onFocus={e => { e.target.style.borderColor = 'rgba(37,99,235,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.08)'; }}
         onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
       />
       {right && <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)' }}>{right}</div>}
@@ -95,20 +95,20 @@ const EyeBtn = ({ show, toggle }) => (
   </button>
 );
 
-const PrimaryBtn = ({ label, loading, onClick, disabled, color = '#00f0ff' }) => (
+const PrimaryBtn = ({ label, loading, onClick, disabled, color = '#2563eb' }) => (
   <button onClick={onClick} disabled={loading || disabled} style={{
-    background: color === '#00f0ff' ? 'linear-gradient(135deg, #00f0ff, #0099cc)' : `linear-gradient(135deg, ${color}, ${color}aa)`,
-    color: color === '#00f0ff' ? '#000' : '#fff',
+    background: color === '#2563eb' ? 'linear-gradient(135deg, #2563eb, #0099cc)' : `linear-gradient(135deg, ${color}, ${color}aa)`,
+    color: color === '#2563eb' ? '#000' : '#fff',
     border: 'none', padding: '14px 32px', borderRadius: '12px',
     fontWeight: '700', fontSize: '15px', cursor: loading ? 'default' : 'pointer',
     opacity: loading ? 0.7 : 1, transition: 'all 0.2s',
     boxShadow: `0 4px 20px ${color}33`
   }}>
-    {loading ? '⏳ Saving…' : label}
+    {loading ? 'â³ Savingâ€¦' : label}
   </button>
 );
 
-// ─── PASSWORD VIEW ───────────────────────────────────────────────────────────
+// â”€â”€â”€ PASSWORD VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PasswordView = ({ user, token, onBack }) => {
   const [tab, setTab]         = useState('change'); // 'change' | 'otp' | 'verify' | 'reset'
   const [oldPass, setOldPass] = useState('');
@@ -142,7 +142,7 @@ const PasswordView = ({ user, token, onBack }) => {
     try {
       const r = await fetch('/api/auth/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass }) });
       const d = await r.json();
-      if (r.ok && d.success) { setOk('Password updated successfully! ✓'); setOldPass(''); setNewPass(''); setConf(''); }
+      if (r.ok && d.success) { setOk('Password updated successfully! âœ“'); setOldPass(''); setNewPass(''); setConf(''); }
       else setErr(d.error || 'Failed to update password.');
     } catch (e) { setErr(e.message); }
     setLoading(false);
@@ -156,7 +156,7 @@ const PasswordView = ({ user, token, onBack }) => {
       <div style={{ display: 'flex', gap: '0', marginBottom: '28px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '4px' }}>
         {[['change', 'Change Password'], ['otp', 'Reset via OTP']].map(([key, label]) => (
           <button key={key} onClick={() => { setTab(key); setErr(''); setOk(''); }}
-            style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '13px', transition: 'all 0.2s', background: tab === key || (tab === 'verify' && key === 'otp') ? 'rgba(0,240,255,0.15)' : 'transparent', color: tab === key || (tab === 'verify' && key === 'otp') ? '#00f0ff' : '#64748b' }}>
+            style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '13px', transition: 'all 0.2s', background: tab === key || (tab === 'verify' && key === 'otp') ? 'rgba(37,99,235,0.15)' : 'transparent', color: tab === key || (tab === 'verify' && key === 'otp') ? '#2563eb' : '#64748b' }}>
             {label}
           </button>
         ))}
@@ -168,9 +168,9 @@ const PasswordView = ({ user, token, onBack }) => {
       {tab === 'change' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           {/* Decorative card */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', background: 'rgba(176,38,255,0.06)', border: '1px solid rgba(176,38,255,0.15)', borderRadius: '14px', marginBottom: '4px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(176,38,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Shield size={22} color="#b026ff" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '14px', marginBottom: '4px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Shield size={22} color="#2563eb" />
             </div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>Secure Password Change</div>
@@ -182,7 +182,7 @@ const PasswordView = ({ user, token, onBack }) => {
             right={<EyeBtn show={show.old} toggle={() => setShow(s => ({ ...s, old: !s.old }))} />} />
 
           <div>
-            <PremiumInput label="New Password" icon={Lock} iconColor="#00f0ff" type={show.new ? 'text' : 'password'} placeholder="Min. 8 characters" value={newPass} onChange={e => setNewPass(e.target.value)}
+            <PremiumInput label="New Password" icon={Lock} iconColor="#2563eb" type={show.new ? 'text' : 'password'} placeholder="Min. 8 characters" value={newPass} onChange={e => setNewPass(e.target.value)}
               right={<EyeBtn show={show.new} toggle={() => setShow(s => ({ ...s, new: !s.new }))} />} />
             {newPass.length > 0 && (
               <div style={{ marginTop: '8px' }}>
@@ -194,12 +194,12 @@ const PasswordView = ({ user, token, onBack }) => {
             )}
           </div>
 
-          <PremiumInput label="Confirm New Password" icon={Lock} iconColor="#00f0ff" type={show.conf ? 'text' : 'password'} placeholder="Repeat new password" value={conf} onChange={e => setConf(e.target.value)}
+          <PremiumInput label="Confirm New Password" icon={Lock} iconColor="#2563eb" type={show.conf ? 'text' : 'password'} placeholder="Repeat new password" value={conf} onChange={e => setConf(e.target.value)}
             right={<EyeBtn show={show.conf} toggle={() => setShow(s => ({ ...s, conf: !s.conf }))} />}
-            hint={conf && newPass !== conf ? '⚠ Passwords do not match' : conf && newPass === conf ? '✓ Passwords match' : ''} />
+            hint={conf && newPass !== conf ? 'âš  Passwords do not match' : conf && newPass === conf ? 'âœ“ Passwords match' : ''} />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
-            <button onClick={() => { setTab('otp'); setErr(''); setOk(''); }} style={{ background: 'transparent', border: 'none', color: '#b026ff', fontSize: '14px', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Forgot current password?</button>
+            <button onClick={() => { setTab('otp'); setErr(''); setOk(''); }} style={{ background: 'transparent', border: 'none', color: '#2563eb', fontSize: '14px', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Forgot current password?</button>
             <PrimaryBtn label="Update Password" loading={loading} onClick={doChange} />
           </div>
         </div>
@@ -207,9 +207,9 @@ const PasswordView = ({ user, token, onBack }) => {
 
       {tab === 'otp' && (
         <div>
-          <div style={{ padding: '24px', background: 'rgba(176,38,255,0.06)', border: '1px dashed rgba(176,38,255,0.3)', borderRadius: '16px', textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(176,38,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <Mail size={26} color="#b026ff" />
+          <div style={{ padding: '24px', background: 'rgba(37,99,235,0.06)', border: '1px dashed rgba(37,99,235,0.3)', borderRadius: '16px', textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <Mail size={26} color="#2563eb" />
             </div>
             <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '6px' }}>Forgot your password?</div>
             <div style={{ fontSize: '14px', color: '#94a3b8', lineHeight: 1.7 }}>
@@ -217,7 +217,7 @@ const PasswordView = ({ user, token, onBack }) => {
               <strong style={{ color: '#fff' }}>{user?.email}</strong>
             </div>
           </div>
-          <PrimaryBtn label="📨 Send OTP to Email" loading={loading} color="#b026ff" onClick={async () => {
+          <PrimaryBtn label="ðŸ“¨ Send OTP to Email" loading={loading} color="#2563eb" onClick={async () => {
             setLoading(true); setErr(''); setOk('');
             try {
               const res = await fetch('/api/auth/send-otp', {
@@ -248,15 +248,15 @@ const PasswordView = ({ user, token, onBack }) => {
       {tab === 'verify' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div style={{ textAlign: 'center', padding: '16px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', fontSize: '14px', color: '#10b981' }}>
-            ✓ OTP sent to <strong>{user?.email}</strong>
+            âœ“ OTP sent to <strong>{user?.email}</strong>
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px' }}>Enter 6-digit OTP</label>
             <input maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-              placeholder="• • • • • •"
-              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(176,38,255,0.4)', padding: '20px', borderRadius: '14px', color: '#fff', fontSize: '28px', letterSpacing: '16px', textAlign: 'center', outline: 'none', fontWeight: '800' }}
-              onFocus={e => { e.target.style.borderColor = '#b026ff'; e.target.style.boxShadow = '0 0 0 3px rgba(176,38,255,0.15)'; }}
-              onBlur={e => { e.target.style.borderColor = 'rgba(176,38,255,0.4)'; e.target.style.boxShadow = 'none'; }}
+              placeholder="â€¢ â€¢ â€¢ â€¢ â€¢ â€¢"
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(37,99,235,0.4)', padding: '20px', borderRadius: '14px', color: '#fff', fontSize: '28px', letterSpacing: '16px', textAlign: 'center', outline: 'none', fontWeight: '800' }}
+              onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.15)'; }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(37,99,235,0.4)'; e.target.style.boxShadow = 'none'; }}
             />
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -286,9 +286,9 @@ const PasswordView = ({ user, token, onBack }) => {
                 }} 
                 disabled={loading || countdown > 0}
                 style={{ 
-                    flex: 1, padding: '13px', background: 'rgba(176,38,255,0.08)', 
-                    border: '1px solid rgba(176,38,255,0.2)', borderRadius: '12px', 
-                    color: countdown > 0 ? '#475569' : '#b026ff', fontWeight: '600', 
+                    flex: 1, padding: '13px', background: 'rgba(37,99,235,0.08)', 
+                    border: '1px solid rgba(37,99,235,0.2)', borderRadius: '12px', 
+                    color: countdown > 0 ? '#475569' : '#2563eb', fontWeight: '600', 
                     cursor: countdown > 0 ? 'not-allowed' : 'pointer', fontSize: '14px',
                     transition: 'all 0.2s'
                 }}>
@@ -312,8 +312,8 @@ const PasswordView = ({ user, token, onBack }) => {
                 setLoading(false);
             }} 
             disabled={loading}
-            style={{ flex: 2, padding: '13px', background: 'linear-gradient(135deg, #b026ff, #7c3aed)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '700', cursor: 'pointer', fontSize: '14px', opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Verifying...' : 'Verify OTP →'}
+            style={{ flex: 2, padding: '13px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '700', cursor: 'pointer', fontSize: '14px', opacity: loading ? 0.7 : 1 }}>
+              {loading ? 'Verifying...' : 'Verify OTP â†’'}
             </button>
           </div>
         </div>
@@ -324,9 +324,9 @@ const PasswordView = ({ user, token, onBack }) => {
           <div style={{ padding: '14px 18px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', fontSize: '14px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CheckCircle size={16} /> Identity verified! Now set your new password.
           </div>
-          <PremiumInput label="New Password" icon={Lock} iconColor="#b026ff" type={show.new ? 'text' : 'password'} placeholder="Min. 8 characters" value={newPass} onChange={e => setNewPass(e.target.value)} right={<EyeBtn show={show.new} toggle={() => setShow(s => ({ ...s, new: !s.new }))} />} />
-          <PremiumInput label="Confirm Password" icon={Lock} iconColor="#b026ff" type={show.conf ? 'text' : 'password'} placeholder="Repeat new password" value={conf} onChange={e => setConf(e.target.value)} right={<EyeBtn show={show.conf} toggle={() => setShow(s => ({ ...s, conf: !s.conf }))} />} />
-          <PrimaryBtn label="🔐 Reset & Save Password" loading={loading} color="#b026ff" onClick={async () => {
+          <PremiumInput label="New Password" icon={Lock} iconColor="#2563eb" type={show.new ? 'text' : 'password'} placeholder="Min. 8 characters" value={newPass} onChange={e => setNewPass(e.target.value)} right={<EyeBtn show={show.new} toggle={() => setShow(s => ({ ...s, new: !s.new }))} />} />
+          <PremiumInput label="Confirm Password" icon={Lock} iconColor="#2563eb" type={show.conf ? 'text' : 'password'} placeholder="Repeat new password" value={conf} onChange={e => setConf(e.target.value)} right={<EyeBtn show={show.conf} toggle={() => setShow(s => ({ ...s, conf: !s.conf }))} />} />
+          <PrimaryBtn label="ðŸ” Reset & Save Password" loading={loading} color="#2563eb" onClick={async () => {
             if (newPass !== conf) return setErr('Passwords do not match');
             setLoading(true); setErr(''); setOk('');
             try {
@@ -366,15 +366,15 @@ const ProfileView = ({ user, token, onBack }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Avatar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' }}>
-          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #052659, #1e40af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '900', color: '#C1E8FF', border: '2px solid rgba(0,240,255,0.3)', boxShadow: '0 0 20px rgba(0,240,255,0.15)', flexShrink: 0 }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #052659, #1e40af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '900', color: '#C1E8FF', border: '2px solid rgba(37,99,235,0.3)', boxShadow: '0 0 20px rgba(37,99,235,0.15)', flexShrink: 0 }}>
             {name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'P'}
           </div>
           <div>
             <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>{name || 'Parent Account'}</div>
             <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Parent Account</div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '6px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)' }}>
-              <ShieldCheck size={11} color="#00f0ff" />
-              <span style={{ fontSize: '11px', color: '#00f0ff', fontWeight: '700' }}>Protected</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '6px', padding: '3px 10px', borderRadius: '12px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)' }}>
+              <ShieldCheck size={11} color="#2563eb" />
+              <span style={{ fontSize: '11px', color: '#2563eb', fontWeight: '700' }}>Protected</span>
             </div>
           </div>
         </div>
@@ -419,13 +419,13 @@ const ProfileView = ({ user, token, onBack }) => {
   );
 };
 
-// ─── NOTIFICATIONS VIEW ──────────────────────────────────────────────────────
+// â”€â”€â”€ NOTIFICATIONS VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const NotificationsView = ({ onBack }) => {
   const [prefs, setPrefs] = useState({ screenTime: true, appBlocked: true, weeklyReport: true, liveAlerts: true, devicePaired: false });
   const [ok, setOk] = useState('');
 
   const Toggle = ({ id }) => (
-    <button onClick={() => setPrefs(p => ({ ...p, [id]: !p[id] }))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: prefs[id] ? '#00f0ff' : '#334155', transition: 'color 0.2s' }}>
+    <button onClick={() => setPrefs(p => ({ ...p, [id]: !p[id] }))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: prefs[id] ? '#2563eb' : '#334155', transition: 'color 0.2s' }}>
       {prefs[id] ? <ToggleRight size={34} /> : <ToggleLeft size={34} />}
     </button>
   );
@@ -460,7 +460,7 @@ const NotificationsView = ({ onBack }) => {
   );
 };
 
-// ─── LANGUAGE VIEW ───────────────────────────────────────────────────────────
+// â”€â”€â”€ LANGUAGE VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const LanguageView = ({ onBack, currentLang, onLangChange }) => {
   const [search, setSearch] = useState('');
 
@@ -507,10 +507,10 @@ const LanguageView = ({ onBack, currentLang, onLangChange }) => {
       <div style={{ marginBottom: '20px' }}>
         <input 
           type="text" 
-          placeholder="🔍 Search for a language..." 
+          placeholder="ðŸ” Search for a language..." 
           value={search} 
           onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', boxSizing: 'border-box', padding: '14px 20px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,240,255,0.2)', color: '#fff', fontSize: '15px', outline: 'none' }}
+          style={{ width: '100%', boxSizing: 'border-box', padding: '14px 20px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(37,99,235,0.2)', color: '#fff', fontSize: '15px', outline: 'none' }}
         />
       </div>
 
@@ -520,13 +520,13 @@ const LanguageView = ({ onBack, currentLang, onLangChange }) => {
             <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>No languages found.</div>
           ) : (
             filtered.map(([code, name]) => (
-              <button key={code} onClick={() => handleSelect(code)} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '15px 20px', background: currentLang === code ? 'rgba(0,240,255,0.06)' : 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', width: '100%', cursor: 'pointer', transition: 'background 0.2s' }}>
-                <span style={{ fontSize: '20px', fill: '#00f0ff' }}><Globe size={18} color={currentLang === code ? '#00f0ff' : '#475569'} /></span>
+              <button key={code} onClick={() => handleSelect(code)} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '15px 20px', background: currentLang === code ? 'rgba(37,99,235,0.06)' : 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', width: '100%', cursor: 'pointer', transition: 'background 0.2s' }}>
+                <span style={{ fontSize: '20px', fill: '#2563eb' }}><Globe size={18} color={currentLang === code ? '#2563eb' : '#475569'} /></span>
                 <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div style={{ fontSize: '15px', fontWeight: '600', color: currentLang === code ? '#00f0ff' : '#fff' }}>{name}</div>
+                  <div style={{ fontSize: '15px', fontWeight: '600', color: currentLang === code ? '#2563eb' : '#fff' }}>{name}</div>
                   <div style={{ fontSize: '12px', color: '#64748b' }}>Language Code: {code.toUpperCase()}</div>
                 </div>
-                {currentLang === code && <CheckCircle size={18} color="#00f0ff" />}
+                {currentLang === code && <CheckCircle size={18} color="#2563eb" />}
               </button>
             ))
           )}
@@ -536,7 +536,7 @@ const LanguageView = ({ onBack, currentLang, onLangChange }) => {
   );
 };
 
-// ─── APPEARANCE VIEW ─────────────────────────────────────────────────────────
+// â”€â”€â”€ APPEARANCE VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const AppearanceView = ({ onBack }) => {
   const [theme, setTheme] = useState(() => localStorage.getItem('cs_theme') || 'dark');
 
@@ -585,7 +585,7 @@ const AppearanceView = ({ onBack }) => {
   );
 };
 
-// ─── CONNECTED DEVICES VIEW ──────────────────────────────────────────────────
+// â”€â”€â”€ CONNECTED DEVICES VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DevicesView = ({ onBack }) => {
   const { childrenList, token, fetchChildren, setActiveChild } = useAuth();
   const navigate = useNavigate();
@@ -644,7 +644,7 @@ const DevicesView = ({ onBack }) => {
           <Smartphone size={40} color="#334155" style={{ marginBottom: '12px' }} />
           <div style={{ fontSize: '16px', fontWeight: '600', color: '#64748b', marginBottom: '8px' }}>No devices linked yet</div>
           <div style={{ fontSize: '13px', color: '#334155', marginBottom: '20px' }}>Pair a child device from the Controls page</div>
-          <button onClick={() => { setActiveChild(null); navigate('/controls'); }} style={{ padding: '12px 24px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: '12px', color: '#00f0ff', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>Add Device</button>
+          <button onClick={() => { setActiveChild(null); navigate('/controls'); }} style={{ padding: '12px 24px', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '12px', color: '#2563eb', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>Add Device</button>
         </div>
       ) : (
         <>
@@ -681,8 +681,8 @@ const DevicesView = ({ onBack }) => {
                     <button onClick={() => { setEditingId(child.id); setEditName(child.name); }} title="Rename" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                       <Edit2 size={14} color="#94a3b8" />
                     </button>
-                    <button onClick={() => { setActiveChild(child); navigate('/controls'); }} title="View Controls" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(0,240,255,0.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <Eye size={14} color="#00f0ff" />
+                    <button onClick={() => { setActiveChild(child); navigate('/controls'); }} title="View Controls" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(37,99,235,0.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Eye size={14} color="#2563eb" />
                     </button>
                     <button onClick={() => setRemoveId(child.id)} title="Remove Device" style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                       <Trash2 size={14} color="#ef4444" />
@@ -730,7 +730,7 @@ const DevicesView = ({ onBack }) => {
   );
 };
 
-// ─── HELP VIEW (Full Help Center) ────────────────────────────────────────────
+// â”€â”€â”€ HELP VIEW (Full Help Center) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const HelpView = ({ onBack }) => {
   const [openFaq, setOpenFaq] = useState(null);
   const [search, setSearch] = useState('');
@@ -740,25 +740,25 @@ const HelpView = ({ onBack }) => {
       icon: Zap, color: '#f59e0b', label: 'Getting Started',
       faqs: [
         { q: 'How do I create a parent account?', a: 'Open ChildShield AI and tap "Sign Up". Enter your full name, email, and create a strong password plus a secret Parent Control PIN. This PIN is used to lock/unlock child devices.' },
-        { q: 'How do I pair a child device?', a: 'Go to Controls → tap "+ Add Device". A 6-digit pairing code appears. On the child device, open the app in Child Mode, enter the child name and select gender — a QR code will appear. Enter that code on the parent side to link.' },
+        { q: 'How do I pair a child device?', a: 'Go to Controls â†’ tap "+ Add Device". A 6-digit pairing code appears. On the child device, open the app in Child Mode, enter the child name and select gender â€” a QR code will appear. Enter that code on the parent side to link.' },
         { q: 'How many child devices can I add?', a: 'You can link multiple child devices to a single parent account. Each child profile is tracked independently with its own settings, limits, and history.' },
         { q: 'Can I use ChildShield AI on a web browser?', a: 'Yes! The web version is fully functional. The production app will be available on both web and native Android/iOS.' },
       ]
     },
     {
-      icon: Clock, color: '#00f0ff', label: 'Screen Time & Controls',
+      icon: Clock, color: '#2563eb', label: 'Screen Time & Controls',
       faqs: [
-        { q: 'How do I set a daily screen time limit?', a: 'Go to Controls → select your child → use the "Daily Limit" slider to set a maximum hours cap. When the child hits the limit, the device is automatically paused.' },
+        { q: 'How do I set a daily screen time limit?', a: 'Go to Controls â†’ select your child â†’ use the "Daily Limit" slider to set a maximum hours cap. When the child hits the limit, the device is automatically paused.' },
         { q: 'How does Night Mode restriction work?', a: 'Enable "Night Restriction" in Controls. This blocks the child device between 9:00 PM and 7:00 AM automatically every day. You can toggle it on/off anytime.' },
-        { q: 'Can I pause or lock the device remotely?', a: 'Yes. In Controls → select the child → tap "Pause Session" or "Lock Device". The screen is immediately blocked with a message. You can unlock remotely anytime.' },
-        { q: 'What is a Session Timer?', a: 'A session timer lets you grant timed access — e.g. 30 minutes of usage. When the timer ends, the device auto-pauses. Perfect for homework breaks.' },
+        { q: 'Can I pause or lock the device remotely?', a: 'Yes. In Controls â†’ select the child â†’ tap "Pause Session" or "Lock Device". The screen is immediately blocked with a message. You can unlock remotely anytime.' },
+        { q: 'What is a Session Timer?', a: 'A session timer lets you grant timed access â€” e.g. 30 minutes of usage. When the timer ends, the device auto-pauses. Perfect for homework breaks.' },
       ]
     },
     {
-      icon: Shield, color: '#b026ff', label: 'Face Guard & Monitoring',
+      icon: Shield, color: '#2563eb', label: 'Face Guard & Monitoring',
       faqs: [
         { q: 'What is Face Guard?', a: 'Face Guard uses the child device\'s front camera to verify who is using the device. If an unauthorized face is detected, the device is paused or locked automatically.' },
-        { q: 'How do I enroll my child\'s face?', a: 'Go to Controls → select child → "Face Guard" section → "Enroll Face". The child must look at the camera while two clear face photos are captured. These are stored locally and never uploaded.' },
+        { q: 'How do I enroll my child\'s face?', a: 'Go to Controls â†’ select child â†’ "Face Guard" section â†’ "Enroll Face". The child must look at the camera while two clear face photos are captured. These are stored locally and never uploaded.' },
         { q: 'What happens if no face is detected?', a: 'If no face is detected after the configured timeout (default 30s), the action you set triggers: Alert, Pause, or Lock. This prevents children from leaving the device unattended.' },
         { q: 'Can I view browsing and app history?', a: 'Yes. Go to "Watch History" in the sidebar to see a full timeline of all URLs visited and apps opened on the child device, grouped by day and app.' },
       ]
@@ -766,9 +766,9 @@ const HelpView = ({ onBack }) => {
     {
       icon: MapPin, color: '#10b981', label: 'Location Tracking',
       faqs: [
-        { q: 'How do I enable GPS tracking for my child?', a: 'Go to the "Location" page in the sidebar → Enable "GPS Target" toggle. On the child device, the browser will ask for location permission — the child must tap Allow.' },
+        { q: 'How do I enable GPS tracking for my child?', a: 'Go to the "Location" page in the sidebar â†’ Enable "GPS Target" toggle. On the child device, the browser will ask for location permission â€” the child must tap Allow.' },
         { q: 'Does tracking work when the phone screen is off?', a: 'On the web version, location tracking requires the browser tab to be open and active. Full background tracking requires the native Android/iOS app, which is on the roadmap.' },
-        { q: 'How often is location updated?', a: 'The child device streams GPS using the browser\'s watchPosition API (updates every 5–15 seconds). The parent dashboard auto-refreshes every 15 seconds.' },
+        { q: 'How often is location updated?', a: 'The child device streams GPS using the browser\'s watchPosition API (updates every 5â€“15 seconds). The parent dashboard auto-refreshes every 15 seconds.' },
         { q: 'Can I see where my child has been today?', a: 'Yes! On the Location page, switch to the "Route History" tab to see a timestamped trail of every GPS point recorded in the last 24 hours, including speed and battery.' },
       ]
     },
@@ -776,7 +776,7 @@ const HelpView = ({ onBack }) => {
       icon: ShieldCheck, color: '#3b82f6', label: 'Security & Account',
       faqs: [
         { q: 'What is the Parent Control Password?', a: 'This is separate from your login password. It\'s required to disconnect a child device, override session locks, and modify critical security settings.' },
-        { q: 'How do I change my Parent Control Password?', a: 'Go to Account Settings → "Password & Security". First verify your login via OTP sent to email, then you can change the Parent Control Password.' },
+        { q: 'How do I change my Parent Control Password?', a: 'Go to Account Settings â†’ "Password & Security". First verify your login via OTP sent to email, then you can change the Parent Control Password.' },
         { q: 'Can the child log out by themselves?', a: 'No. The child cannot logout or disconnect without entering the Parent Control Password. Any attempt instantly sends an alert to the parent dashboard.' },
         { q: 'Is my data encrypted?', a: 'Yes. All data is transmitted over HTTPS/TLS. Passwords are hashed using bcrypt. Face images are stored locally on the child device and never uploaded to any server.' },
       ]
@@ -784,10 +784,10 @@ const HelpView = ({ onBack }) => {
     {
       icon: Wifi, color: '#ef4444', label: 'Troubleshooting',
       faqs: [
-        { q: 'The child device shows "Offline" — what do I do?', a: 'Check: (1) Is the backend server running? (2) Is the child on the same network? (3) Has the pairing been broken? Try re-pairing via Controls.' },
-        { q: 'GPS / Location not showing on the map?', a: 'Make sure: (1) GPS tracking is enabled by parent. (2) The child allowed location permission in the browser. (3) On Chrome Android — Location must be set to "Allow" in Site Settings.' },
+        { q: 'The child device shows "Offline" â€” what do I do?', a: 'Check: (1) Is the backend server running? (2) Is the child on the same network? (3) Has the pairing been broken? Try re-pairing via Controls.' },
+        { q: 'GPS / Location not showing on the map?', a: 'Make sure: (1) GPS tracking is enabled by parent. (2) The child allowed location permission in the browser. (3) On Chrome Android â€” Location must be set to "Allow" in Site Settings.' },
         { q: 'OTP email not arriving for password reset?', a: 'Check your spam/junk folder first. Make sure you\'ve generated a 16-character "App Password" and entered it in backend/.env as SMTP_PASSWORD. Standard Gmail passwords won\'t work.' },
-        { q: 'Face detection not working?', a: 'Make sure: (1) Camera permission is allowed. (2) Lighting is adequate. (3) Face is fully visible. (4) You have enrolled at least one face. Re-enroll if needed from Controls → Face Guard.' },
+        { q: 'Face detection not working?', a: 'Make sure: (1) Camera permission is allowed. (2) Lighting is adequate. (3) Face is fully visible. (4) You have enrolled at least one face. Re-enroll if needed from Controls â†’ Face Guard.' },
       ]
     },
   ];
@@ -863,7 +863,7 @@ const HelpView = ({ onBack }) => {
                         <ChevronDown size={16} color="#475569" style={{ flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
                       </div>
                       {isOpen && (
-                        <div style={{ padding: '14px 18px 18px', background: 'rgba(0,240,255,0.02)', borderTop: '1px solid rgba(0,240,255,0.08)' }}>
+                        <div style={{ padding: '14px 18px 18px', background: 'rgba(37,99,235,0.02)', borderTop: '1px solid rgba(37,99,235,0.08)' }}>
                           <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', lineHeight: 1.75 }}>{faq.a}</p>
                         </div>
                       )}
@@ -878,8 +878,8 @@ const HelpView = ({ onBack }) => {
           <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '14px', marginTop: '8px' }}>
             <ShieldCheck size={20} color="var(--accent-cyan)" />
             <div>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>ChildShield AI · v1.0.0</div>
-              <div style={{ fontSize: '12px', color: '#475569' }}>Family Safety Platform · Free & Open Source</div>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>ChildShield AI Â· v1.0.0</div>
+              <div style={{ fontSize: '12px', color: '#475569' }}>Family Safety Platform Â· Free & Open Source</div>
             </div>
             <div style={{ marginLeft: 'auto', fontSize: '11px', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(16,185,129,0.2)' }}>Up to date</div>
           </div>
@@ -889,7 +889,7 @@ const HelpView = ({ onBack }) => {
   );
 };
 
-// ─── CONTACT VIEW ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ CONTACT VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ContactView = ({ onBack }) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -912,7 +912,7 @@ const ContactView = ({ onBack }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
         {[
           { icon: Mail, label: 'Email Support', value: 'support@childshield.ai', color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', href: 'mailto:support@childshield.ai', desc: 'Reply within 24 hours' },
-          { icon: MessageCircle, label: 'Live Chat', value: 'Chat with us online', color: '#10b981', bg: 'rgba(16,185,129,0.08)', href: '#', desc: 'Available 9AM – 9PM IST' },
+          { icon: MessageCircle, label: 'Live Chat', value: 'Chat with us online', color: '#10b981', bg: 'rgba(16,185,129,0.08)', href: '#', desc: 'Available 9AM â€“ 9PM IST' },
           { icon: Github, label: 'Report a Bug', value: 'GitHub Issues', color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', href: '#', desc: 'Open source project' },
         ].map(({ icon: Icon, label, value, color, bg, href, desc }) => (
           <a key={label} href={href} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 20px', background: bg, border: `1px solid ${color}30`, borderRadius: '16px', textDecoration: 'none', color: '#fff', transition: 'all 0.2s' }}
@@ -949,9 +949,9 @@ const ContactView = ({ onBack }) => {
             <div>
               <label style={{ fontSize: '12px', color: '#475569', fontWeight: '700', letterSpacing: '0.06em', marginBottom: '8px', display: 'block' }}>TOPIC</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {[['general','💬 General'],['bug','🐛 Bug Report'],['feature','✨ Feature Request'],['billing','💳 Billing'],['privacy','🔒 Privacy']].map(([c, label]) => (
+                {[['general','ðŸ’¬ General'],['bug','ðŸ› Bug Report'],['feature','âœ¨ Feature Request'],['billing','ðŸ’³ Billing'],['privacy','ðŸ”’ Privacy']].map(([c, label]) => (
                   <button key={c} type="button" onClick={() => setCategory(c)}
-                    style={{ padding: '6px 14px', borderRadius: '20px', border: `1px solid ${category===c ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.08)'}`, background: category===c ? 'rgba(0,240,255,0.12)' : 'transparent', color: category===c ? 'var(--accent-cyan)' : '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    style={{ padding: '6px 14px', borderRadius: '20px', border: `1px solid ${category===c ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.08)'}`, background: category===c ? 'rgba(37,99,235,0.12)' : 'transparent', color: category===c ? 'var(--accent-cyan)' : '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
                     {label}
                   </button>
                 ))}
@@ -968,7 +968,7 @@ const ContactView = ({ onBack }) => {
                 style={{ width: '100%', boxSizing: 'border-box', padding: '12px 16px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#fff', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
             </div>
             <button type="submit" disabled={sending || !subject.trim() || !message.trim()}
-              style={{ padding: '14px', background: sending || !subject.trim() || !message.trim() ? 'rgba(0,240,255,0.2)' : 'var(--accent-cyan)', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+              style={{ padding: '14px', background: sending || !subject.trim() || !message.trim() ? 'rgba(37,99,235,0.2)' : 'var(--accent-cyan)', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
               <Send size={16} />{sending ? 'Sending...' : 'Send Message'}
             </button>
           </div>
@@ -993,7 +993,7 @@ const ContactView = ({ onBack }) => {
   );
 };
 
-// ─── PRIVACY POLICY VIEW ─────────────────────────────────────────────────────
+// â”€â”€â”€ PRIVACY POLICY VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PrivacyView = ({ onBack }) => (
   <div style={{ maxWidth: '600px' }}>
     <SubHeader title="Privacy Policy" desc="How ChildShield AI handles your data." onBack={onBack} />
@@ -1010,7 +1010,7 @@ const PrivacyView = ({ onBack }) => (
   </div>
 );
 
-// ─── MAIN PAGE ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ MAIN PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const AccountSettings = () => {
   const { user, token, logout } = useAuth();
   const [view, setView] = useState('main');
@@ -1095,24 +1095,24 @@ const AccountSettings = () => {
   return (
     <div style={{ padding: '32px', maxWidth: '680px' }}>
       {/* Profile hero card */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '36px', padding: '24px', background: 'linear-gradient(135deg, rgba(5,38,89,0.6), rgba(30,64,175,0.3))', borderRadius: '20px', border: '1px solid rgba(0,240,255,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
-        <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, #052659, #1e40af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', fontWeight: '900', color: '#C1E8FF', border: '2px solid rgba(0,240,255,0.3)', boxShadow: '0 0 24px rgba(0,240,255,0.2)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '36px', padding: '24px', background: 'linear-gradient(135deg, rgba(5,38,89,0.6), rgba(30,64,175,0.3))', borderRadius: '20px', border: '1px solid rgba(37,99,235,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+        <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, #052659, #1e40af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', fontWeight: '900', color: '#C1E8FF', border: '2px solid rgba(37,99,235,0.3)', boxShadow: '0 0 24px rgba(37,99,235,0.2)', flexShrink: 0 }}>
           {initials(user?.fullName)}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '20px', fontWeight: '800', color: '#fff', letterSpacing: '-0.3px' }}>{user?.fullName || 'Parent Account'}</div>
           <div style={{ fontSize: '14px', color: '#64748b', marginTop: '3px' }}>{user?.email}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.25)' }}>
-          <ShieldCheck size={13} color="#00f0ff" />
-          <span style={{ fontSize: '12px', color: '#00f0ff', fontWeight: '700' }}>Protected</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.25)' }}>
+          <ShieldCheck size={13} color="#2563eb" />
+          <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: '700' }}>Protected</span>
         </div>
       </div>
 
       {/* Sections */}
       <Card title="Account">
         <Row icon={User}  iconColor="#3b82f6" iconBg="rgba(59,130,246,0.1)"  label="Manage Profile"     desc="Update your name and email"           onClick={() => setView('profile')} />
-        <Row icon={Key}   iconColor="#b026ff" iconBg="rgba(176,38,255,0.1)"  label="Password & Security" desc="Change your login password"           onClick={() => setView('password')} />
+        <Row icon={Key}   iconColor="#2563eb" iconBg="rgba(37,99,235,0.1)"  label="Password & Security" desc="Change your login password"           onClick={() => setView('password')} />
         <Row icon={Bell}  iconColor="#f59e0b" iconBg="rgba(245,158,11,0.1)"  label="Notifications"       desc="Manage alerts and push notifications" onClick={() => setView('notifs')} />
         <Row icon={Globe} iconColor="#06b6d4" iconBg="rgba(6,182,212,0.1)"   label="Language"            right={langCode.toUpperCase()}                            onClick={() => setView('language')} />
       </Card>
@@ -1120,7 +1120,7 @@ const AccountSettings = () => {
       <Card title="Preferences">
         <Row icon={Palette}    iconColor="#8b5cf6" iconBg="rgba(139,92,246,0.1)"  label="Theme / Appearance"  right={(localStorage.getItem('cs_theme')||'dark').charAt(0).toUpperCase()+(localStorage.getItem('cs_theme')||'dark').slice(1)}  onClick={() => setView('appearance')} />
         <Row icon={Smartphone} iconColor="#10b981" iconBg="rgba(16,185,129,0.1)"  label="Connected Devices"   desc="Manage paired child devices" onClick={() => setView('devices')} />
-        <Row icon={Shield}     iconColor="#00f0ff" iconBg="rgba(0,240,255,0.08)"  label="Privacy Policy"                                 onClick={() => setView('privacy')} />
+        <Row icon={Shield}     iconColor="#2563eb" iconBg="rgba(37,99,235,0.08)"  label="Privacy Policy"                                 onClick={() => setView('privacy')} />
       </Card>
 
       <Card title="Account Linking">
@@ -1163,9 +1163,9 @@ const AccountSettings = () => {
         />
       </Card>
 
-      <div style={{ textAlign: 'center', fontSize: '12px', color: '#1e293b', paddingBottom: '16px' }}>ChildShield AI · Family Safety Platform · v1.0.0</div>
+      <div style={{ textAlign: 'center', fontSize: '12px', color: '#1e293b', paddingBottom: '16px' }}>ChildShield AI Â· Family Safety Platform Â· v1.0.0</div>
 
-      {/* ── Danger Action Modal (Logout & Delete) ─────────────────────────── */}
+      {/* â”€â”€ Danger Action Modal (Logout & Delete) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {dangerAction && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>

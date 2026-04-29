@@ -42,7 +42,7 @@ const slides = [
           <div style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', fontSize: '10px', fontWeight: '800', padding: '4px 8px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.3)' }}>DEVICE LOCKED</div>
         </div>
         <div style={{ position: 'absolute', bottom: '15px', right: '-30px', background: '#3b82f6', padding: '8px 12px', borderRadius: '14px', fontSize: '12px', fontWeight: 'bold', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 15px rgba(59,130,246,0.4)' }}>
-          ⏳ 1h 30m
+          â³ 1h 30m
         </div>
       </div>
     )
@@ -50,14 +50,14 @@ const slides = [
   {
     id: 'surroundings',
     icon: Camera,
-    color: '#00f0ff',
+    color: '#2563eb',
     title: "Listen & See Surroundings",
     subtitle: "In emergencies, remotely activate the camera or microphone to ensure your child is physically safe.",
     graphic: (
       <div style={{ position: 'relative', width: '160px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ position: 'absolute', width: '100%', height: '100%', border: '2px solid rgba(251, 191, 36, 0.6)', borderRadius: '24px', background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.7), rgba(15, 23, 42, 0.9))', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-           <div style={{ width: '50px', height: '50px', borderRadius: '16px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(0,240,255,0.2)' }}>
-             <Camera size={24} color="#00f0ff" />
+           <div style={{ width: '50px', height: '50px', borderRadius: '16px', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(37,99,235,0.2)' }}>
+             <Camera size={24} color="#2563eb" />
            </div>
            <div style={{ width: '50px', height: '50px', borderRadius: '16px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(245,158,11,0.2)' }}>
              <Mic size={24} color="#f59e0b" />

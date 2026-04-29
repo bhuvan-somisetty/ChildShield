@@ -56,8 +56,8 @@ const ChildSetup = () => {
         {step === 1 ? (
           <div>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(176, 38, 255, 0.1)', marginBottom: '16px', border: '1px solid rgba(176, 38, 255, 0.3)' }}>
-                <Smartphone size={32} color="#b026ff" />
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(37,99,235, 0.1)', marginBottom: '16px', border: '1px solid rgba(37,99,235, 0.3)' }}>
+                <Smartphone size={32} color="#2563eb" />
               </div>
               <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>Child Setup</h2>
               <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '14px' }}>Who will be using this device?</p>
@@ -76,7 +76,7 @@ const ChildSetup = () => {
 
               <button 
                 onClick={handleNextStep}
-                style={{ background: '#b026ff', color: '#fff', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '600', fontSize: '16px', marginTop: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(176, 38, 255, 0.3)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '600', fontSize: '16px', marginTop: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(37,99,235, 0.3)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 Continue <ArrowRight size={18} />
               </button>
               
@@ -107,7 +107,7 @@ const ChildSetup = () => {
                 onMouseOver={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)'}
                 onMouseOut={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)'}
               >
-                <div style={{ fontSize: '48px' }}>👦</div>
+                <div style={{ fontSize: '48px' }}>ðŸ‘¦</div>
                 <div style={{ color: '#38bdf8', fontWeight: '700', fontSize: '18px' }}>BOY</div>
               </button>
 
@@ -117,13 +117,13 @@ const ChildSetup = () => {
                 onMouseOver={e => e.currentTarget.style.background = 'rgba(244, 114, 182, 0.2)'}
                 onMouseOut={e => e.currentTarget.style.background = 'rgba(244, 114, 182, 0.1)'}
               >
-                <div style={{ fontSize: '48px' }}>👧</div>
+                <div style={{ fontSize: '48px' }}>ðŸ‘§</div>
                 <div style={{ color: '#f472b6', fontWeight: '700', fontSize: '18px' }}>GIRL</div>
               </button>
 
             </div>
 
-             {loading && <div style={{ textAlign: 'center', color: '#00f0ff', fontSize: '14px', fontWeight: '500' }}>Preparing profile and QR Code...</div>}
+             {loading && <div style={{ textAlign: 'center', color: '#2563eb', fontSize: '14px', fontWeight: '500' }}>Preparing profile and QR Code...</div>}
 
           </div>
         )}

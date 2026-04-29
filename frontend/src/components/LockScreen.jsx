@@ -62,9 +62,9 @@ const LockScreen = ({ onUnlock }) => {
               type="password" required value={password} onChange={e => setPassword(e.target.value)}
               placeholder="Parent Control Password"
               style={{
-                width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(176, 38, 255, 0.4)',
+                width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(37,99,235, 0.4)',
                 padding: '14px 16px 14px 48px', borderRadius: '12px', color: '#fff', fontSize: '16px', outline: 'none',
-                boxShadow: 'inset 0 0 10px rgba(176, 38, 255, 0.1)'
+                boxShadow: 'inset 0 0 10px rgba(37,99,235, 0.1)'
               }}
             />
           </div>
@@ -72,7 +72,7 @@ const LockScreen = ({ onUnlock }) => {
           <button type="submit" disabled={loading} style={{
             width: '100%', background: 'var(--accent-purple)', color: '#fff', border: 'none',
             padding: '16px', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer',
-            boxShadow: '0 0 20px rgba(176, 38, 255, 0.4)', transition: 'all 0.3s'
+            boxShadow: '0 0 20px rgba(37,99,235, 0.4)', transition: 'all 0.3s'
           }}>
             {loading ? 'Verifying...' : 'Unlock Device Session'}
           </button>

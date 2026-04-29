@@ -21,13 +21,13 @@ const createEmoji = (emoji, size = 36) => L.divIcon({
 });
 
 const createZoneIcon = (type) => {
-  const icons = { home: '🏠', school: '🏫', relative: '👨‍👩‍👧', hospital: '🏥', custom: '📍' };
-  return createEmoji(icons[type] || '📍', 28);
+  const icons = { home: 'ðŸ ', school: 'ðŸ«', relative: 'ðŸ‘¨â€ðŸ‘©â€ðŸ‘§', hospital: 'ðŸ¥', custom: 'ðŸ“' };
+  return createEmoji(icons[type] || 'ðŸ“', 28);
 };
 
-const CHILD_ICON = createEmoji('📍', 32);
-const PARENT_ICON = createEmoji('🧑', 32);
-const PIN_ICON = createEmoji('📍', 36);
+const CHILD_ICON = createEmoji('ðŸ“', 32);
+const PARENT_ICON = createEmoji('ðŸ§‘', 32);
+const PIN_ICON = createEmoji('ðŸ“', 36);
 const ZONE_COLORS = { home: '#10b981', school: '#3b82f6', relative: '#f59e0b', hospital: '#ef4444', custom: '#8b5cf6' };
 const DEFAULT_RADIUS = 80;
 
@@ -358,7 +358,7 @@ const LocationTracker = () => {
 
       <div style={{ display: 'flex', gap: '4px', padding: '4px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '20px' }}>
         {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: '12px 14px', borderRadius: '10px', border: 'none', background: tab === t.id ? 'rgba(0,240,255,0.15)' : 'transparent', color: tab === t.id ? '#00f0ff' : '#64748b', fontWeight: '600', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>
+          <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, padding: '12px 14px', borderRadius: '10px', border: 'none', background: tab === t.id ? 'rgba(37,99,235,0.15)' : 'transparent', color: tab === t.id ? '#2563eb' : '#64748b', fontWeight: '600', fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>
             {t.label}
           </button>
         ))}
@@ -375,9 +375,9 @@ const LocationTracker = () => {
                     {distance < 50 ? 'NEARBY' : distance < 500 ? 'WALKING' : distance < 5000 ? 'FAR' : 'VERY FAR'}
                   </div>
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: '900', color: '#00f0ff' }}>{formatDist(distance)}</div>
+                <div style={{ fontSize: '24px', fontWeight: '900', color: '#2563eb' }}>{formatDist(distance)}</div>
                 <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>
-                  🚗 {formatTravelTime(distance / 1000)} · 🚶 {formatTravelTime(distance / 80)}
+                  ðŸš— {formatTravelTime(distance / 1000)} Â· ðŸš¶ {formatTravelTime(distance / 80)}
                 </div>
               </div>
             )}
@@ -389,7 +389,7 @@ const LocationTracker = () => {
               {showMapControls && (
                 <div style={{ background: 'rgba(15, 23, 42, 0.95)', borderRadius: '12px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {['dark', 'street', 'satellite'].map(type => (
-                    <button key={type} onClick={() => { setMapType(type); setShowMapControls(false); }} style={{ padding: '8px 12px', background: mapType === type ? 'rgba(0,240,255,0.15)' : 'transparent', border: 'none', borderRadius: '8px', color: mapType === type ? '#00f0ff' : '#94a3b8', fontSize: '12px', fontWeight: '600', cursor: 'pointer', textTransform: 'capitalize' }}>
+                    <button key={type} onClick={() => { setMapType(type); setShowMapControls(false); }} style={{ padding: '8px 12px', background: mapType === type ? 'rgba(37,99,235,0.15)' : 'transparent', border: 'none', borderRadius: '8px', color: mapType === type ? '#2563eb' : '#94a3b8', fontSize: '12px', fontWeight: '600', cursor: 'pointer', textTransform: 'capitalize' }}>
                       {type}
                     </button>
                   ))}
@@ -417,7 +417,7 @@ const LocationTracker = () => {
               <TileLayer url={MAP_TILES[mapType]} />
               <MapClickHandler onMapClick={handleMapPinDrop} enabled={pinMode} />
               {mapPositions.length > 0 && <FitBounds positions={mapPositions} />}
-              {latest && parentPos && <Polyline positions={[[parentPos.lat, parentPos.lng], [latest.latitude, latest.longitude]]} pathOptions={{ color: '#00f0ff', weight: 3, dashArray: '5, 10', opacity: 0.6 }} />}
+              {latest && parentPos && <Polyline positions={[[parentPos.lat, parentPos.lng], [latest.latitude, latest.longitude]]} pathOptions={{ color: '#2563eb', weight: 3, dashArray: '5, 10', opacity: 0.6 }} />}
               {latest && <Marker position={[latest.latitude, latest.longitude]} icon={CHILD_ICON}>
                 <Tooltip direction="top" offset={[0, -10]} opacity={1}>
                   <div style={{ textAlign: 'center' }}>
@@ -436,7 +436,7 @@ const LocationTracker = () => {
                   <Marker position={[z.latitude, z.longitude]} icon={createZoneIcon(z.type)}>
                     <Tooltip direction="top" offset={[0, -10]} opacity={1}>
                       <div style={{ textAlign: 'center' }}>
-                        <strong style={{ fontSize: '14px', color: '#00f0ff' }}>{z.name}</strong><br />
+                        <strong style={{ fontSize: '14px', color: '#2563eb' }}>{z.name}</strong><br />
                         <span style={{ textTransform: 'capitalize', color: '#94a3b8', fontSize: '12px' }}>{z.type}</span>
                       </div>
                     </Tooltip>
@@ -517,7 +517,7 @@ const LocationTracker = () => {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{loc.latitude.toFixed(5)}, {loc.longitude.toFixed(5)}</div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                      {formatTime(loc.timestamp)} {loc.battery != null && `· 🔋 ${loc.battery}%`}
+                      {formatTime(loc.timestamp)} {loc.battery != null && `Â· ðŸ”‹ ${loc.battery}%`}
                     </div>
                   </div>
                 </div>
@@ -531,7 +531,7 @@ const LocationTracker = () => {
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '600' }}>{safeZones.length} saved place{safeZones.length !== 1 ? 's' : ''}</span>
-            <button onClick={() => setShowAddZone(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: '12px', color: '#00f0ff', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+            <button onClick={() => setShowAddZone(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '12px', color: '#2563eb', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
               <Plus size={16} /> Add Place
             </button>
           </div>
@@ -559,7 +559,7 @@ const LocationTracker = () => {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {['home', 'school', 'relative', 'hospital', 'custom'].map(t => (
                     <button key={t} onClick={() => setNewZone(z => ({ ...z, type: t }))} style={{ flex: 1, padding: '10px', borderRadius: '12px', border: `1px solid ${newZone.type === t ? ZONE_COLORS[t] : 'rgba(255,255,255,0.1)'}`, background: newZone.type === t ? `${ZONE_COLORS[t]}15` : 'transparent', color: newZone.type === t ? ZONE_COLORS[t] : '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', textTransform: 'capitalize' }}>
-                      {t === 'home' ? '🏠 Home' : t === 'school' ? '🏫 School' : t === 'relative' ? '👨‍👩‍👧 Relative' : t === 'hospital' ? '🏥 Hospital' : '📍 Custom'}
+                      {t === 'home' ? 'ðŸ  Home' : t === 'school' ? 'ðŸ« School' : t === 'relative' ? 'ðŸ‘¨â€ðŸ‘©â€ðŸ‘§ Relative' : t === 'hospital' ? 'ðŸ¥ Hospital' : 'ðŸ“ Custom'}
                     </button>
                   ))}
                 </div>
@@ -597,7 +597,7 @@ const LocationTracker = () => {
                   )}
                 </div>
 
-                {/* ── Save feedback ── */}
+                {/* â”€â”€ Save feedback â”€â”€ */}
                 {zoneMsg && (
                   <div style={{
                     padding: '12px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: '600',
@@ -606,7 +606,7 @@ const LocationTracker = () => {
                     color: zoneMsg.type === 'success' ? '#10b981' : '#ef4444',
                     display: 'flex', alignItems: 'center', gap: '8px'
                   }}>
-                    {zoneMsg.type === 'success' ? '✅' : '❌'} {zoneMsg.text}
+                    {zoneMsg.type === 'success' ? 'âœ…' : 'âŒ'} {zoneMsg.text}
                   </div>
                 )}
 
@@ -629,10 +629,10 @@ const LocationTracker = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {safeZones.map(z => {
                 const col = ZONE_COLORS[z.type] || '#8b5cf6';
-                const icons = { home: '🏠', school: '🏫', relative: '👨‍👩‍👧', hospital: '🏥', custom: '📍' };
+                const icons = { home: 'ðŸ ', school: 'ðŸ«', relative: 'ðŸ‘¨â€ðŸ‘©â€ðŸ‘§', hospital: 'ðŸ¥', custom: 'ðŸ“' };
                 return (
                   <div key={z.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ fontSize: '28px' }}>{icons[z.type] || '📍'}</div>
+                    <div style={{ fontSize: '28px' }}>{icons[z.type] || 'ðŸ“'}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff' }}>{z.name}</div>
                       <div style={{ fontSize: '12px', color: col, marginTop: '2px' }}>{z.type}</div>
@@ -640,7 +640,7 @@ const LocationTracker = () => {
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => { setNewZone(z); setShowAddZone(true); }} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '10px', padding: '10px', cursor: 'pointer' }}>
-                        <span style={{ fontSize: '14px', color: '#3b82f6' }}>✏️</span>
+                        <span style={{ fontSize: '14px', color: '#3b82f6' }}>âœï¸</span>
                       </button>
                       <button onClick={() => handleDeleteZone(z.id)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '10px', cursor: 'pointer' }}>
                         <Trash2 size={18} color="#ef4444" />
@@ -673,7 +673,7 @@ const LocationTracker = () => {
                     style={{ width: '100%', padding: '14px 16px', paddingLeft: '44px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
                   />
                   <Search size={20} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '14px' }} />
-                  {isSearchingZone && <Loader2 size={18} style={{ position: 'absolute', right: '14px', top: '15px', color: '#00f0ff', animation: 'spin 1s linear infinite' }} />}
+                  {isSearchingZone && <Loader2 size={18} style={{ position: 'absolute', right: '14px', top: '15px', color: '#2563eb', animation: 'spin 1s linear infinite' }} />}
                 </div>
                 {zoneSearchResults.length > 0 ? (
                   <div style={{ position: 'absolute', left: '16px', right: '16px', marginTop: '8px', background: '#1e293b', border: '1px solid #334155', borderRadius: '12px', overflowY: 'auto', maxHeight: '40vh', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 12 }}>

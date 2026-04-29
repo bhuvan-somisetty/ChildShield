@@ -40,7 +40,7 @@ const Analytics = () => {
                   <YAxis stroke="var(--text-muted)" tick={{fill: 'var(--text-secondary)', fontSize: 12}} axisLine={false} tickLine={false} />
                   <Tooltip 
                     cursor={{fill: 'rgba(255,255,255,0.02)'}}
-                    contentStyle={{ backgroundColor: 'rgba(15,15,23,0.9)', border: '1px solid rgba(0,240,255,0.2)', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={{ backgroundColor: 'rgba(15,15,23,0.9)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '8px', color: '#fff' }}
                     itemStyle={{ color: '#fff', fontWeight: 'bold' }}
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={60}>
