@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, User, Smartphone } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
@@ -21,9 +23,13 @@ const Landing = () => {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '30px' }}>
-          {/* Parent Mode Button */}
+          {/* Parent Mode Button - always clear session to force Login page */}
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => {
+              // Clear any stale session so Login page does NOT auto-redirect
+              localStorage.removeItem('cs_token');
+              navigate('/login');
+            }}
             style={{
               display: 'flex', alignItems: 'center', background: 'rgba(30, 30, 45, 0.6)',
               padding: '20px', borderRadius: '16px', border: '1px solid rgba(37,99,235, 0.3)',

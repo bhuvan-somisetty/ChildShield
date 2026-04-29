@@ -5,7 +5,7 @@ import { useLivePolling } from '../../hooks/useLivePolling';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
-  const { user, logout, activeChild, childrenList, setActiveChild, isDemoMode, setIsDemoMode, token } = useAuth();
+  const { user, logout, activeChild, childrenList, setActiveChild, isDemoMode, setIsDemoMode, token, accounts, switchAccount } = useAuth();
   const notifications = useLivePolling('/api/notifications') || [];
   const navigate = useNavigate();
 
@@ -43,20 +43,22 @@ const Navbar = () => {
     setLogoutErr('');
     try {
       const tok = token || localStorage.getItem('cs_token');
-      const r = await fetch('/api/auth/verify-parent-password', {
+      const r = await fetch('/api/auth/verify-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
-        body: JSON.stringify({ password: logoutPin })
+        body: JSON.stringify({ parentControlPassword: logoutPin })
       });
       let d;
       try {
         const text = await r.text();
         d = JSON.parse(text);
       } catch (e) {
-        throw new Error('Server unavailable');
+        throw new Error('Server unavailable - please try again in a moment.');
       }
       if (r.ok && d.success) {
-        setLogoutStep('confirm'); // move to confirmation step
+        setLogoutStep('confirm');
+      } else if (r.status >= 500) {
+        setLogoutErr('Server is waking up. Please try again in a few seconds.');
       } else {
         setLogoutErr(d.error || 'Incorrect password.');
       }
@@ -163,10 +165,11 @@ const Navbar = () => {
             </div>
 
             {profileOpen && (
-              <div style={{ position: 'absolute', top: '110%', right: 0, width: '210px', background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '8px', zIndex: 200, boxShadow: '0 10px 30px rgba(0,0,0,0.6)' }}>
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '6px', overflow: 'hidden' }}>
-                  <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+              <div style={{ position: 'absolute', top: '110%', right: 0, width: '220px', background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '8px', zIndex: 200, boxShadow: '0 10px 30px rgba(0,0,0,0.6)', overflow: 'visible' }}>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '6px' }}>
+                  <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName || 'Parent'}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email || ''}</div>
+                  <span style={{ display: 'inline-block', marginTop: '6px', fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '10px', background: 'rgba(37,99,235,0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(37,99,235,0.3)' }}>PROTECTED</span>
                 </div>
                 {/* Multi-Account List */}
                 {accounts && accounts.length > 0 && (

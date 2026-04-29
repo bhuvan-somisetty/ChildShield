@@ -47,9 +47,9 @@ const ChildSetup = () => {
   };
 
   return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', overflow: 'hidden', position: 'relative' }}>
       {/* Background Ambience */}
-      <div style={{ position: 'absolute', top: '10%', left: '10%', width: '400px', height: '400px', background: 'var(--accent-purple)', filter: 'blur(150px)', opacity: 0.15, borderRadius: '50%' }}></div>
+      <div style={{ position: 'absolute', top: '10%', left: '10%', width: '400px', height: '400px', background: 'var(--accent-primary)', filter: 'blur(150px)', opacity: 0.12, borderRadius: '50%', pointerEvents: 'none' }} />
 
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '420px', padding: '40px', position: 'relative', zIndex: 1 }}>
         
@@ -93,7 +93,7 @@ const ChildSetup = () => {
               </button>
               <div>
                 <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>Profile Gender</h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Let's personalize {name}'s experience.</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Let us personalize {name}'s experience.</p>
               </div>
             </div>
 
@@ -107,7 +107,7 @@ const ChildSetup = () => {
                 onMouseOver={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)'}
                 onMouseOut={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)'}
               >
-                <div style={{ fontSize: '48px' }}>ðŸ‘¦</div>
+                <div style={{ fontSize: '48px' }}>&#128102;</div>
                 <div style={{ color: '#38bdf8', fontWeight: '700', fontSize: '18px' }}>BOY</div>
               </button>
 
@@ -117,17 +117,23 @@ const ChildSetup = () => {
                 onMouseOver={e => e.currentTarget.style.background = 'rgba(244, 114, 182, 0.2)'}
                 onMouseOut={e => e.currentTarget.style.background = 'rgba(244, 114, 182, 0.1)'}
               >
-                <div style={{ fontSize: '48px' }}>ðŸ‘§</div>
+                <div style={{ fontSize: '48px' }}>&#128103;</div>
                 <div style={{ color: '#f472b6', fontWeight: '700', fontSize: '18px' }}>GIRL</div>
               </button>
 
             </div>
 
-             {loading && <div style={{ textAlign: 'center', color: '#2563eb', fontSize: '14px', fontWeight: '500' }}>Preparing profile and QR Code...</div>}
+            {loading && (
+              <div style={{ textAlign: 'center', color: '#2563eb', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <div style={{ width: '16px', height: '16px', border: '2px solid rgba(37,99,235,0.3)', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                Preparing profile and pairing code...
+              </div>
+            )}
 
           </div>
         )}
       </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };
