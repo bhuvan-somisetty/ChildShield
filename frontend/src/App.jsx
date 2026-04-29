@@ -61,12 +61,25 @@ const AppLayout = () => {
 
   if (isLoader) {
     return (
-      <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a0f', gap: '16px' }}>
+      <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a0f', gap: '20px' }}>
         <div style={{
-          width: '48px', height: '48px', border: '3px solid rgba(201, 168, 76, 0.15)',
-          borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite'
-        }}></div>
-        <div style={{ color: '#2563eb', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>AlphaGuard AI</div>
+          width: '80px', height: '80px', borderRadius: '50%',
+          background: 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(16,185,129,0.1))',
+          border: '2px solid #2563eb',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 40px rgba(37,99,235,0.35)',
+          animation: 'shieldBoot 2s ease-in-out infinite'
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"
+              fill="rgba(37,99,235,0.9)" stroke="#2563eb" strokeWidth="1.5"/>
+          </svg>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ color: '#fff', fontSize: '15px', fontWeight: '700', marginBottom: '6px' }}>AlphaGuard AI</div>
+          <div style={{ color: '#64748b', fontSize: '12px' }}>Securing your session...</div>
+        </div>
+        <style>{`@keyframes shieldBoot { 0%,100% { box-shadow: 0 0 20px rgba(37,99,235,0.3); transform: scale(1); } 50% { box-shadow: 0 0 50px rgba(37,99,235,0.6); transform: scale(1.06); } }`}</style>
       </div>
     );
   }
