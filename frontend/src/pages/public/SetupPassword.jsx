@@ -2,7 +2,7 @@
  * SetupPassword.jsx
  * Standalone page shown after every new Google/OAuth login.
  * Forces user to set a Parent Control Password before accessing the app.
- * On success → navigates to /controls.
+ * On success â†’ navigates to /controls.
  */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -67,8 +67,8 @@ const SetupPassword = () => {
       background: 'var(--bg-primary)', padding: '20px', position: 'relative', overflow: 'hidden'
     }}>
       {/* Ambient blobs */}
-      <div style={{ position: 'fixed', top: '10%', left: '5%', width: '350px', height: '350px', background: '#b026ff', filter: 'blur(140px)', opacity: 0.1, borderRadius: '50%', pointerEvents: 'none' }} />
-      <div style={{ position: 'fixed', bottom: '10%', right: '5%', width: '350px', height: '350px', background: '#00f0ff', filter: 'blur(140px)', opacity: 0.08, borderRadius: '50%', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', top: '10%', left: '5%', width: '350px', height: '350px', background: '#2563eb', filter: 'blur(140px)', opacity: 0.1, borderRadius: '50%', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', bottom: '10%', right: '5%', width: '350px', height: '350px', background: '#2563eb', filter: 'blur(140px)', opacity: 0.08, borderRadius: '50%', pointerEvents: 'none' }} />
 
       <div className="glass-panel animate-fade-in" style={{
         width: '100%', maxWidth: '460px', padding: '40px 32px',
@@ -78,17 +78,17 @@ const SetupPassword = () => {
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
             width: '80px', height: '80px', borderRadius: '50%',
-            background: 'rgba(176,38,255,0.12)', border: '2px solid rgba(176,38,255,0.35)',
+            background: 'rgba(37,99,235,0.12)', border: '2px solid rgba(37,99,235,0.35)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
-            boxShadow: '0 0 30px rgba(176,38,255,0.2)'
+            boxShadow: '0 0 30px rgba(37,99,235,0.2)'
           }}>
-            <ShieldCheck size={40} color="#b026ff" />
+            <ShieldCheck size={40} color="#2563eb" />
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '10px', letterSpacing: '-0.5px' }}>
             Set Your Control Password
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.7, maxWidth: '340px', margin: '0 auto' }}>
-            This <strong style={{ color: '#b026ff' }}>Parent Control Password</strong> protects critical actions — child device logout, app unlocking, and security overrides. It is separate from your Google password.
+            This <strong style={{ color: '#2563eb' }}>Parent Control Password</strong> protects critical actions â€” child device logout, app unlocking, and security overrides. It is separate from your Google password.
           </p>
         </div>
 
@@ -126,7 +126,7 @@ const SetupPassword = () => {
                   borderRadius: '12px', color: 'var(--text-primary)', fontSize: '15px', outline: 'none',
                   transition: 'border-color 0.2s'
                 }}
-                onFocus={e => e.target.style.borderColor = 'rgba(176,38,255,0.5)'}
+                onFocus={e => e.target.style.borderColor = 'rgba(37,99,235,0.5)'}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
               />
               <button onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: '#475569' }}>
@@ -167,7 +167,7 @@ const SetupPassword = () => {
                   borderRadius: '12px', color: 'var(--text-primary)', fontSize: '15px', outline: 'none',
                   transition: 'border-color 0.2s'
                 }}
-                onFocus={e => e.target.style.borderColor = 'rgba(176,38,255,0.5)'}
+                onFocus={e => e.target.style.borderColor = 'rgba(37,99,235,0.5)'}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
               />
               <button onClick={() => setShowConfirm(!showConfirm)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: '#475569' }}>
@@ -197,16 +197,16 @@ const SetupPassword = () => {
           style={{
             width: '100%', padding: '16px',
             background: loading || !password || !confirm
-              ? 'rgba(176,38,255,0.3)'
-              : 'linear-gradient(135deg, #b026ff, #7c3aed)',
+              ? 'rgba(37,99,235,0.3)'
+              : 'linear-gradient(135deg, #2563eb, #7c3aed)',
             border: 'none', borderRadius: '14px', color: '#fff',
             fontWeight: '700', fontSize: '16px',
             cursor: loading || !password || !confirm ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s',
-            boxShadow: (!loading && password && confirm) ? '0 4px 20px rgba(176,38,255,0.35)' : 'none'
+            boxShadow: (!loading && password && confirm) ? '0 4px 20px rgba(37,99,235,0.35)' : 'none'
           }}
         >
-          {loading ? 'Setting Password...' : 'Set Control Password & Continue →'}
+          {loading ? 'Setting Password...' : 'Set Control Password & Continue â†’'}
         </button>
       </div>
     </div>

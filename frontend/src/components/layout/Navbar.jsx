@@ -13,7 +13,7 @@ const Navbar = () => {
   const [childSelectOpen, setChildSelectOpen] = useState(false);
   const [notiOpen, setNotiOpen] = useState(false);
 
-  // Logout modal state — step: 'password' | 'confirm'
+  // Logout modal state â€” step: 'password' | 'confirm'
   const [logoutStep, setLogoutStep] = useState('password');
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [logoutPin, setLogoutPin] = useState('');
@@ -75,7 +75,7 @@ const Navbar = () => {
   return (
     <>
       <header className="navbar" style={{ justifyContent: 'space-between' }}>
-        {/* Left — title + child selector */}
+        {/* Left â€” title + child selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
           <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
             ChildShield
@@ -84,7 +84,7 @@ const Navbar = () => {
           {childrenList.length > 0 && (
             <div style={{ position: 'relative', minWidth: 0 }}>
               <div onClick={() => setChildSelectOpen(!childSelectOpen)}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.4)', borderRadius: '20px', cursor: 'pointer', color: 'var(--accent-cyan)', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '160px' }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.4)', borderRadius: '20px', cursor: 'pointer', color: 'var(--accent-cyan)', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '160px' }}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeChild?.name}</span>
                 <ChevronDown size={14} style={{ flexShrink: 0 }} />
               </div>
@@ -92,7 +92,7 @@ const Navbar = () => {
                 <div style={{ position: 'absolute', top: '110%', left: 0, background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '6px', zIndex: 200, minWidth: '160px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
                   {childrenList.map(child => (
                     <div key={child.id} onClick={() => { setActiveChild(child); setChildSelectOpen(false); }}
-                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: activeChild?.id === child.id ? 'rgba(0,240,255,0.08)' : 'transparent', color: activeChild?.id === child.id ? 'var(--accent-cyan)' : 'var(--text-primary)', fontSize: '14px', transition: 'background 0.2s', whiteSpace: 'nowrap' }}>
+                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: activeChild?.id === child.id ? 'rgba(37,99,235,0.08)' : 'transparent', color: activeChild?.id === child.id ? 'var(--accent-cyan)' : 'var(--text-primary)', fontSize: '14px', transition: 'background 0.2s', whiteSpace: 'nowrap' }}>
                       {child.name}
                     </div>
                   ))}
@@ -109,14 +109,14 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Right — demo toggle (desktop only), notifications, profile */}
+        {/* Right â€” demo toggle (desktop only), notifications, profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
 
-          {/* Demo mode toggle — hidden on mobile */}
+          {/* Demo mode toggle â€” hidden on mobile */}
           <div onClick={() => setIsDemoMode(!isDemoMode)} style={{
             display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
             padding: '6px 12px', borderRadius: '20px', transition: 'all 0.3s',
-            background: isDemoMode ? 'rgba(176,38,255,0.2)' : 'rgba(255,255,255,0.05)',
+            background: isDemoMode ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.05)',
             border: isDemoMode ? '1px solid var(--accent-purple)' : '1px solid rgba(255,255,255,0.1)',
           }} className="demo-toggle-btn">
             <Zap size={14} color={isDemoMode ? 'var(--accent-purple)' : 'var(--text-muted)'} fill={isDemoMode ? 'var(--accent-purple)' : 'none'} />
@@ -221,7 +221,7 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* ── Logout Modal ───────────────────────────────────────────────────────── */}
+      {/* â”€â”€ Logout Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {logoutModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#0f172a', border: '1px solid rgba(239,68,68,0.4)', padding: '32px 28px', borderRadius: '20px', width: '100%', maxWidth: '380px', textAlign: 'center', boxShadow: '0 10px 40px rgba(239,68,68,0.2)', boxSizing: 'border-box' }}>

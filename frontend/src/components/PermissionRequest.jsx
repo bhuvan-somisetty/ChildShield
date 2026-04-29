@@ -3,7 +3,7 @@ import { MapPin, Bell, Loader2 } from 'lucide-react';
 
 /**
  * PermissionRequest
- * ─────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * Shows a one-time permission banner for Location + Notifications.
  * Fixes:
  *  - useEffect no longer depends on unstable `onComplete` reference
@@ -18,7 +18,7 @@ const PermissionRequest = ({ onComplete }) => {
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    // Already interacted with banner — never show again
+    // Already interacted with banner â€” never show again
     const dismissed = localStorage.getItem('cs_permission_requested');
     if (dismissed) {
       onCompleteRef.current?.();
@@ -40,7 +40,7 @@ const PermissionRequest = ({ onComplete }) => {
       } catch {}
 
       if (locationGranted && notifyGranted) {
-        // Already have both — save and close
+        // Already have both â€” save and close
         localStorage.setItem('cs_permission_requested', 'true');
         localStorage.setItem('cs_location_permitted',     'true');
         localStorage.setItem('cs_notification_permitted', 'true');
@@ -53,7 +53,7 @@ const PermissionRequest = ({ onComplete }) => {
     };
 
     checkPermissions();
-  }, []); // ← intentionally empty — runs only on mount
+  }, []); // â† intentionally empty â€” runs only on mount
 
   const requestPermissions = async () => {
     setRequesting(true);
@@ -96,14 +96,14 @@ const PermissionRequest = ({ onComplete }) => {
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
       background: 'rgba(15, 23, 42, 0.97)', backdropFilter: 'blur(20px)',
-      borderTop: '1px solid rgba(0, 240, 255, 0.2)', padding: '20px',
+      borderTop: '1px solid rgba(37,99,235, 0.2)', padding: '20px',
       zIndex: 9999, animation: 'slideUp 0.3s ease-out',
     }}>
       <style>{`@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
       <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(0, 240, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MapPin size={20} color="#00f0ff" />
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(37,99,235, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <MapPin size={20} color="#2563eb" />
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff' }}>Enable Permissions</div>
@@ -130,7 +130,7 @@ const PermissionRequest = ({ onComplete }) => {
           <button
             onClick={requestPermissions}
             disabled={requesting}
-            style={{ padding: '10px 24px', background: '#00f0ff', border: 'none', borderRadius: '10px', color: '#0f172a', fontSize: '13px', fontWeight: '700', cursor: requesting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', opacity: requesting ? 0.8 : 1 }}
+            style={{ padding: '10px 24px', background: '#2563eb', border: 'none', borderRadius: '10px', color: '#0f172a', fontSize: '13px', fontWeight: '700', cursor: requesting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px', opacity: requesting ? 0.8 : 1 }}
           >
             {requesting ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : null}
             {requesting ? 'Enabling...' : 'Enable All'}

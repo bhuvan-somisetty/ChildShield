@@ -44,13 +44,13 @@ const PasswordSetupModal = ({ onComplete }) => {
       background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px'
     }}>
-      <div style={{ position: 'fixed', top: '15%', left: '20%', width: '400px', height: '400px', background: '#b026ff', filter: 'blur(160px)', opacity: 0.08, borderRadius: '50%' }} />
+      <div style={{ position: 'fixed', top: '15%', left: '20%', width: '400px', height: '400px', background: '#2563eb', filter: 'blur(160px)', opacity: 0.08, borderRadius: '50%' }} />
       
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '40px 32px', position: 'relative', zIndex: 1 }}>
         {/* Icon */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
-          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(176,38,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid rgba(176,38,255,0.3)' }}>
-            <ShieldCheck size={40} color="#b026ff" />
+          <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid rgba(37,99,235,0.3)' }}>
+            <ShieldCheck size={40} color="#2563eb" />
           </div>
         </div>
 
@@ -58,7 +58,7 @@ const PasswordSetupModal = ({ onComplete }) => {
           Set Parent Control Password
         </h2>
         <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '14px', lineHeight: 1.7, marginBottom: '28px' }}>
-          Since you signed in with Google, you need to set a <strong style={{ color: '#b026ff' }}>Parent Control Password</strong>. 
+          Since you signed in with Google, you need to set a <strong style={{ color: '#2563eb' }}>Parent Control Password</strong>. 
           This is used to protect critical actions like child device logout, app unlocking, and security overrides.
         </p>
 
@@ -107,7 +107,7 @@ const PasswordSetupModal = ({ onComplete }) => {
         <button
           onClick={handleSubmit}
           disabled={loading || !password || !confirm}
-          style={{ width: '100%', padding: '16px', background: '#b026ff', border: 'none', borderRadius: '14px', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 20px rgba(176,38,255,0.3)' }}
+          style={{ width: '100%', padding: '16px', background: '#2563eb', border: 'none', borderRadius: '14px', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 20px rgba(37,99,235,0.3)' }}
         >
           {loading ? 'Setting Password...' : 'Set Control Password'}
         </button>

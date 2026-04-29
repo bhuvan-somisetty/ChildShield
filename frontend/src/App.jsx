@@ -37,7 +37,7 @@ import PairingSetup from './pages/child/PairingSetup';
 import ChildDeviceView from './pages/child/ChildDeviceView';
 import ChildPermissionWizard from './pages/child/ChildPermissionWizard';
 
-// ─── useIsMobile hook ──────────────────────────────────────────────────────────
+// â”€â”€â”€ useIsMobile hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const useIsMobile = () => {
   const [mobile, setMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -64,9 +64,9 @@ const AppLayout = () => {
       <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a0f', gap: '16px' }}>
         <div style={{
           width: '48px', height: '48px', border: '3px solid rgba(201, 168, 76, 0.15)',
-          borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 0.8s linear infinite'
+          borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite'
         }}></div>
-        <div style={{ color: '#c9a84c', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>AlphaGuard AI</div>
+        <div style={{ color: '#2563eb', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>AlphaGuard AI</div>
       </div>
     );
   }
@@ -80,7 +80,7 @@ const AppLayout = () => {
       <div className="main-content">
         <Navbar />
         <main className="page-content" style={isMobile ? { paddingBottom: '80px' } : undefined}>
-          <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading…</div>}>
+          <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loadingâ€¦</div>}>
             <Routes location={location} key={location.pathname}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/history" element={<WatchHistory />} />
@@ -100,8 +100,6 @@ const AppLayout = () => {
         {isMobile && <BottomNav />}
       </div>
 
-      {/* Floating AI Assistant */}
-      <AIAssistant />
     </div>
   );
 };
@@ -123,7 +121,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
-        {/* Password setup — standalone page, requires JWT but no password yet */}
+        {/* Password setup â€” standalone page, requires JWT but no password yet */}
         <Route path="/setup-password" element={<SetupPassword />} />
         {/* Child device routes */}
         <Route path="/child-setup" element={<ChildSetup />} />

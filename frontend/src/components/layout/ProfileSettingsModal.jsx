@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-// ─── Reusable Components ─────────────────────────────────────────────────────
+// â”€â”€â”€ Reusable Components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SettingRow = ({ icon: Icon, iconColor = '#64748b', iconBg = 'rgba(255,255,255,0.06)', label, desc, right, onClick, danger }) => (
   <button
@@ -64,7 +64,7 @@ const InputField = ({ icon: Icon, iconColor, placeholder, value, onChange, type 
         padding: '12px 44px', borderRadius: '10px', color: '#fff',
         fontSize: '14px', outline: 'none', transition: 'border-color 0.2s'
       }}
-      onFocus={e => e.target.style.borderColor = 'rgba(0,240,255,0.4)'}
+      onFocus={e => e.target.style.borderColor = 'rgba(37,99,235,0.4)'}
       onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
     />
     {right}
@@ -84,7 +84,7 @@ const Alert = ({ type, msg }) => {
   );
 };
 
-// ─── Password Change View ────────────────────────────────────────────────────
+// â”€â”€â”€ Password Change View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PasswordView = ({ user, token, onBack }) => {
   const [view, setView] = useState('change');
   const [oldPass, setOldPass] = useState('');
@@ -166,44 +166,44 @@ const PasswordView = ({ user, token, onBack }) => {
       {view === 'change' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ position: 'relative' }}><InputField icon={Key} placeholder="Old Password" value={oldPass} onChange={e => setOldPass(e.target.value)} type={showOld ? 'text' : 'password'} right={<EyeBtn show={showOld} toggle={() => setShowOld(!showOld)} />} /></div>
-          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#00f0ff" placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)} type={showNew ? 'text' : 'password'} right={<EyeBtn show={showNew} toggle={() => setShowNew(!showNew)} />} /></div>
-          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#00f0ff" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} type={showConfirm ? 'text' : 'password'} right={<EyeBtn show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />} /></div>
+          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#2563eb" placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)} type={showNew ? 'text' : 'password'} right={<EyeBtn show={showNew} toggle={() => setShowNew(!showNew)} />} /></div>
+          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#2563eb" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} type={showConfirm ? 'text' : 'password'} right={<EyeBtn show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />} /></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-            <button onClick={() => { setView('otp'); setError(''); setSuccess(''); }} style={{ background: 'transparent', border: 'none', color: '#b026ff', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Forgot Old Password?</button>
-            <button onClick={handleChangePassword} disabled={loading} style={{ background: '#00f0ff', color: '#000', border: 'none', padding: '11px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>{loading ? 'Saving…' : 'Update Password'}</button>
+            <button onClick={() => { setView('otp'); setError(''); setSuccess(''); }} style={{ background: 'transparent', border: 'none', color: '#2563eb', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Forgot Old Password?</button>
+            <button onClick={handleChangePassword} disabled={loading} style={{ background: '#2563eb', color: '#000', border: 'none', padding: '11px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>{loading ? 'Savingâ€¦' : 'Update Password'}</button>
           </div>
         </div>
       )}
 
       {view === 'otp' && (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ border: '1px dashed rgba(176,38,255,0.4)', padding: '20px', borderRadius: '12px', background: 'rgba(176,38,255,0.05)', marginBottom: '20px', color: '#94a3b8', fontSize: '14px', lineHeight: 1.6 }}>
+          <div style={{ border: '1px dashed rgba(37,99,235,0.4)', padding: '20px', borderRadius: '12px', background: 'rgba(37,99,235,0.05)', marginBottom: '20px', color: '#94a3b8', fontSize: '14px', lineHeight: 1.6 }}>
             A 6-digit code will be sent to <strong style={{ color: '#fff' }}>{user?.email}</strong>
           </div>
-          <button onClick={handleSendOTP} disabled={loading} style={{ width: '100%', background: '#b026ff', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>{loading ? 'Sending…' : 'Send Verification OTP'}</button>
+          <button onClick={handleSendOTP} disabled={loading} style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>{loading ? 'Sendingâ€¦' : 'Send Verification OTP'}</button>
         </div>
       )}
 
       {view === 'otp-verify' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <input placeholder="Enter 6-digit OTP" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value)}
-            style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(176,38,255,0.4)', padding: '16px', borderRadius: '10px', color: '#fff', fontSize: '22px', letterSpacing: '10px', textAlign: 'center', outline: 'none' }} />
-          <button onClick={handleVerifyOTP} disabled={loading} style={{ background: '#b026ff', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>Verify OTP</button>
+            style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(37,99,235,0.4)', padding: '16px', borderRadius: '10px', color: '#fff', fontSize: '22px', letterSpacing: '10px', textAlign: 'center', outline: 'none' }} />
+          <button onClick={handleVerifyOTP} disabled={loading} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>Verify OTP</button>
         </div>
       )}
 
       {view === 'otp-reset' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#b026ff" placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)} type={showNew ? 'text' : 'password'} right={<EyeBtn show={showNew} toggle={() => setShowNew(!showNew)} />} /></div>
-          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#b026ff" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} type={showConfirm ? 'text' : 'password'} right={<EyeBtn show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />} /></div>
-          <button onClick={handleResetPassword} disabled={loading} style={{ background: '#b026ff', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', marginTop: '4px' }}>{loading ? 'Resetting…' : 'Reset & Save Password'}</button>
+          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#2563eb" placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)} type={showNew ? 'text' : 'password'} right={<EyeBtn show={showNew} toggle={() => setShowNew(!showNew)} />} /></div>
+          <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#2563eb" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} type={showConfirm ? 'text' : 'password'} right={<EyeBtn show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />} /></div>
+          <button onClick={handleResetPassword} disabled={loading} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', marginTop: '4px' }}>{loading ? 'Resettingâ€¦' : 'Reset & Save Password'}</button>
         </div>
       )}
     </div>
   );
 };
 
-// ─── Main Profile Side Panel ─────────────────────────────────────────────────
+// â”€â”€â”€ Main Profile Side Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ProfileSettingsModal = ({ onClose }) => {
   const { user, token, logout } = useAuth();
   const [view, setView] = useState('profile');
@@ -212,7 +212,7 @@ const ProfileSettingsModal = ({ onClose }) => {
 
   return (
     <>
-      {/* Backdrop — light dimming only, dashboard stays visible on left */}
+      {/* Backdrop â€” light dimming only, dashboard stays visible on left */}
       <div
         onClick={onClose}
         style={{
@@ -222,7 +222,7 @@ const ProfileSettingsModal = ({ onClose }) => {
         }}
       />
 
-      {/* Right-half panel — exactly 50% of screen width */}
+      {/* Right-half panel â€” exactly 50% of screen width */}
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
         width: '50vw',
@@ -232,7 +232,7 @@ const ProfileSettingsModal = ({ onClose }) => {
         zIndex: 9999, display: 'flex', flexDirection: 'column',
         animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1)'
       }}>
-        {/* ── Header bar ────────────────────────────────────────────────────── */}
+        {/* â”€â”€ Header bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '12px',
           padding: '16px 20px',
@@ -272,7 +272,7 @@ const ProfileSettingsModal = ({ onClose }) => {
           </button>
         </div>
 
-        {/* ── Scrollable content ─────────────────────────────────────────────── */}
+        {/* â”€â”€ Scrollable content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
 
           {view === 'password' ? (
@@ -286,7 +286,7 @@ const ProfileSettingsModal = ({ onClose }) => {
                   background: 'linear-gradient(135deg, #052659, #1e40af)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '26px', fontWeight: '900', color: '#C1E8FF',
-                  border: '2px solid rgba(0,240,255,0.2)',
+                  border: '2px solid rgba(37,99,235,0.2)',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
                 }}>
                   {initials(user?.fullName)}
@@ -295,16 +295,16 @@ const ProfileSettingsModal = ({ onClose }) => {
                   {user?.fullName || 'Parent Account'}
                 </div>
                 <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>{user?.email}</div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '20px', background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)' }}>
-                  <ShieldCheck size={12} color="#00f0ff" />
-                  <span style={{ fontSize: '11px', color: '#00f0ff', fontWeight: '700' }}>Protected Account</span>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '20px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)' }}>
+                  <ShieldCheck size={12} color="#2563eb" />
+                  <span style={{ fontSize: '11px', color: '#2563eb', fontWeight: '700' }}>Protected Account</span>
                 </div>
               </div>
 
               {/* Account */}
               <SectionCard title="Account">
                 <SettingRow icon={User} iconColor="#3b82f6" iconBg="rgba(59,130,246,0.1)" label="Manage Profile" desc="Update your name and email" onClick={() => {}} />
-                <SettingRow icon={Key} iconColor="#b026ff" iconBg="rgba(176,38,255,0.1)" label="Password & Security" desc="Change your login password" onClick={() => setView('password')} />
+                <SettingRow icon={Key} iconColor="#2563eb" iconBg="rgba(37,99,235,0.1)" label="Password & Security" desc="Change your login password" onClick={() => setView('password')} />
                 <SettingRow icon={Bell} iconColor="#f59e0b" iconBg="rgba(245,158,11,0.1)" label="Notifications" desc="Manage alerts and push notifications" onClick={() => {}} />
                 <SettingRow icon={Globe} iconColor="#06b6d4" iconBg="rgba(6,182,212,0.1)" label="Language" right="English" onClick={() => {}} />
               </SectionCard>
@@ -313,10 +313,10 @@ const ProfileSettingsModal = ({ onClose }) => {
               <SectionCard title="Preferences">
                 <SettingRow icon={Palette} iconColor="#8b5cf6" iconBg="rgba(139,92,246,0.1)" label="Theme / Appearance" right="Dark" onClick={() => {}} />
                 <SettingRow icon={Smartphone} iconColor="#10b981" iconBg="rgba(16,185,129,0.1)" label="Connected Devices" desc="Manage paired child devices" onClick={() => { onClose(); }} />
-                <SettingRow icon={Shield} iconColor="#00f0ff" iconBg="rgba(0,240,255,0.08)" label="Privacy Policy" onClick={() => {}} />
+                <SettingRow icon={Shield} iconColor="#2563eb" iconBg="rgba(37,99,235,0.08)" label="Privacy Policy" onClick={() => {}} />
               </SectionCard>
 
-              {/* Account Linking — Google + Facebook only (no Twitter, no Apple) */}
+              {/* Account Linking â€” Google + Facebook only (no Twitter, no Apple) */}
               <SectionCard title="Account Linking">
                 <div style={{ padding: '14px 20px' }}>
                   <div style={{ fontSize: '12px', color: '#475569', marginBottom: '14px' }}>
@@ -366,7 +366,7 @@ const ProfileSettingsModal = ({ onClose }) => {
               </SectionCard>
 
               <div style={{ textAlign: 'center', fontSize: '11px', color: '#1e293b', paddingTop: '8px', paddingBottom: '8px' }}>
-                ChildShield AI · Family Safety Platform · v1.0.0
+                ChildShield AI Â· Family Safety Platform Â· v1.0.0
               </div>
             </>
           )}

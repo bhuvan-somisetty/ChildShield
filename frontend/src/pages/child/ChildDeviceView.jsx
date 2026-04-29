@@ -11,16 +11,16 @@ import { VoiceEvents } from '../../hooks/VoiceAssistant';
 import { useWebRTC } from '../../hooks/useWebRTC';
 
 const INSTALLED_APPS = [
-  { name: 'YouTube', icon: '📺', category: 'Entertainment', color: '#ef4444' },
-  { name: 'Instagram', icon: '📸', category: 'Social', color: '#e91e8c' },
-  { name: 'WhatsApp', icon: '💬', category: 'Messaging', color: '#10b981' },
-  { name: 'TikTok', icon: '🎵', category: 'Entertainment', color: '#000' },
-  { name: 'Snapchat', icon: '👻', category: 'Social', color: '#f59e0b' },
-  { name: 'Chrome', icon: '🌐', category: 'Browser', color: '#3b82f6' },
-  { name: 'Roblox', icon: '🎮', category: 'Gaming', color: '#8b5cf6' },
-  { name: 'Spotify', icon: '🎧', category: 'Music', color: '#10b981' },
-  { name: 'Telegram', icon: '✈️', category: 'Messaging', color: '#0891b2' },
-  { name: 'Gallery', icon: '🖼️', category: 'System', color: '#6366f1' },
+  { name: 'YouTube', icon: 'ðŸ“º', category: 'Entertainment', color: '#ef4444' },
+  { name: 'Instagram', icon: 'ðŸ“¸', category: 'Social', color: '#e91e8c' },
+  { name: 'WhatsApp', icon: 'ðŸ’¬', category: 'Messaging', color: '#10b981' },
+  { name: 'TikTok', icon: 'ðŸŽµ', category: 'Entertainment', color: '#000' },
+  { name: 'Snapchat', icon: 'ðŸ‘»', category: 'Social', color: '#f59e0b' },
+  { name: 'Chrome', icon: 'ðŸŒ', category: 'Browser', color: '#3b82f6' },
+  { name: 'Roblox', icon: 'ðŸŽ®', category: 'Gaming', color: '#8b5cf6' },
+  { name: 'Spotify', icon: 'ðŸŽ§', category: 'Music', color: '#10b981' },
+  { name: 'Telegram', icon: 'âœˆï¸', category: 'Messaging', color: '#0891b2' },
+  { name: 'Gallery', icon: 'ðŸ–¼ï¸', category: 'System', color: '#6366f1' },
 ];
 
 const haversine = (lat1, lon1, lat2, lon2) => {
@@ -32,7 +32,7 @@ const haversine = (lat1, lon1, lat2, lon2) => {
 };
 const formatDist = (m) => m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
 
-// ─── Countdown formatter ───────────────────────────────────────────────────────
+// â”€â”€â”€ Countdown formatter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const formatTime = (secs) => {
   if (!secs || secs <= 0) return '00:00';
   const h = Math.floor(secs / 3600);
@@ -42,7 +42,7 @@ const formatTime = (secs) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-// ─── SVG Circular progress ring ────────────────────────────────────────────────
+// â”€â”€â”€ SVG Circular progress ring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ProgressRing = ({ pct, color, size = 180, stroke = 10 }) => {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -59,7 +59,7 @@ const ProgressRing = ({ pct, color, size = 180, stroke = 10 }) => {
   );
 };
 
-// ─── Protection card ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Protection card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ProtectCard = ({ icon: Icon, label, sublabel, active, color }) => (
   <div style={{
     background: active ? `${color}10` : 'rgba(255,255,255,0.02)',
@@ -92,7 +92,7 @@ const ProtectCard = ({ icon: Icon, label, sublabel, active, color }) => (
   </div>
 );
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ChildDeviceView = () => {
   const [session] = useState(() => {
     try { return JSON.parse(localStorage.getItem('child_session')); } catch { return null; }
@@ -135,7 +135,7 @@ const ChildDeviceView = () => {
   const parentName = session?.parentName || status?.parentName || 'Parent';
   const childName = session?.childName || status?.name || 'Child';
   const childId = session?.childId;
-  // ─── Poll for logout request status when pending ──────────────────────────────
+  // â”€â”€â”€ Poll for logout request status when pending â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (logoutRequestStatus !== 'pending' || !session?.childId) return;
     const iv = setInterval(async () => {
@@ -161,7 +161,7 @@ const ChildDeviceView = () => {
     return () => clearInterval(iv);
   }, [logoutRequestStatus, session?.childId, navigate]);
 
-  // ─── beforeunload protection ──────────────────────────────────────────────────
+  // â”€â”€â”€ beforeunload protection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
@@ -189,7 +189,7 @@ const ChildDeviceView = () => {
     }
   }, []);
 
-  // ─── Polling ─────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Polling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!session?.childId) { navigate('/child-setup'); return; }
     let mounted = true;
@@ -230,14 +230,14 @@ const ChildDeviceView = () => {
     return () => { mounted = false; clearInterval(iv); };
   }, [session, navigate, checkVoice]);
 
-  // ─── Live countdown tick ──────────────────────────────────────────────────────
+  // â”€â”€â”€ Live countdown tick â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!timerEndMs) return;
     const iv = setInterval(() => setCountdown(Math.max(0, Math.floor((timerEndMs - Date.now()) / 1000))), 1000);
     return () => clearInterval(iv);
   }, [timerEndMs]);
 
-  // ─── GPS Location Tracker ─────────────────────────────────────────────────────
+  // â”€â”€â”€ GPS Location Tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!session?.childId) return;
 
@@ -284,7 +284,7 @@ const ChildDeviceView = () => {
     };
   }, [status?.locationTrackingEnabled, session?.childId]);
 
-  // ─── Reverse geocode child's current location ─────────────────────────────────
+  // â”€â”€â”€ Reverse geocode child's current location â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const lastGeoKeyRef = useRef('');
   useEffect(() => {
     if (!currentLoc?.lat) return;
@@ -298,7 +298,7 @@ const ChildDeviceView = () => {
       }).catch(() => {});
   }, [currentLoc?.lat, currentLoc?.lng]);
 
-  // ─── Fetch safe zones for child ───────────────────────────────────────────────
+  // â”€â”€â”€ Fetch safe zones for child â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!session?.childId) return;
     // Try fetching safe zones without auth (child doesn't have parent token)
@@ -308,7 +308,7 @@ const ChildDeviceView = () => {
       .catch(() => {});
   }, [session?.childId]);
 
-  // ─── WebRTC Responder (Camera / Audio / Screen) ───────────────────────────────
+  // â”€â”€â”€ WebRTC Responder (Camera / Audio / Screen) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const { connectSocket, handleOffer: rtcHandleOffer, socket: socketRef, pcRef } = useWebRTC(session?.childId, 'child');
   const [activeStreams, setActiveStreams] = useState({ camera: false, audio: false, screen: false });
   const activeStreamRefs = useRef({});
@@ -408,19 +408,19 @@ const ChildDeviceView = () => {
     };
   }, [session?.childId, connectSocket, rtcHandleOffer]);
 
-  // ─── Night block enforcement ──────────────────────────────────────────────────
+  // â”€â”€â”€ Night block enforcement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const isNightBlocked = useCallback(() => {
     if (!status?.nightRestriction) return false;
     const h = new Date().getHours();
     return h >= 21 || h < 7;
   }, [status?.nightRestriction]);
 
-  // ─── Guards ───────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Guards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!status) return (
     <div style={{ height: '100dvh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
-      <div style={{ width: '56px', height: '56px', border: '3px solid rgba(0,240,255,0.12)', borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <div style={{ width: '56px', height: '56px', border: '3px solid rgba(37,99,235,0.12)', borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
       <div style={{ textAlign: 'center' }}>
-        <p style={{ color: '#fff', fontWeight: '600', marginBottom: '4px' }}>Connecting to {session?.parentName || 'parent'}…</p>
+        <p style={{ color: '#fff', fontWeight: '600', marginBottom: '4px' }}>Connecting to {session?.parentName || 'parent'}â€¦</p>
         <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Syncing device restrictions</p>
       </div>
     </div>
@@ -431,17 +431,17 @@ const ChildDeviceView = () => {
   // Night enforcement wall
   if (isNightBlocked()) return (
     <div style={{ height: '100dvh', background: '#07070f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px', textAlign: 'center' }}>
-      <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(176,38,255,0.1)', border: '2px solid rgba(176,38,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '28px', boxShadow: '0 0 40px rgba(176,38,255,0.2)' }}>
-        <Moon size={48} color="#b026ff" />
+      <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(37,99,235,0.1)', border: '2px solid rgba(37,99,235,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '28px', boxShadow: '0 0 40px rgba(37,99,235,0.2)' }}>
+        <Moon size={48} color="#2563eb" />
       </div>
       <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>Night Restriction Active</h2>
       <p style={{ color: '#64748b', fontSize: '15px', lineHeight: 1.7, maxWidth: '300px' }}>
         ChildShield is blocking device use between{' '}
-        <strong style={{ color: '#b026ff' }}>9:00 PM – 7:00 AM</strong>.{'\n'}
+        <strong style={{ color: '#2563eb' }}>9:00 PM â€“ 7:00 AM</strong>.{'\n'}
         Your parent has enabled this.
       </p>
-      <div style={{ marginTop: '32px', padding: '12px 24px', borderRadius: '30px', background: 'rgba(176,38,255,0.08)', border: '1px solid rgba(176,38,255,0.2)', color: '#b026ff', fontSize: '13px', fontWeight: '600' }}>
-        🌙 See you in the morning!
+      <div style={{ marginTop: '32px', padding: '12px 24px', borderRadius: '30px', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)', color: '#2563eb', fontSize: '13px', fontWeight: '600' }}>
+        ðŸŒ™ See you in the morning!
       </div>
     </div>
   );
@@ -455,22 +455,22 @@ const ChildDeviceView = () => {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Ambient glow ─────────────────────────────────────────────────────── */}
+      {/* â”€â”€ Ambient glow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div style={{
         position: 'fixed', top: '-15%', left: '50%', transform: 'translateX(-50%)', width: '700px', height: '700px', borderRadius: '50%', pointerEvents: 'none', zIndex: 0,
         background: isPaused
           ? 'radial-gradient(ellipse, rgba(245,158,11,0.06) 0%, transparent 65%)'
-          : 'radial-gradient(ellipse, rgba(0,240,255,0.06) 0%, transparent 65%)'
+          : 'radial-gradient(ellipse, rgba(37,99,235,0.06) 0%, transparent 65%)'
       }} />
 
-      {/* ── Top bar ──────────────────────────────────────────────────────────── */}
+      {/* â”€â”€ Top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div style={{ position: 'relative', zIndex: 10, padding: '14px 20px', background: 'rgba(255,255,255,0.015)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ShieldCheck size={18} color="var(--accent-cyan)" />
           <span style={{ fontWeight: '800', color: '#fff', fontSize: '15px', letterSpacing: '-0.3px' }}>
             Child<span style={{ color: 'var(--accent-cyan)' }}>Shield</span>
           </span>
-          <span style={{ fontSize: '10px', background: 'rgba(0,240,255,0.1)', color: 'var(--accent-cyan)', padding: '2px 8px', borderRadius: '20px', fontWeight: '700', letterSpacing: '0.05em' }}>CHILD MODE</span>
+          <span style={{ fontSize: '10px', background: 'rgba(37,99,235,0.1)', color: 'var(--accent-cyan)', padding: '2px 8px', borderRadius: '20px', fontWeight: '700', letterSpacing: '0.05em' }}>CHILD MODE</span>
           {activeStreams.camera && <span style={{ fontSize: '10px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}><Camera size={10} /> CAM</span>}
           {activeStreams.audio && <span style={{ fontSize: '10px', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', padding: '2px 8px', borderRadius: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}><Mic size={10} /> MIC</span>}
           {activeStreams.screen && <span style={{ fontSize: '10px', background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', padding: '2px 8px', borderRadius: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}><Monitor size={10} /> SCR</span>}
@@ -568,7 +568,7 @@ const ChildDeviceView = () => {
                 <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <CheckCircle2 size={32} color="#10b981" />
                 </div>
-                <h3 style={{ color: '#10b981', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Approved! ✅</h3>
+                <h3 style={{ color: '#10b981', fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>Approved! âœ…</h3>
                 <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '20px' }}>You got approval from <strong style={{ color: '#10b981' }}>{parentName}</strong>. Device logging out...</p>
               </>
             )}
@@ -590,28 +590,28 @@ const ChildDeviceView = () => {
         </div>
       )}
 
-      {/* ── Scrollable body ──────────────────────────────────────────────────── */}
+      {/* â”€â”€ Scrollable body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px 48px', maxWidth: '480px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
 
-        {/* ── Greeting ───────────────────────────────────────────────────────── */}
+        {/* â”€â”€ Greeting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ marginBottom: '22px' }}>
           <h1 style={{ fontSize: '28px', fontWeight: '900', color: '#fff', marginBottom: '4px' }}>
-            Hello, {childName} 👋
+            Hello, {childName} ðŸ‘‹
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Your session is being supervised by ChildShield AI.</p>
         </div>
 
-        {/* ── Parent connection card ─────────────────────────────────────────── */}
+        {/* â”€â”€ Parent connection card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{
-          background: 'rgba(176,38,255,0.05)', border: '1px solid rgba(176,38,255,0.18)',
+          background: 'rgba(37,99,235,0.05)', border: '1px solid rgba(37,99,235,0.18)',
           borderRadius: '20px', padding: '16px 20px', marginBottom: status?.locationTrackingEnabled ? '8px' : '16px',
           display: 'flex', alignItems: 'center', gap: '14px'
         }}>
-          <div style={{ width: '46px', height: '46px', borderRadius: '50%', flexShrink: 0, background: 'rgba(176,38,255,0.1)', border: '1px solid rgba(176,38,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <User size={20} color="#b026ff" />
+          <div style={{ width: '46px', height: '46px', borderRadius: '50%', flexShrink: 0, background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <User size={20} color="#2563eb" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '10px', color: '#b026ff', fontWeight: '800', letterSpacing: '0.1em', marginBottom: '3px' }}>CONNECTED TO PARENT</div>
+            <div style={{ fontSize: '10px', color: '#2563eb', fontWeight: '800', letterSpacing: '0.1em', marginBottom: '3px' }}>CONNECTED TO PARENT</div>
             <div style={{ fontSize: '19px', fontWeight: '800', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{parentName}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: '700', color: 'var(--accent-green)' }}>
@@ -619,10 +619,10 @@ const ChildDeviceView = () => {
           </div>
         </div>
 
-        {/* ── Location Tracking Indicator ────────────────────────────────────── */}
+        {/* â”€â”€ Location Tracking Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {status?.locationTrackingEnabled && (
           <div style={{
-            background: 'rgba(0, 240, 255, 0.05)', border: '1px solid rgba(0, 240, 255, 0.2)',
+            background: 'rgba(37,99,235, 0.05)', border: '1px solid rgba(37,99,235, 0.2)',
             borderRadius: '12px', padding: '10px 16px', marginBottom: '16px',
             display: 'flex', alignItems: 'center', gap: '10px', animation: 'fade-in 0.3s'
           }}>
@@ -631,10 +631,10 @@ const ChildDeviceView = () => {
           </div>
         )}
 
-        {/* ── Session state + timer ring ────────────────────────────────────── */}
+        {/* â”€â”€ Session state + timer ring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{
-          background: isPaused ? 'rgba(245,158,11,0.04)' : 'rgba(0,240,255,0.03)',
-          border: `1px solid ${isPaused ? 'rgba(245,158,11,0.18)' : 'rgba(0,240,255,0.12)'}`,
+          background: isPaused ? 'rgba(245,158,11,0.04)' : 'rgba(37,99,235,0.03)',
+          border: `1px solid ${isPaused ? 'rgba(245,158,11,0.18)' : 'rgba(37,99,235,0.12)'}`,
           borderRadius: '20px', padding: '28px 24px', marginBottom: '16px',
           display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
@@ -647,7 +647,7 @@ const ChildDeviceView = () => {
             color: stateColor, fontWeight: '800', fontSize: '12px', letterSpacing: '0.08em'
           }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', boxShadow: '0 0 8px currentColor', animation: 'pulse-dot 2s infinite' }} />
-            {isPaused ? '⏸ PAUSED' : '▶ ACTIVE'}
+            {isPaused ? 'â¸ PAUSED' : 'â–¶ ACTIVE'}
           </div>
 
           {/* Timer ring OR daily limit */}
@@ -684,14 +684,14 @@ const ChildDeviceView = () => {
           )}
         </div>
 
-        {/* ── Active protections ────────────────────────────────────────────── */}
+        {/* â”€â”€ Active protections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ marginBottom: '16px' }}>
           <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '12px' }}>ACTIVE PROTECTIONS</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <ProtectCard icon={Eye} label="Safe Browsing" color="var(--accent-cyan)"
               active={!!status.safeMode}
               sublabel={{ on: 'Risky sites blocked', off: 'Not enforced' }} />
-            <ProtectCard icon={Shield} label="Face Guard" color="#b026ff"
+            <ProtectCard icon={Shield} label="Face Guard" color="#2563eb"
               active={!!status.facePresenceEnabled}
               sublabel={{ on: 'Presence monitored', off: 'Not active' }} />
             <ProtectCard icon={Volume2} label="Voice Alerts" color="var(--accent-green)"
@@ -699,11 +699,11 @@ const ChildDeviceView = () => {
               sublabel={{ on: 'Audio reminders on', off: 'Muted' }} />
             <ProtectCard icon={Moon} label="Night Block" color="#8b5cf6"
               active={!!status.nightRestriction}
-              sublabel={{ on: '9PM–7AM restricted', off: 'No time block' }} />
+              sublabel={{ on: '9PMâ€“7AM restricted', off: 'No time block' }} />
           </div>
         </div>
 
-        {/* ── Night block status banner (active but not current night time) ── */}
+        {/* â”€â”€ Night block status banner (active but not current night time) â”€â”€ */}
         {status.nightRestriction && !isNightBlocked() && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
@@ -718,14 +718,14 @@ const ChildDeviceView = () => {
           </div>
         )}
 
-        {/* ── Session info table ─────────────────────────────────────────────── */}
+        {/* â”€â”€ Session info table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '16px 20px', marginBottom: '16px' }}>
           <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '14px' }}>SESSION DETAILS</div>
           {[
             { label: 'Child profile', value: childName, color: '#fff' },
-            { label: 'Monitored by', value: parentName, color: '#b026ff' },
+            { label: 'Monitored by', value: parentName, color: '#2563eb' },
             { label: 'Session state', value: status.deviceState.toUpperCase(), color: stateColor },
-            { label: 'Sync', value: connected ? '● Live' : '○ Offline', color: connected ? 'var(--accent-green)' : 'var(--accent-red)' },
+            { label: 'Sync', value: connected ? 'â— Live' : 'â—‹ Offline', color: connected ? 'var(--accent-green)' : 'var(--accent-red)' },
             { label: 'Safe browsing', value: status.safeMode ? 'Enabled' : 'Disabled', color: status.safeMode ? 'var(--accent-cyan)' : '#475569' },
             { label: 'Night block', value: status.nightRestriction ? 'Enabled' : 'Off', color: status.nightRestriction ? '#8b5cf6' : '#475569' },
           ].map(({ label, value, color }) => (
@@ -736,7 +736,7 @@ const ChildDeviceView = () => {
           ))}
         </div>
 
-        {/* ── All-good confirmation ─────────────────────────────────────────── */}
+        {/* â”€â”€ All-good confirmation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {!isPaused && connected && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 18px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '14px' }}>
             <CheckCircle2 size={18} color="var(--accent-green)" />
@@ -747,16 +747,16 @@ const ChildDeviceView = () => {
           </div>
         )}
 
-        {/* ── Offline warning ───────────────────────────────────────────────── */}
+        {/* â”€â”€ Offline warning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {syncError && (
           <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderRadius: '12px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', fontSize: '13px', color: 'var(--accent-red)' }}>
-            <WifiOff size={14} /> Lost connection — retrying...
+            <WifiOff size={14} /> Lost connection â€” retrying...
           </div>
         )}
 
-        {/* ── MY LOCATION ────────────────────────────────────────────────── */}
-        <div style={{ marginTop: '16px', background: 'rgba(0,240,255,0.04)', border: '1px solid rgba(0,240,255,0.15)', borderRadius: '16px', padding: '16px 20px' }}>
-          <div style={{ fontSize: '10px', color: '#00f0ff', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '12px' }}>📍 MY LOCATION</div>
+        {/* â”€â”€ MY LOCATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <div style={{ marginTop: '16px', background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '16px', padding: '16px 20px' }}>
+          <div style={{ fontSize: '10px', color: '#2563eb', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '12px' }}>ðŸ“ MY LOCATION</div>
           {currentLoc?.address ? (
             <div>
               <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>{currentLoc.locality || currentLoc.city || 'Your Area'}</div>
@@ -769,23 +769,23 @@ const ChildDeviceView = () => {
           )}
         </div>
 
-        {/* ── SAVED PLACES ───────────────────────────────────────────────── */}
+        {/* â”€â”€ SAVED PLACES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {safeZones.length > 0 && (
           <div style={{ marginTop: '16px' }}>
             <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '12px' }}>SAVED PLACES</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {safeZones.map(z => {
-                const icons = { home: '🏠', school: '🏫', relative: '👨‍👩‍👧', hospital: '🏥', custom: '📍' };
+                const icons = { home: 'ðŸ ', school: 'ðŸ«', relative: 'ðŸ‘¨â€ðŸ‘©â€ðŸ‘§', hospital: 'ðŸ¥', custom: 'ðŸ“' };
                 const dist = currentLoc?.lat ? haversine(currentLoc.lat, currentLoc.lng, z.latitude, z.longitude) : null;
                 return (
                   <div key={z.id} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${z.latitude},${z.longitude}&travelmode=driving`, '_blank')} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>
-                    <div style={{ fontSize: '24px', flexShrink: 0 }}>{icons[z.type] || '📍'}</div>
+                    <div style={{ fontSize: '24px', flexShrink: 0 }}>{icons[z.type] || 'ðŸ“'}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{z.name}</div>
                       {z.address && <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.address}</div>}
                     </div>
                     {dist !== null && (
-                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#00f0ff', flexShrink: 0 }}>{formatDist(dist)}</div>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#2563eb', flexShrink: 0 }}>{formatDist(dist)}</div>
                     )}
                   </div>
                 );
@@ -794,11 +794,11 @@ const ChildDeviceView = () => {
           </div>
         )}
 
-        {/* ── MAIN CONTACTS ──────────────────────────────────────────────── */}
+        {/* â”€â”€ MAIN CONTACTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em' }}>MAIN CONTACTS</div>
-            <button onClick={() => { setShowAddContact(true); setNewContact({ name: '', phone: '' }); }} style={{ padding: '6px 14px', background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: '8px', color: '#00f0ff', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>+ Add</button>
+            <button onClick={() => { setShowAddContact(true); setNewContact({ name: '', phone: '' }); }} style={{ padding: '6px 14px', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: '8px', color: '#2563eb', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>+ Add</button>
           </div>
           {contacts.length === 0 ? (
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '32px 16px', textAlign: 'center' }}>
@@ -831,14 +831,14 @@ const ChildDeviceView = () => {
           )}
         </div>
 
-        {/* ── Add Contact Modal ────────────────────────────────────────────── */}
+        {/* â”€â”€ Add Contact Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {showAddContact && (
           <>
             <div onClick={() => setShowAddContact(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 9998 }} />
             <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', background: '#0f172a', borderRadius: '24px 24px 0 0', padding: '24px', zIndex: 9999, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 40px rgba(0,0,0,0.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <span style={{ fontSize: '18px', fontWeight: '700', color: '#fff' }}>Add Contact</span>
-                <button onClick={() => setShowAddContact(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '22px' }}>✕</button>
+                <button onClick={() => setShowAddContact(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '22px' }}>âœ•</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <input placeholder="Contact name (e.g. Mom, Dad, Uncle)" value={newContact.name} onChange={e => setNewContact(c => ({ ...c, name: e.target.value }))} style={{ width: '100%', padding: '14px 16px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none' }} />
@@ -859,7 +859,7 @@ const ChildDeviceView = () => {
           </>
         )}
 
-        {/* ── APP LAUNCHER ──────────────────────────────────────────────── */}
+        {/* â”€â”€ APP LAUNCHER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ marginTop: '32px' }}>
           <div style={{ fontSize: '10px', color: '#475569', fontWeight: '800', letterSpacing: '0.12em', marginBottom: '16px' }}>INSTALLED APPS</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 12px' }}>
@@ -895,7 +895,7 @@ const ChildDeviceView = () => {
           </div>
         </div>
 
-        {/* ── SOS EMERGENCY BUTTON ──────────────────────────────────────────── */}
+        {/* â”€â”€ SOS EMERGENCY BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ marginTop: '32px' }}>
           <button
             onClick={async () => {
@@ -909,7 +909,7 @@ const ChildDeviceView = () => {
                } else if (!navigator.geolocation) {
                  failReason = 'unavailable';
                } else {
-                 // STEP 2: Check permission state first — do NOT call getCurrentPosition if denied
+                 // STEP 2: Check permission state first â€” do NOT call getCurrentPosition if denied
                  let permState = 'prompt';
                  try {
                    if (navigator.permissions) {
@@ -941,7 +941,7 @@ const ChildDeviceView = () => {
                }
 
                // STEP 4: ALWAYS send SOS to parent, even without location
-               // The alert is what matters — parent must know immediately
+               // The alert is what matters â€” parent must know immediately
                const sock = socketRef?.current;
                if (sock && session?.childId) {
                  sock.emit('command', {
@@ -1010,7 +1010,7 @@ const ChildDeviceView = () => {
 
       </div>
 
-      {/* ── SOS Results Modal ────────────────────────────────────────────── */}
+      {/* â”€â”€ SOS Results Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {sosResult && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(239,68,68,0.5)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#0f172a', border: '2px solid #ef4444', borderRadius: '24px', padding: '28px', width: '100%', maxWidth: '400px', boxShadow: '0 0 80px rgba(239,68,68,0.6)' }}>
@@ -1025,13 +1025,13 @@ const ChildDeviceView = () => {
             {(sosResult.status === 'no-gps' || sosResult.status === 'no-geo') && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '14px', marginBottom: '10px', fontSize: '13px', color: '#f59e0b', textAlign: 'center' }}>
-                  {sosResult.reason === 'denied' ? '⚠️ Location permission denied. Please allow it in settings.' :
-                   sosResult.reason === 'timeout' ? '⚠️ GPS signal timeout. Try moving to an open area.' :
-                   '⚠️ Location unavailable. Allow location to find nearby help.'}
+                  {sosResult.reason === 'denied' ? 'âš ï¸ Location permission denied. Please allow it in settings.' :
+                   sosResult.reason === 'timeout' ? 'âš ï¸ GPS signal timeout. Try moving to an open area.' :
+                   'âš ï¸ Location unavailable. Allow location to find nearby help.'}
                 </div>
                 <button onClick={async () => {
                   if (sosResult.reason === 'denied') {
-                    // For denied: can't force permission — guide user to browser settings
+                    // For denied: can't force permission â€” guide user to browser settings
                     setSosResult(prev => ({ ...prev, reason: 'denied_instructions' }));
                     return;
                   }
@@ -1075,8 +1075,8 @@ const ChildDeviceView = () => {
                 </button>
                 {sosResult.reason === 'denied_instructions' && (
                   <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '10px', fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 }}>
-                    📋 <strong style={{ color: '#fff' }}>To allow location:</strong><br />
-                    Tap the 🔒 lock icon in browser → Site settings → Location → Allow → then come back and press SOS again.
+                    ðŸ“‹ <strong style={{ color: '#fff' }}>To allow location:</strong><br />
+                    Tap the ðŸ”’ lock icon in browser â†’ Site settings â†’ Location â†’ Allow â†’ then come back and press SOS again.
                   </div>
                 )}
               </div>
@@ -1089,7 +1089,7 @@ const ChildDeviceView = () => {
                   <div key={i} style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', padding: '12px', marginBottom: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '10px', color: '#60a5fa', fontWeight: '800', textTransform: 'uppercase' }}>{f.type} • {f.distanceText}</div>
+                        <div style={{ fontSize: '10px', color: '#60a5fa', fontWeight: '800', textTransform: 'uppercase' }}>{f.type} â€¢ {f.distanceText}</div>
                         <div style={{ fontSize: '14px', color: '#fff', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</div>
                         <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.address}</div>
                       </div>
@@ -1123,7 +1123,7 @@ const ChildDeviceView = () => {
         </div>
       )}
 
-      {/* ── APP UNLOCK MODAL ────────────────────────────────────────────── */}
+      {/* â”€â”€ APP UNLOCK MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {unlockAppTarget && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#0f172a', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '360px', textAlign: 'center', boxShadow: '0 10px 40px rgba(239, 68, 68, 0.2)' }}>

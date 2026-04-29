@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * GlobalErrorBoundary
- * ───────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * Catches any uncaught render errors and shows a recovery UI
  * instead of a blank white screen. Gives users a button to reload.
  */
@@ -34,7 +34,7 @@ class GlobalErrorBoundary extends React.Component {
           background: 'rgba(239,68,68,0.1)', border: '2px solid rgba(239,68,68,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '36px'
-        }}>⚠️</div>
+        }}>âš ï¸</div>
 
         <div>
           <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: '800', marginBottom: '8px' }}>
@@ -64,9 +64,9 @@ class GlobalErrorBoundary extends React.Component {
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             style={{
-              padding: '12px 24px', background: 'rgba(0,240,255,0.1)',
-              border: '1px solid rgba(0,240,255,0.3)', borderRadius: '12px',
-              color: '#00f0ff', fontWeight: '700', fontSize: '14px', cursor: 'pointer'
+              padding: '12px 24px', background: 'rgba(37,99,235,0.1)',
+              border: '1px solid rgba(37,99,235,0.3)', borderRadius: '12px',
+              color: '#2563eb', fontWeight: '700', fontSize: '14px', cursor: 'pointer'
             }}
           >
             Try Again
@@ -74,7 +74,7 @@ class GlobalErrorBoundary extends React.Component {
           <button
             onClick={() => window.location.reload()}
             style={{
-              padding: '12px 24px', background: '#00f0ff',
+              padding: '12px 24px', background: '#2563eb',
               border: 'none', borderRadius: '12px',
               color: '#0f172a', fontWeight: '800', fontSize: '14px', cursor: 'pointer'
             }}

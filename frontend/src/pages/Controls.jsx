@@ -14,7 +14,7 @@ const Toggle = ({ active, onChange, danger = false }) => {
       onClick={() => onChange(!active)}
       style={{
         width: '56px', height: '32px', borderRadius: '16px',
-        backgroundColor: active ? (danger ? 'rgba(239, 68, 68, 0.4)' : 'rgba(0, 240, 255, 0.4)') : 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: active ? (danger ? 'rgba(239, 68, 68, 0.4)' : 'rgba(37,99,235, 0.4)') : 'rgba(255, 255, 255, 0.1)',
         position: 'relative', cursor: 'pointer', transition: 'all 0.3s',
         border: `1px solid ${active ? accent : 'rgba(255,255,255,0.05)'}`,
         boxShadow: active ? `0 0 10px rgba(${danger?'239, 68, 68':'0, 240, 255'}, 0.3)` : 'none'
@@ -103,7 +103,7 @@ const Controls = () => {
       });
       const data = await res.json();
       if(res.ok && data.success) {
-        // ✅ Refresh children list WITHOUT reloading the page (reload wipes auth state)
+        // Ã¢Å“â€¦ Refresh children list WITHOUT reloading the page (reload wipes auth state)
         await fetchChildren(token);
         // If the newly paired child is returned, set it as active immediately
         if (data.child) setActiveChild(data.child);
@@ -155,7 +155,7 @@ const Controls = () => {
           onChange={(e) => setParentInputCode(e.target.value)}
           maxLength={6}
           disabled={isLinking}
-          style={{ flex: '1 1 120px', minWidth: '120px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(176, 38, 255, 0.3)', padding: '16px', borderRadius: '12px', color: '#fff', fontSize: '18px', letterSpacing: '4px', textAlign: 'center', outline: 'none' }} 
+          style={{ flex: '1 1 120px', minWidth: '120px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(37,99,235, 0.3)', padding: '16px', borderRadius: '12px', color: '#fff', fontSize: '18px', letterSpacing: '4px', textAlign: 'center', outline: 'none' }} 
         />
         <button 
           onClick={handleLinkDevice}
@@ -167,11 +167,11 @@ const Controls = () => {
       </div>
 
       <div style={{ marginTop: '24px', textAlign: 'center' }}>
-        <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '14px', fontWeight: 'bold' }}>— OR —</p>
+        <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '14px', fontWeight: 'bold' }}>Ã¢â‚¬â€ OR Ã¢â‚¬â€</p>
         {!scanMode ? (
           <button 
             onClick={() => setScanMode(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 24px', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--accent-cyan)', border: '1px solid var(--accent-cyan)', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 24px', background: 'rgba(37,99,235, 0.1)', color: 'var(--accent-cyan)', border: '1px solid var(--accent-cyan)', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
           >
             <Camera size={20} /> Scan QR Code via Desktop Camera
           </button>
@@ -179,7 +179,7 @@ const Controls = () => {
           <div className="animate-fade-in" style={{ position: 'relative', width: '100%', maxWidth: '300px', margin: '0 auto', borderRadius: '16px', overflow: 'hidden', border: '2px solid var(--accent-cyan)' }}>
             <Webcam ref={webcamRef} audio={false} videoConstraints={{ facingMode: 'user' }} style={{ width: '100%', display: 'block' }} />
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '40px solid rgba(0,0,0,0.5)', pointerEvents: 'none' }}>
-              <div style={{ width: '100%', height: '100%', border: '2px dashed #00f0ff' }}></div>
+              <div style={{ width: '100%', height: '100%', border: '2px dashed #2563eb' }}></div>
             </div>
             <button onClick={() => setScanMode(false)} style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>Cancel Scanner</button>
           </div>
@@ -327,7 +327,7 @@ const Controls = () => {
                 <ShieldAlert size={40} color="var(--accent-red)" style={{ margin: '0 auto 16px' }} />
                 <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px', fontWeight: '800' }}>Before you continue</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
-                  You may lose access to this child’s data. Do you want to download a report before continuing?
+                  You may lose access to this childÃ¢â‚¬â„¢s data. Do you want to download a report before continuing?
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <button onClick={() => {
@@ -382,7 +382,7 @@ const Controls = () => {
               Connected to Parent Account: <span style={{ color: 'var(--accent-purple)', fontWeight: 'bold' }}>{user?.fullName || 'Parent'}</span>
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(0, 240, 255, 0.1)', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(37,99,235, 0.1)', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(37,99,235, 0.2)' }}>
             <Wifi size={14} color="var(--accent-cyan)" />
             <span style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 'bold', letterSpacing: '0.05em' }}>LIVE LINK ACTIVE</span>
           </div>
@@ -498,7 +498,7 @@ const Controls = () => {
 
             {!activeChild.isPaired && (
               <p style={{ fontSize: '12px', color: 'var(--accent-yellow)', marginTop: '12px', textAlign: 'center' }}>
-                Device not paired — pair a child device to enable controls.
+                Device not paired Ã¢â‚¬â€ pair a child device to enable controls.
               </p>
             )}
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', textAlign: 'center' }}>Use "Resume" to clear any active lockouts.</p>
@@ -526,7 +526,7 @@ const Controls = () => {
               <Toggle active={activeChild.facePresenceEnabled} onChange={() => toggleControl('facePresenceEnabled')} />
             </div>
             
-            <div style={{ padding: '12px', background: 'rgba(176, 38, 255, 0.05)', borderRadius: '8px', borderLeft: '3px solid var(--accent-purple)', marginTop: '8px' }}>
+            <div style={{ padding: '12px', background: 'rgba(37,99,235, 0.05)', borderRadius: '8px', borderLeft: '3px solid var(--accent-purple)', marginTop: '8px' }}>
                <p style={{ fontSize: '12px', color: 'var(--accent-purple)', fontWeight: '500' }}>AI Supervision active for {activeChild.name}</p>
             </div>
           </div>
@@ -538,7 +538,7 @@ const Controls = () => {
            <FaceRegistration />
         </div>
 
-        {/* ─── App Manager ─────────────────────────────────────────────────── */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ App Manager Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         {user?.subscriptionPlan === 'premium' ? (
           <AppManager childId={activeChild?.id} token={token} childName={activeChild?.name} />
         ) : (
@@ -558,7 +558,7 @@ const Controls = () => {
                   } catch (e) {}
                 }}
                 style={{
-                  background: 'linear-gradient(135deg, #c9a84c, #ef4444)',
+                  background: 'linear-gradient(135deg, #2563eb, #ef4444)',
                   color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '20px',
                   fontWeight: 'bold', cursor: 'pointer'
                 }}>
@@ -574,18 +574,18 @@ const Controls = () => {
   );
 };
 
-// ─── App Manager Component ────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ App Manager Component Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const INSTALLED_APPS = [
-  { name: 'YouTube', icon: '📺', category: 'Entertainment', avgTime: '2h 15m', color: '#ef4444' },
-  { name: 'Instagram', icon: '📸', category: 'Social', avgTime: '1h 30m', color: '#e91e8c' },
-  { name: 'WhatsApp', icon: '💬', category: 'Messaging', avgTime: '45m', color: '#10b981' },
-  { name: 'TikTok', icon: '🎵', category: 'Entertainment', avgTime: '1h 45m', color: '#000' },
-  { name: 'Snapchat', icon: '👻', category: 'Social', avgTime: '50m', color: '#f59e0b' },
-  { name: 'Chrome', icon: '🌐', category: 'Browser', avgTime: '1h 10m', color: '#3b82f6' },
-  { name: 'Roblox', icon: '🎮', category: 'Gaming', avgTime: '2h 00m', color: '#8b5cf6' },
-  { name: 'Spotify', icon: '🎧', category: 'Music', avgTime: '30m', color: '#10b981' },
-  { name: 'Telegram', icon: '✈️', category: 'Messaging', avgTime: '25m', color: '#0891b2' },
-  { name: 'Gallery', icon: '🖼️', category: 'System', avgTime: '15m', color: '#6366f1' },
+  { name: 'YouTube', icon: 'Ã°Å¸â€œÂº', category: 'Entertainment', avgTime: '2h 15m', color: '#ef4444' },
+  { name: 'Instagram', icon: 'Ã°Å¸â€œÂ¸', category: 'Social', avgTime: '1h 30m', color: '#e91e8c' },
+  { name: 'WhatsApp', icon: 'Ã°Å¸â€™Â¬', category: 'Messaging', avgTime: '45m', color: '#10b981' },
+  { name: 'TikTok', icon: 'Ã°Å¸Å½Âµ', category: 'Entertainment', avgTime: '1h 45m', color: '#000' },
+  { name: 'Snapchat', icon: 'Ã°Å¸â€˜Â»', category: 'Social', avgTime: '50m', color: '#f59e0b' },
+  { name: 'Chrome', icon: 'Ã°Å¸Å’Â', category: 'Browser', avgTime: '1h 10m', color: '#3b82f6' },
+  { name: 'Roblox', icon: 'Ã°Å¸Å½Â®', category: 'Gaming', avgTime: '2h 00m', color: '#8b5cf6' },
+  { name: 'Spotify', icon: 'Ã°Å¸Å½Â§', category: 'Music', avgTime: '30m', color: '#10b981' },
+  { name: 'Telegram', icon: 'Ã¢Å“Ë†Ã¯Â¸Â', category: 'Messaging', avgTime: '25m', color: '#0891b2' },
+  { name: 'Gallery', icon: 'Ã°Å¸â€“Â¼Ã¯Â¸Â', category: 'System', avgTime: '15m', color: '#6366f1' },
 ];
 
 const AppManager = ({ childId, token, childName }) => {
@@ -658,8 +658,8 @@ const AppManager = ({ childId, token, childName }) => {
           </div>
           <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
             <span>{app.category}</span>
-            <span>📊 {app.avgTime}/day</span>
-            {isLocked && <span style={{ color: '#f59e0b' }}>⏰ {getRemainingTime(lockInfo.lockedAt)}</span>}
+            <span>Ã°Å¸â€œÅ  {app.avgTime}/day</span>
+            {isLocked && <span style={{ color: '#f59e0b' }}>Ã¢ÂÂ° {getRemainingTime(lockInfo.lockedAt)}</span>}
           </div>
         </div>
 
@@ -718,7 +718,7 @@ const AppManager = ({ childId, token, childName }) => {
 
         <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>
           <p style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '500' }}>
-            🔒 Locked apps require the parent control password to unlock on the child device, or auto-unlock after 24 hours.
+            Ã°Å¸â€â€™ Locked apps require the parent control password to unlock on the child device, or auto-unlock after 24 hours.
           </p>
         </div>
       </div>

@@ -34,7 +34,7 @@ const ChildPairing = () => {
         if (!isMountedRef.current) return;
 
         if (res.ok && data.success && data.connected === true) {
-          // Pairing confirmed by parent — store full session including parent identity
+          // Pairing confirmed by parent â€” store full session including parent identity
           setPairingDetected(true);
           localStorage.setItem('child_session', JSON.stringify({
             childId,
@@ -44,7 +44,7 @@ const ChildPairing = () => {
             pairedAt: new Date().toISOString()
           }));
 
-          // Short delay so the user can see the ✅ "Connected!" flash
+          // Short delay so the user can see the âœ… "Connected!" flash
           setTimeout(() => {
             if (isMountedRef.current) navigate('/child/permissions', { replace: true });
           }, 1500);
@@ -86,17 +86,17 @@ const ChildPairing = () => {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', padding: '24px' }}>
       {/* Background glow */}
-      <div style={{ position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '500px', height: '500px', background: 'rgba(176, 38, 255, 0.06)', filter: 'blur(120px)', borderRadius: '50%', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '500px', height: '500px', background: 'rgba(37,99,235, 0.06)', filter: 'blur(120px)', borderRadius: '50%', pointerEvents: 'none' }} />
 
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '40px 32px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
         {/* Icon */}
-        <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(0, 240, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: '1px solid rgba(0, 240, 255, 0.3)', boxShadow: '0 0 30px rgba(0,240,255,0.1)' }}>
-          <Smartphone color="#00f0ff" size={38} />
+        <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(37,99,235, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: '1px solid rgba(37,99,235, 0.3)', boxShadow: '0 0 30px rgba(37,99,235,0.1)' }}>
+          <Smartphone color="#2563eb" size={38} />
         </div>
 
         <h2 style={{ color: '#fff', fontSize: '26px', fontWeight: '800', marginBottom: '8px' }}>Ready to Connect</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '28px', lineHeight: 1.6 }}>
-          Open the <strong style={{ color: '#b026ff' }}>Parent App → Controls</strong> and enter<br />the 6-digit sync code below.
+          Open the <strong style={{ color: '#2563eb' }}>Parent App â†’ Controls</strong> and enter<br />the 6-digit sync code below.
         </p>
 
         {/* Error message */}
@@ -107,15 +107,15 @@ const ChildPairing = () => {
         )}
 
         {/* QR Code */}
-        <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '16px', display: 'inline-block', border: '2px solid rgba(0,240,255,0.3)', marginBottom: '24px' }}>
+        <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '16px', display: 'inline-block', border: '2px solid rgba(37,99,235,0.3)', marginBottom: '24px' }}>
           <QRCodeSVG value={JSON.stringify({ code: livePairingCode })} size={170} fgColor="#000000" bgColor="#ffffff" />
         </div>
 
-        <p style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', letterSpacing: '2px', marginBottom: '16px' }}>— OR ENTER CODE —</p>
+        <p style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', letterSpacing: '2px', marginBottom: '16px' }}>â€” OR ENTER CODE â€”</p>
 
         {/* Pairing code display */}
-        <div style={{ backgroundColor: 'rgba(176, 38, 255, 0.06)', padding: '16px 28px', borderRadius: '16px', border: '1px solid rgba(176, 38, 255, 0.25)', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, color: '#b026ff', fontSize: '40px', fontWeight: '900', letterSpacing: '10px', textShadow: '0 0 20px rgba(176, 38, 255, 0.5)', fontFamily: 'monospace' }}>
+        <div style={{ backgroundColor: 'rgba(37,99,235, 0.06)', padding: '16px 28px', borderRadius: '16px', border: '1px solid rgba(37,99,235, 0.25)', marginBottom: '16px' }}>
+          <h2 style={{ margin: 0, color: '#2563eb', fontSize: '40px', fontWeight: '900', letterSpacing: '10px', textShadow: '0 0 20px rgba(37,99,235, 0.5)', fontFamily: 'monospace' }}>
             {livePairingCode || '------'}
           </h2>
         </div>
@@ -128,9 +128,9 @@ const ChildPairing = () => {
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             width: '100%', padding: '12px 20px',
-            background: 'rgba(176,38,255,0.08)',
-            color: refreshing ? 'var(--text-muted)' : '#b026ff',
-            border: '1px solid rgba(176,38,255,0.3)',
+            background: 'rgba(37,99,235,0.08)',
+            color: refreshing ? 'var(--text-muted)' : '#2563eb',
+            border: '1px solid rgba(37,99,235,0.3)',
             borderRadius: '12px', fontWeight: '700', fontSize: '14px',
             cursor: refreshing || pairingDetected ? 'not-allowed' : 'pointer',
             marginBottom: '24px',
@@ -150,7 +150,7 @@ const ChildPairing = () => {
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', borderRadius: '20px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <Loader size={16} color="#b026ff" style={{ animation: 'spin 2s linear infinite' }} />
+            <Loader size={16} color="#2563eb" style={{ animation: 'spin 2s linear infinite' }} />
             <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Waiting for parent to approve...</span>
           </div>
         )}

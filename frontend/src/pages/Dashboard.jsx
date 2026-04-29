@@ -2,6 +2,18 @@ import React from 'react';
 import { Clock, Smartphone, User, Wifi, WifiOff } from 'lucide-react';
 import { useLivePolling } from '../hooks/useLivePolling';
 import { useAuth } from '../context/AuthContext';
+import { Brain, Heart, Moon, Activity } from 'lucide-react';
+
+const useFetch = (path, childId) => {
+  const [data, ReactSetData] = React.useState(null);
+  const { token } = useAuth();
+  React.useEffect(() => {
+    if (!childId || !token) return;
+    fetch(`/api${path}?childId=${childId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(d => { if (d.success) ReactSetData(d.data); }).catch(() => {});
+  }, [path, childId, token]);
+  return data;
+};
 
 const Dashboard = () => {
   const { activeChild } = useAuth();
@@ -71,7 +83,7 @@ const Dashboard = () => {
             {/* Top Apps List */}
             <div className="glass-card" style={{ padding: '24px' }}>
               <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Smartphone size={18} color="var(--accent-purple)" /> App Usage List
+                <Smartphone size={18} color="var(--accent-primary)" /> App Usage List
               </h3>
               <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {data.topApps && data.topApps.length > 0 ? data.topApps.map((app, i) => (
@@ -83,17 +95,47 @@ const Dashboard = () => {
               </ul>
             </div>
 
-            {/* Category Breakdown */}
-            <div className="glass-card" style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '18px', marginBottom: '20px' }}>Category Breakdown</h3>
-              <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {data.categoryDistribution && data.categoryDistribution.length > 0 ? data.categoryDistribution.map((cat, i) => (
-                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', borderLeft: `4px solid ${cat.color}` }}>
-                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{cat.name}</span>
-                    <span style={{ color: cat.color }}>{cat.value} mins</span>
-                  </li>
-                )) : <li style={{ color: 'var(--text-muted)' }}>No category data found.</li>}
-              </ul>
+            {/* AI Insights Summary Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Brain size={24} color="var(--accent-primary)" />
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold' }}>BEHAVIOR SCORE</div>
+                  <div style={{ fontSize: '24px', fontWeight: '900', color: '#fff' }}>85<span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>/100</span></div>
+                </div>
+              </div>
+
+              <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Activity size={24} color="var(--accent-green)" />
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold' }}>WEEKLY TREND</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--accent-green)' }}>-12% Screen Time</div>
+                </div>
+              </div>
+
+              <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Moon size={24} color="var(--accent-red)" />
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold' }}>LATE NIGHT USAGE</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>2 Sessions Past 10PM</div>
+                </div>
+              </div>
+
+              <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Heart size={24} color="var(--accent-yellow)" />
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 'bold' }}>MOOD SUMMARY</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>Mostly Happy 😄</div>
+                </div>
+              </div>
             </div>
           </div>
 

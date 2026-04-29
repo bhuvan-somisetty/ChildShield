@@ -33,9 +33,9 @@ const Login = () => {
 
   // Read ?error= from OAuth redirect-back
   const oauthErrorMap = {
-    facebook_not_configured: '⚠️ Facebook login needs setup — add your FACEBOOK_APP_ID to backend/.env',
-    twitter_not_configured:  '⚠️ X (Twitter) login needs setup — add your TWITTER_CONSUMER_KEY to backend/.env',
-    google_not_configured:   '⚠️ Google login needs setup — add your GOOGLE_CLIENT_ID to backend/.env',
+    facebook_not_configured: 'âš ï¸ Facebook login needs setup â€” add your FACEBOOK_APP_ID to backend/.env',
+    twitter_not_configured:  'âš ï¸ X (Twitter) login needs setup â€” add your TWITTER_CONSUMER_KEY to backend/.env',
+    google_not_configured:   'âš ï¸ Google login needs setup â€” add your GOOGLE_CLIENT_ID to backend/.env',
     facebook_failed: 'Facebook login failed. Check your App ID & redirect URI in Facebook Developers.',
     twitter_failed:  'X (Twitter) login failed. Check your API Key & callback URL in Twitter Developer Portal.',
     google_failed:   'Google login failed. Check your Client ID & redirect URI in Google Cloud Console.',
@@ -47,8 +47,8 @@ const Login = () => {
 
   if (loading || isWakingServer) return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-      <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0,240,255,0.2)', borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '16px' }} />
-      {isWakingServer && <p style={{ color: 'var(--accent-cyan)', fontWeight: '600' }}>Starting secure login server… please wait</p>}
+      <div style={{ width: '40px', height: '40px', border: '3px solid rgba(37,99,235,0.2)', borderTopColor: 'var(--accent-cyan)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '16px' }} />
+      {isWakingServer && <p style={{ color: 'var(--accent-cyan)', fontWeight: '600' }}>Starting secure login serverâ€¦ please wait</p>}
     </div>
   );
   if (user) return <Navigate to="/controls" />;
@@ -91,9 +91,9 @@ const Login = () => {
           </div>
         )}
 
-        {/* Form — autoComplete="off" + hidden decoys stop browser from pre-filling saved passwords */}
+        {/* Form â€” autoComplete="off" + hidden decoys stop browser from pre-filling saved passwords */}
         <form onSubmit={handleSubmit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Hidden honeypot inputs — tricks Chrome/Edge into filling these instead */}
+          {/* Hidden honeypot inputs â€” tricks Chrome/Edge into filling these instead */}
           <input type="text"     style={{ display: 'none' }} autoComplete="username"         tabIndex="-1" readOnly />
           <input type="password" style={{ display: 'none' }} autoComplete="current-password" tabIndex="-1" readOnly />
 
@@ -115,7 +115,7 @@ const Login = () => {
               <input type={showPass ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
                 autoComplete="new-password"
                 style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 40px 12px 44px', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }}
-                placeholder="••••••••" />
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
               <div onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
               </div>
@@ -124,7 +124,7 @@ const Login = () => {
 
           <button type="submit" disabled={submitting}
             style={{ background: 'var(--accent-cyan)', color: '#000', border: 'none', padding: '14px', borderRadius: '8px', fontWeight: '600', fontSize: '16px', marginTop: '8px', cursor: 'pointer', boxShadow: 'var(--shadow-neon-cyan)', transition: 'all 0.2s', opacity: submitting ? 0.7 : 1 }}>
-            {submitting ? 'Signing in…' : 'Sign In'}
+            {submitting ? 'Signing inâ€¦' : 'Sign In'}
           </button>
         </form>
 

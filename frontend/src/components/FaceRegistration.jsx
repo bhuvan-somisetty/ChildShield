@@ -81,7 +81,7 @@ const FaceRegistration = () => {
             const hasFace = !!validFaces[slotIndex];
             const faceImg = hasFace ? validFaces[slotIndex].image : null;
             return (
-              <div key={slotIndex} style={{ border: '1px dashed rgba(255,255,255,0.2)', padding: '16px', borderRadius: '12px', textAlign: 'center', background: hasFace ? 'rgba(0,240,255,0.05)' : 'transparent' }}>
+              <div key={slotIndex} style={{ border: '1px dashed rgba(255,255,255,0.2)', padding: '16px', borderRadius: '12px', textAlign: 'center', background: hasFace ? 'rgba(37,99,235,0.05)' : 'transparent' }}>
                 {hasFace ? (
                   <>
                     <img src={faceImg} alt={`Face ${slotIndex + 1}`} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', marginBottom: '12px', border: '2px solid var(--accent-cyan)' }} />
