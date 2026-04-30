@@ -165,7 +165,7 @@ const ChildDeviceView = () => {
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
-      e.returnValue = 'ChildShield is protecting this device. Are you sure you want to leave?';
+      e.returnValue = 'AlphaGuard is protecting this device. Are you sure you want to leave?';
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
@@ -436,7 +436,7 @@ const ChildDeviceView = () => {
       </div>
       <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#fff', marginBottom: '12px' }}>Night Restriction Active</h2>
       <p style={{ color: '#64748b', fontSize: '15px', lineHeight: 1.7, maxWidth: '300px' }}>
-        ChildShield is blocking device use between{' '}
+        AlphaGuard is blocking device use between{' '}
         <strong style={{ color: '#2563eb' }}>9:00 PM â€“ 7:00 AM</strong>.{'\n'}
         Your parent has enabled this.
       </p>
@@ -598,7 +598,7 @@ const ChildDeviceView = () => {
           <h1 style={{ fontSize: '28px', fontWeight: '900', color: '#fff', marginBottom: '4px' }}>
             Hello, {childName} ðŸ‘‹
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Your session is being supervised by ChildShield AI.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Your session is being supervised by AlphaGuard AI.</p>
         </div>
 
         {/* â”€â”€ Parent connection card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -742,7 +742,7 @@ const ChildDeviceView = () => {
             <CheckCircle2 size={18} color="var(--accent-green)" />
             <div>
               <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--accent-green)' }}>Session is active & protected</div>
-              <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>ChildShield is actively supervising this device.</div>
+              <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>AlphaGuard is actively supervising this device.</div>
             </div>
           </div>
         )}

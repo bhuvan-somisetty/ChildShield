@@ -97,7 +97,7 @@ const Sidebar = () => {
             onMouseOver={e => e.currentTarget.style.color = '#2563eb'}
             onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}
           >
-            <span style={{ marginRight: '16px' }}>Ã¢Å“Â¨</span>
+            <span style={{ marginRight: '16px' }}>✨</span>
             Voice Assistant
           </button>
           {renderLink({ name: 'Account Settings', icon: Settings, path: '/account-settings' })}

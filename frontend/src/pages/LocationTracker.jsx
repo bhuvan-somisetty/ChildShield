@@ -26,7 +26,7 @@ const createZoneIcon = (type) => {
 };
 
 const CHILD_ICON = createEmoji('ðŸ“', 32);
-const PARENT_ICON = createEmoji('ðŸ§‘', 32);
+const PARENT_ICON = createEmoji('🧑', 32);
 const PIN_ICON = createEmoji('ðŸ“', 36);
 const ZONE_COLORS = { home: '#10b981', school: '#3b82f6', relative: '#f59e0b', hospital: '#ef4444', custom: '#8b5cf6' };
 const DEFAULT_RADIUS = 80;
@@ -162,7 +162,7 @@ const LocationTracker = () => {
         // Fallback to Nominatim
         const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=1`;
         const nomRes = await fetch(nomUrl, {
-          headers: { 'Accept-Language': 'en', 'User-Agent': 'ChildShieldAI/1.0' }
+          headers: { 'Accept-Language': 'en', 'User-Agent': 'AlphaGuardAI/1.0' }
         });
         const nomData = await nomRes.json();
         setZoneSearchResults(nomData || []);
@@ -377,7 +377,7 @@ const LocationTracker = () => {
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: '900', color: '#2563eb' }}>{formatDist(distance)}</div>
                 <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px' }}>
-                  ðŸš— {formatTravelTime(distance / 1000)} Â· ðŸš¶ {formatTravelTime(distance / 80)}
+                  🚗 {formatTravelTime(distance / 1000)} · 🚶 {formatTravelTime(distance / 80)}
                 </div>
               </div>
             )}
@@ -517,7 +517,7 @@ const LocationTracker = () => {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{loc.latitude.toFixed(5)}, {loc.longitude.toFixed(5)}</div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                      {formatTime(loc.timestamp)} {loc.battery != null && `Â· ðŸ”‹ ${loc.battery}%`}
+                      {formatTime(loc.timestamp)} {loc.battery != null && `· 🔋 ${loc.battery}%`}
                     </div>
                   </div>
                 </div>

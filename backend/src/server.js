@@ -120,17 +120,6 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-// OAuth social login routes MUST be mounted BEFORE /api
-app.use('/auth', oauthRoutes);
-
-app.use('/api/auth',     authRoutes);
-app.use('/api/children', childRoutes);
-app.use('/api/device',   deviceRoutes);
-app.use('/api/activity', activityRoutes);
-app.use('/api/ai',       aiRoutes);
-app.use('/api',          apiRoutes);
-
 // ── Health Check (always responds, even if DB is down) ────────────────────────
 app.get('/', (req, res) => res.send('AlphaGuard AI Backend is running! 🛡️'));
 
@@ -157,6 +146,17 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// ── Routes ────────────────────────────────────────────────────────────────────
+// OAuth social login routes MUST be mounted BEFORE /api
+app.use('/auth', oauthRoutes);
+
+app.use('/api/auth',     authRoutes);
+app.use('/api/children', childRoutes);
+app.use('/api/device',   deviceRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/ai',       aiRoutes);
+app.use('/api',          apiRoutes);
 
 // ── Global Error Handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {

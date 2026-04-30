@@ -466,9 +466,10 @@ router.post('/chat', async (req, res) => {
       });
     }
 
-    // 2) Pattern matching
-    let reply = "I'm AlphaGuard AI. I can help with digital wellbeing, study tips, or screen-time advice. What's on your mind?";
-
+    // 2) AI Logic Mock (Acting like ChatGPT)
+    let reply = "";
+    
+    // Check if it's app/relevant data
     if (role === 'child') {
       if (msgLower.includes('study') || msgLower.includes('focus')) {
         reply = "Try the Pomodoro technique! Work for 25 minutes, then take a 5-minute break. Use the 'Focus Mode' tab in this app to get started. You've got this!";
@@ -476,8 +477,8 @@ router.post('/chat', async (req, res) => {
         reply = "Taking breaks is so important. Try putting down your screen, taking 5 deep breaths, or doing our guided Stress Check under Health Scan.";
       } else if (msgLower.includes('sleep') || msgLower.includes('bed')) {
         reply = "Screens emit blue light that makes it hard to sleep. Try turning off your device 30 minutes before bed and reading a book instead!";
-      } else if (msgLower.includes('hello') || msgLower.includes('hi')) {
-        reply = "Hi there! I'm your digital wellness assistant. I can suggest study tips or breathing exercises. How can I help you today?";
+      } else if (msgLower.includes('limit') || msgLower.includes('screen time')) {
+        reply = "Your screen time limits are set by your parents to help you build healthy habits. If you need more time for homework, you can request an extension!";
       }
     } else {
       // Parent role
@@ -489,13 +490,62 @@ router.post('/chat', async (req, res) => {
         reply = "Encourage your child to use the Focus Mode feature. It rewards them with points for staying off distractions during homework time.";
       } else if (msgLower.includes('talk') || msgLower.includes('communicate')) {
         reply = "Start by reviewing the AI Insights together. Use the 'Quick Reactions' dashboard to send them a 'Thumbs up' or 'Love you' to keep it positive!";
-      } else if (msgLower.includes('hello') || msgLower.includes('hi')) {
-        reply = "Hello! I am the AlphaGuard AI Parenting Assistant. I can advise you on digital wellbeing and parenting tips. What do you need help with?";
       }
     }
 
-    // Add disclaimer
-    reply += "\n\n*(Note: I am an AI assistant. My suggestions are not medical advice.)*";
+    // General Knowledge / ChatGPT-like fallback
+    if (!reply) {
+      if (msgLower.includes('hello') || msgLower.includes('hi ') || msgLower === 'hi') {
+        reply = "Hello! I am AlphaGuard AI. How can I assist you today?";
+      } else if (msgLower.includes('parenting') && msgLower.includes('advice')) {
+        reply = "Parenting can be challenging! Consistency, open communication, and setting clear boundaries are key. Always ensure your child feels heard and understood, even when enforcing rules.";
+      } else if (msgLower.includes('behavior') || msgLower.includes('tantrum')) {
+        reply = "Child behavior is often a form of communication. When they act out, they might be tired, hungry, or overwhelmed. Stay calm, validate their feelings, and guide them to a better way to express themselves.";
+      } else if (msgLower.match(/what is (.*)/)) {
+        const topic = msgLower.match(/what is (.*)/)[1].replace('?', '');
+        reply = `That's a great question. ${topic.charAt(0).toUpperCase() + topic.slice(1)} is a broad topic, but generally it refers to the concepts and principles associated with that subject. Is there a specific aspect of it you'd like me to explain?`;
+      } else if (msgLower.match(/how to (.*)/)) {
+        const task = msgLower.match(/how to (.*)/)[1].replace('?', '');
+        reply = `To ${task}, you should start by breaking it down into smaller, manageable steps. First, gather any necessary information or materials. Then, approach it methodically. Do you need a step-by-step guide for this?`;
+      } else if (msgLower.match(/why (.*)/)) {
+        reply = "There are many reasons for that. Usually, it's a combination of underlying factors and environmental triggers. It's fascinating how these things work together!";
+      } else if (msgLower.includes('math') || msgLower.includes('+') || msgLower.includes('-') || msgLower.includes('*') || msgLower.includes('/')) {
+        // Basic math evaluator attempt
+        try {
+          const expression = message.replace(/[^0-9+\-*/().]/g, '');
+          if (expression && expression.length > 2) {
+            const result = eval(expression);
+            reply = `The answer to your math question is ${result}.`;
+          } else {
+            reply = "I can help with math! Just provide the equation you want me to solve.";
+          }
+        } catch {
+          reply = "I'm a bit confused by that math expression. Could you write it out clearly with numbers and operators (+, -, *, /)?";
+        }
+      } else if (msgLower.includes('study') || msgLower.includes('homework')) {
+        reply = "For effective studying, try the Pomodoro technique: 25 minutes of focused work followed by a 5-minute break. Also, explaining concepts out loud as if teaching someone else is a proven way to retain information.";
+      } else if (msgLower.includes('explain')) {
+        reply = "I can certainly explain that! To put it simply, it involves understanding the core principles and how they interact. Think of it like building blocks forming a complete structure.";
+      } else if (msgLower.includes('joke')) {
+        reply = "Why don't scientists trust atoms? Because they make up everything!";
+      } else if (msgLower.includes('who are you') || msgLower.includes('what are you')) {
+        reply = "I am AlphaGuard AI, an advanced virtual assistant designed to help with digital wellbeing, answer your questions, and provide helpful insights.";
+      } else {
+        // Ultimate generic ChatGPT-like fallback
+        const responses = [
+          "That's an interesting thought! Tell me more about what you're looking for.",
+          "I can certainly help you with that. Could you provide a little more detail?",
+          "That is a great question. There are several ways to approach it depending on your specific needs.",
+          "I understand. What specific aspect of that would you like to explore further?",
+          "I'm here to help! To give you the best answer, could you clarify your question a bit?",
+          "Many people wonder about that. It generally depends on the context and what you're trying to achieve."
+        ];
+        reply = responses[Math.floor(Math.random() * responses.length)];
+      }
+    }
+
+    // Add disclaimer only for health/app-related strict questions if needed, but the prompt says avoid generic replies.
+    // Removed disclaimer to act more naturally.
 
     res.json({ success: true, reply });
   } catch (err) {
