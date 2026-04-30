@@ -136,7 +136,7 @@ const Welcome = () => {
         position: 'absolute', bottom: '28px', fontSize: '12px', 
         color: 'rgba(255, 255, 255, 0.4)'
       }}>
-        Â© {new Date().getFullYear()} AlphaGuard AI Â· All rights reserved
+        Â© {new Date().getFullYear()} AlphaGuard AI · All rights reserved
       </div>
 
       <style>{`

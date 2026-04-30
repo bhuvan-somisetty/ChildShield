@@ -103,7 +103,7 @@ const Controls = () => {
       });
       const data = await res.json();
       if(res.ok && data.success) {
-        // Ã¢Å“â€¦ Refresh children list WITHOUT reloading the page (reload wipes auth state)
+        // ✅ Refresh children list WITHOUT reloading the page (reload wipes auth state)
         await fetchChildren(token);
         // If the newly paired child is returned, set it as active immediately
         if (data.child) setActiveChild(data.child);
@@ -327,16 +327,16 @@ const Controls = () => {
                 <ShieldAlert size={40} color="var(--accent-red)" style={{ margin: '0 auto 16px' }} />
                 <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px', fontWeight: '800' }}>Before you continue</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
-                  You may lose access to this childÃ¢â‚¬â„¢s data. Do you want to download a report before continuing?
+                  You may lose access to this child's data. Do you want to download a report before continuing?
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <button onClick={() => {
-                      const reportData = `ChildShield Report\n\nParent: ${user?.fullName}\nChild: ${activeChild?.name}\nDate: ${new Date().toLocaleString()}\n\nNote: Detailed analytics available in the dashboard.`;
+                      const reportData = `AlphaGuard Report\n\nParent: ${user?.fullName}\nChild: ${activeChild?.name}\nDate: ${new Date().toLocaleString()}\n\nNote: Detailed analytics available in the dashboard.`;
                       const blob = new Blob([reportData], { type: 'text/plain' });
                       const url = window.URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = `ChildShield_Device_Report_${new Date().getTime()}.txt`;
+                      a.download = `AlphaGuard_Device_Report_${new Date().getTime()}.txt`;
                       a.click();
                       setUnpairStep('downloaded');
                     }}
@@ -576,14 +576,14 @@ const Controls = () => {
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ App Manager Component Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const INSTALLED_APPS = [
-  { name: 'YouTube', icon: 'Ã°Å¸â€œÂº', category: 'Entertainment', avgTime: '2h 15m', color: '#ef4444' },
-  { name: 'Instagram', icon: 'Ã°Å¸â€œÂ¸', category: 'Social', avgTime: '1h 30m', color: '#e91e8c' },
-  { name: 'WhatsApp', icon: 'Ã°Å¸â€™Â¬', category: 'Messaging', avgTime: '45m', color: '#10b981' },
-  { name: 'TikTok', icon: 'Ã°Å¸Å½Âµ', category: 'Entertainment', avgTime: '1h 45m', color: '#000' },
-  { name: 'Snapchat', icon: 'Ã°Å¸â€˜Â»', category: 'Social', avgTime: '50m', color: '#f59e0b' },
+  { name: 'YouTube', icon: '📺', category: 'Entertainment', avgTime: '2h 15m', color: '#ef4444' },
+  { name: 'Instagram', icon: '📸', category: 'Social', avgTime: '1h 30m', color: '#e91e8c' },
+  { name: 'WhatsApp', icon: '💬', category: 'Messaging', avgTime: '45m', color: '#10b981' },
+  { name: 'TikTok', icon: '🎵', category: 'Entertainment', avgTime: '1h 45m', color: '#000' },
+  { name: 'Snapchat', icon: '👻', category: 'Social', avgTime: '50m', color: '#f59e0b' },
   { name: 'Chrome', icon: 'Ã°Å¸Å’Â', category: 'Browser', avgTime: '1h 10m', color: '#3b82f6' },
-  { name: 'Roblox', icon: 'Ã°Å¸Å½Â®', category: 'Gaming', avgTime: '2h 00m', color: '#8b5cf6' },
-  { name: 'Spotify', icon: 'Ã°Å¸Å½Â§', category: 'Music', avgTime: '30m', color: '#10b981' },
+  { name: 'Roblox', icon: '🎮', category: 'Gaming', avgTime: '2h 00m', color: '#8b5cf6' },
+  { name: 'Spotify', icon: '🎧', category: 'Music', avgTime: '30m', color: '#10b981' },
   { name: 'Telegram', icon: 'Ã¢Å“Ë†Ã¯Â¸Â', category: 'Messaging', avgTime: '25m', color: '#0891b2' },
   { name: 'Gallery', icon: 'Ã°Å¸â€“Â¼Ã¯Â¸Â', category: 'System', avgTime: '15m', color: '#6366f1' },
 ];
@@ -658,7 +658,7 @@ const AppManager = ({ childId, token, childName }) => {
           </div>
           <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
             <span>{app.category}</span>
-            <span>Ã°Å¸â€œÅ  {app.avgTime}/day</span>
+            <span>📊 {app.avgTime}/day</span>
             {isLocked && <span style={{ color: '#f59e0b' }}>Ã¢ÂÂ° {getRemainingTime(lockInfo.lockedAt)}</span>}
           </div>
         </div>

@@ -41,7 +41,7 @@ class GlobalErrorBoundary extends React.Component {
             Something went wrong
           </h2>
           <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '360px', lineHeight: 1.6, margin: '0 auto' }}>
-            ChildShield encountered an unexpected error. Your session data is safe.
+            AlphaGuard encountered an unexpected error. Your session data is safe.
           </p>
           {this.state.error && (
             <details style={{ marginTop: '16px' }}>

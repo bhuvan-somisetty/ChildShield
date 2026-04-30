@@ -74,8 +74,8 @@ const slides = [
     icon: ShieldCheck,
     color: '#fbbf24', // Gold motif for final consent
     title: "Terms & Conditions",
-    subtitle: "To enforce these safety protocols, parental consent is required to activate ChildShield AI supervision on this device.",
-    termsText: "By clicking Agree, you ensure you have read and fully understood our Terms of Service and Privacy Policy. You expressly undertake to comply with the applicable laws and regulations in your territory regarding monitoring. You authorize ChildShield AI to securely transmit data from your child's device.",
+    subtitle: "To enforce these safety protocols, parental consent is required to activate AlphaGuard AI supervision on this device.",
+    termsText: "By clicking Agree, you ensure you have read and fully understood our Terms of Service and Privacy Policy. You expressly undertake to comply with the applicable laws and regulations in your territory regarding monitoring. You authorize AlphaGuard AI to securely transmit data from your child's device.",
     graphic: (
       <div style={{ position: 'relative', width: '140px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ position: 'absolute', width: '100%', height: '100%', border: '2px solid rgba(251, 191, 36, 0.5)', borderRadius: '24px', transform: 'rotate(-5deg)', background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(15, 23, 42, 0.8))' }} />

@@ -1,5 +1,5 @@
 // ────────────────────────────────────────────────────────────────────────────
-// VoiceAssistant.js — Web Speech API wrapper for ChildShield AI
+// VoiceAssistant.js — Web Speech API wrapper for AlphaGuard AI
 // Handles the async voice-loading race condition and Chrome cancel() bug.
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -81,7 +81,7 @@ export const speak = (text) => {
 };
 
 // ────────────────────────────────────────────────────────────────────────────
-// Pre-defined announcements for ChildShield events
+// Pre-defined announcements for AlphaGuard events
 // ────────────────────────────────────────────────────────────────────────────
 export const VoiceEvents = {
   SESSION_LOCKED:  () => speak("Your session has been locked. Please ask a parent to unlock the device."),
@@ -90,6 +90,6 @@ export const VoiceEvents = {
   TIME_WARNING_10: () => speak("You have 10 minutes of screen time remaining today."),
   TIME_WARNING_5:  () => speak("Warning. Only 5 minutes of screen time left."),
   TIME_WARNING_1:  () => speak("Device will lock in 1 minute. Please save your work."),
-  DEVICE_LINKED:   () => speak("This device is now connected and protected by ChildShield A.I."),
+  DEVICE_LINKED:   () => speak("This device is now connected and protected by AlphaGuard A.I."),
 };
 

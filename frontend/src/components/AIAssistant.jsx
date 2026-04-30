@@ -1,69 +1,47 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Sparkles, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { X, Send, Sparkles, Mic, Brain, StopCircle, VolumeX, Volume2, User, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { getVolume, setVolume } from '../hooks/VoiceAssistant';
 
 const QUICK_REPLIES = [
-  'How do I pair a child device?',
-  'How to set screen time limits?',
-  'How does location tracking work?',
-  'What is Face Guard?',
-  'How to lock an app?',
-  'How does the camera feature work?',
+  'How do I limit screen time?',
+  'Why is my child sad today?',
+  'Explain late night usage',
+  'How do I lock YouTube?',
 ];
 
-// Simple local AI responses (no API needed)
-const getAIResponse = (msg) => {
-  const q = msg.toLowerCase();
-  if (q.includes('pair') || q.includes('connect') || q.includes('link'))
-    return "To pair a child device:\n1. On the child's phone, open ChildShield and select **Child Mode**\n2. Enter the child's name and gender\n3. A **6-digit code** and QR code will appear\n4. On your parent dashboard, go to **Controls** and enter the code\n5. The devices will sync automatically! âœ…";
-  if (q.includes('screen time') || q.includes('time limit') || q.includes('timer'))
-    return "To set screen time limits:\n1. Go to **Controls** in your dashboard\n2. Find **Screen Time** section\n3. Set daily limit (e.g., 2 hours)\n4. You can also start a **countdown timer** for homework time\n5. The child will get warnings at 10, 5, and 1 minute before time's up â°";
-  if (q.includes('location') || q.includes('track') || q.includes('gps'))
-    return "Location tracking features:\nâ€¢ **Live Location** â€” See where your child is right now on the map ðŸ“\nâ€¢ **Route History** â€” View where they've been throughout the day\nâ€¢ **Safe Zones** â€” Set up Home, School, and custom zones with alerts\nâ€¢ **Distance** â€” See how far your child is from you in real-time\n\nEnable tracking in **Controls â†’ Location Tracking**";
-  if (q.includes('face') || q.includes('guard'))
-    return "Face Guard monitors who is using the child's device:\nâ€¢ It uses the **front camera** to detect faces\nâ€¢ If an **unknown face** is detected, it can alert, pause, or lock the device\nâ€¢ You can enroll authorized faces in **Controls â†’ Face Guard**\nâ€¢ All face data stays **local** and is never uploaded ðŸ”’";
-  if (q.includes('lock') || q.includes('app'))
-    return "To lock an app on the child's device:\n1. Go to **Controls** in your dashboard\n2. Find the **App Manager** section\n3. You'll see a list of apps the child uses\n4. Tap the **lock icon** next to any app\n5. The app will be locked for **24 hours** or until you manually unlock it ðŸ”";
-  if (q.includes('camera'))
-    return "The Camera feature lets you:\nâ€¢ View the child's camera **live** via the Camera page ðŸ“·\nâ€¢ **Switch** between front and back cameras\nâ€¢ Toggle the **flashlight**\nâ€¢ Take a **screenshot** of the camera feed\n\nAll streaming is peer-to-peer and encrypted!";
-  if (q.includes('audio') || q.includes('listen') || q.includes('mic'))
-    return "Audio Listening lets you hear the child's surroundings:\nâ€¢ Go to the **Audio** page in the sidebar\nâ€¢ Tap **Start Listening** to begin\nâ€¢ You'll see a live **audio visualizer** ðŸŽµ\nâ€¢ Tap **Stop** when done\n\nThis uses the microphone permission granted during child setup.";
-  if (q.includes('screen') && (q.includes('shar') || q.includes('view')))
-    return "Screen View lets you see the child's screen live:\nâ€¢ Go to **Screen View** in the sidebar\nâ€¢ Tap **View Child Screen**\nâ€¢ The child will see a system prompt asking to share\nâ€¢ Once approved, you'll see their screen in real-time ðŸ–¥ï¸\nâ€¢ You can take screenshots too!";
-  if (q.includes('password') || q.includes('control'))
-    return "The **Parent Control Password** is separate from your login password. It's used for:\nâ€¢ Unlocking child device\nâ€¢ Approving logout requests\nâ€¢ Unlocking locked apps\n\nYou can change it in **Account Settings â†’ Security**";
-  if (q.includes('safe zone') || q.includes('geofence'))
-    return "Safe Zones let you define trusted areas:\n1. Go to **Location â†’ Safe Zones** tab\n2. Tap **Add Zone** and enter details\n3. Choose type: Home, School, Relative, or Custom\n4. Set radius: 100m, 200m, or 500m\n5. Get alerts when child enters/exits zones ðŸ›¡ï¸";
-  if (q.includes('hi') || q.includes('hello') || q.includes('hey'))
-    return "Hello! ðŸ‘‹ I'm your ChildShield AI assistant. I can help you with:\nâ€¢ Device pairing\nâ€¢ Screen time & controls\nâ€¢ Location tracking & safe zones\nâ€¢ Camera, audio & screen features\nâ€¢ Security settings\n\nJust ask me anything!";
-  return "I can help you with ChildShield features! Try asking about:\nâ€¢ **Pairing** a child device\nâ€¢ Setting **screen time** limits\nâ€¢ **Location** tracking & safe zones\nâ€¢ **Camera**, **audio**, or **screen** viewing\nâ€¢ **App locking** & security\nâ€¢ **Face Guard** settings\n\nWhat would you like to know? ðŸ˜Š";
-};
-
 const AIAssistant = () => {
+  const { token } = useAuth();
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState('voice'); // 'chat' or 'voice'
+  
+  // Chat state
   const [messages, setMessages] = useState([
-    { role: 'ai', text: "Hi! ðŸ‘‹ I'm **Samantha**, your ChildShield AI assistant. How can I help you today?" }
+    { role: 'ai', text: "Hello! I'm AlphaGuard AI. I analyze your child's data to help you parent better. You can ask me anything!" }
   ]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const chatEndRef = useRef(null);
+
+  // Voice state
+  const [voiceState, setVoiceState] = useState('idle'); // idle, listening, thinking, speaking
+  const [voiceText, setVoiceText] = useState('Ask anything');
+  const [isMuted, setIsMuted] = useState(false);
+  const [vol, setVol] = useState(() => getVolume());
+  
+  const synth = window.speechSynthesis;
+  const recognitionRef = useRef(null);
 
   // Draggable state
   const [pos, setPos] = useState({ x: window.innerWidth - 90, y: window.innerHeight - 140 });
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef({ startX: 0, startY: 0, startPosX: 0, startPosY: 0 });
 
-  // Mute logic
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolumeState] = useState(() => getVolume());
-
   useEffect(() => {
     // Sync mute state on mount
     setIsMuted(localStorage.getItem('samantha_muted') === 'true');
-    
-    // Listen for cross-tab or external mute toggles
     const handleMuteToggle = () => setIsMuted(localStorage.getItem('samantha_muted') === 'true');
-    const handleVolumeChanged = (e) => setVolumeState(e.detail);
+    const handleVolumeChanged = (e) => setVol(e.detail);
     window.addEventListener('samantha-mute-changed', handleMuteToggle);
     window.addEventListener('samantha-volume-changed', handleVolumeChanged);
     return () => {
@@ -76,7 +54,6 @@ const AIAssistant = () => {
     const newState = !isMuted;
     setIsMuted(newState);
     localStorage.setItem('samantha_muted', newState);
-    // Let VoiceAssistant logic know if speech is happening it should stop
     if (newState) window.speechSynthesis.cancel();
     window.dispatchEvent(new Event('samantha-mute-changed'));
   };
@@ -88,20 +65,165 @@ const AIAssistant = () => {
   }, []);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typing]);
+    if (open && mode === 'chat') {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, typing, open, mode]);
 
-  const handleSend = useCallback((text) => {
+  useEffect(() => {
+    // Setup Speech Recognition
+    if ('webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      let fullTranscript = '';
+      let silenceTimer = null;
+
+      recognitionRef.current.onstart = () => {
+        setVoiceState('listening');
+        setVoiceText('Listening...');
+      };
+
+      recognitionRef.current.onresult = (event) => {
+        let interimTranscript = '';
+        let currentFinal = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            currentFinal += event.results[i][0].transcript + ' ';
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        
+        if (currentFinal) fullTranscript += currentFinal;
+        
+        const displayTxt = (fullTranscript + interimTranscript).trim();
+        if (displayTxt) setVoiceText(displayTxt);
+
+        // Reset the silence timer on any speech
+        if (silenceTimer) clearTimeout(silenceTimer);
+        
+        // Auto-submit after 2 seconds of silence
+        if (fullTranscript.trim()) {
+          silenceTimer = setTimeout(() => {
+             recognitionRef.current.stop();
+             handleVoiceQuery(fullTranscript.trim());
+             fullTranscript = '';
+          }, 2000);
+        }
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error("Speech Rec Error:", event.error);
+        if (event.error === 'no-speech') {
+          // ignore no-speech errors in continuous mode
+          return; 
+        }
+        setVoiceState('idle');
+        setVoiceText('Ask anything');
+      };
+
+      recognitionRef.current.onend = () => {
+        if (silenceTimer) clearTimeout(silenceTimer);
+        if (voiceState === 'listening') {
+          setVoiceState('idle');
+          if (!fullTranscript.trim()) {
+            setVoiceText('Ask anything');
+          }
+        }
+      };
+    }
+    
+    return () => {
+      synth.cancel();
+      if (recognitionRef.current) recognitionRef.current.stop();
+    };
+  }, [voiceState]);
+
+  const speak = (text) => {
+    if (isMuted) return;
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.volume = vol;
+    utterance.pitch = 1.1;
+    utterance.rate = 1.0;
+    
+    const voices = synth.getVoices();
+    const premiumVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha') || v.name.includes('Female')) || voices[0];
+    if (premiumVoice) utterance.voice = premiumVoice;
+
+    utterance.onstart = () => setVoiceState('speaking');
+    utterance.onend = () => {
+      setVoiceState('idle');
+      setVoiceText('Ask anything');
+    };
+    
+    synth.speak(utterance);
+  };
+
+  const askBackend = async (query) => {
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message: query, role: 'parent' })
+      });
+      const data = await res.json();
+      return data.success ? data.reply : "I couldn't process that right now.";
+    } catch (err) {
+      return "Network error. Please try again.";
+    }
+  };
+
+  const handleSend = async (text) => {
     const msg = text || input.trim();
     if (!msg) return;
+    
     setMessages(m => [...m, { role: 'user', text: msg }]);
     setInput('');
     setTyping(true);
-    setTimeout(() => {
-      setMessages(m => [...m, { role: 'ai', text: getAIResponse(msg).replace(/Disha/g, 'Samantha') }]);
-      setTyping(false);
-    }, 800 + Math.random() * 500);
-  }, [input]);
+    
+    const reply = await askBackend(msg);
+    setMessages(m => [...m, { role: 'ai', text: reply }]);
+    setTyping(false);
+  };
+
+  const handleVoiceQuery = async (text) => {
+    setVoiceState('thinking');
+    setVoiceText('Thinking...');
+    
+    const reply = await askBackend(text);
+    
+    setVoiceText(reply);
+    speak(reply);
+  };
+
+  const toggleMic = async () => {
+    if (voiceState === 'listening') {
+      recognitionRef.current?.stop();
+      setVoiceState('idle');
+      setVoiceText('Ask anything');
+    } else {
+      synth.cancel();
+      setVoiceState('listening');
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        recognitionRef.current?.start();
+      } catch (err) {
+        console.error("Mic access denied", err);
+        setVoiceState('idle');
+        setVoiceText('Mic access denied. Please allow it in browser settings.');
+      }
+    }
+  };
+
+  const stopVoice = () => {
+    synth.cancel();
+    setVoiceState('idle');
+    setVoiceText('Ask anything');
+  };
 
   // Drag handlers
   const onPointerDown = (e) => {
@@ -126,7 +248,6 @@ const AIAssistant = () => {
     if (dx < 5 && dy < 5) setOpen(true); // Only open if not dragged
   };
 
-  // Render simple markdown bold
   const renderText = (text) => text.split('\n').map((line, i) => (
     <span key={i}>
       {line.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
@@ -138,6 +259,15 @@ const AIAssistant = () => {
     </span>
   ));
 
+  const isListening = voiceState === 'listening';
+  const isThinking = voiceState === 'thinking';
+  const isSpeaking = voiceState === 'speaking';
+
+  let orbColor = 'var(--accent-primary)'; // idle
+  if (isListening) orbColor = 'var(--accent-red)';
+  if (isThinking) orbColor = 'var(--accent-cyan)';
+  if (isSpeaking) orbColor = '#8b5cf6';
+
   return (
     <>
       {/* Floating button */}
@@ -148,106 +278,232 @@ const AIAssistant = () => {
           onPointerUp={onPointerUp}
           style={{
             position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999,
-            width: '64px', height: '64px', borderRadius: '50%',
-            cursor: dragging ? 'grabbing' : 'grab',
-            boxShadow: '0 4px 24px rgba(37,99,235,0.3), 0 0 60px rgba(37,99,235,0.15)',
-            border: '2px solid rgba(37,99,235,0.4)',
-            overflow: 'hidden', touchAction: 'none',
-            animation: 'pulse-dot 3s infinite'
+            width: '60px', height: '60px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #2563eb, #1e40af)',
+            boxShadow: '0 8px 32px rgba(37,99,235,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: dragging ? 'grabbing' : 'pointer',
+            border: '2px solid rgba(255,255,255,0.1)',
+            touchAction: 'none'
           }}
         >
-          <img src="/disha.jpeg" alt="Samantha AI Assistant" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Sparkles size={28} color="#fff" />
+          <div style={{ position: 'absolute', top: -4, right: -4, width: 14, height: 14, background: '#10b981', borderRadius: '50%', border: '2px solid #0f172a' }} />
         </div>
       )}
 
-      {/* Chat window */}
+      {/* Floating Panel */}
       {open && (
         <div style={{
-          position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999,
-          width: '380px', maxWidth: 'calc(100vw - 32px)', height: '520px', maxHeight: 'calc(100vh - 60px)',
-          background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '24px', display: 'flex', flexDirection: 'column',
-          boxShadow: '0 12px 48px rgba(0,0,0,0.5), 0 0 40px rgba(37,99,235,0.08)',
-          overflow: 'hidden'
+          position: 'fixed', bottom: '24px', right: '24px', width: '380px', height: '600px',
+          maxWidth: 'calc(100vw - 48px)', maxHeight: 'calc(100vh - 48px)',
+          background: mode === 'voice' ? '#07070a' : 'rgba(15, 23, 42, 0.95)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '24px', zIndex: 10000,
+          display: 'flex', flexDirection: 'column',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+          overflow: 'hidden', animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}>
+          
+          <style>{`
+            @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+            @keyframes pulse-orb { 0% { transform: scale(1); box-shadow: 0 0 20px rgba(37,99,235,0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(37,99,235,0.8); } 100% { transform: scale(1); box-shadow: 0 0 20px rgba(37,99,235,0.4); } }
+            @keyframes rotate-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            @keyframes rotate-ring-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+            @keyframes ripple-glow { 0% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.5); } 100% { box-shadow: 0 0 0 40px rgba(239, 68, 68, 0); } }
+          `}</style>
+
           {/* Header */}
-          <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(37,99,235,0.03)' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(37,99,235,0.3)', flexShrink: 0 }}>
-              <img src="/disha.jpeg" alt="Samantha" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                Samantha <Sparkles size={14} color="#f59e0b" />
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(239,68,68,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Sparkles size={16} color="#2563eb" />
               </div>
-              <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '600' }}>â— Online</div>
+              <span style={{ fontSize: '16px', fontWeight: '800', color: '#fff', letterSpacing: '-0.3px' }}>AlphaGuard AI</span>
             </div>
-            {/* MUTED TOGGLE */}
-            <button onClick={toggleMute} style={{ background: isMuted ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.05)', border: '1px solid ' + (isMuted ? 'rgba(239,68,68,0.3)' : 'transparent'), borderRadius: '10px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: isMuted ? '#ef4444' : '#fff', fontSize: '11px', fontWeight: 'bold' }}>
-              {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
-              {isMuted ? 'Muted' : 'Voice'}
-            </button>
-            {/* VOLUME SLIDER â€” only visible when not muted */}
-            {!isMuted && (
-              <input
-                type="range" min="0" max="1" step="0.05"
-                value={volume}
-                onChange={e => { const v = parseFloat(e.target.value); setVolumeState(v); setVolume(v); }}
-                title={`Volume: ${Math.round(volume * 100)}%`}
-                style={{ width: '64px', accentColor: 'var(--accent-cyan)', cursor: 'pointer' }}
-              />
-            )}
-            <button onClick={() => setOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '10px', padding: '8px', cursor: 'pointer', display: 'flex' }}>
-              <Minimize2 size={16} color="#94a3b8" />
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={toggleMute} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: isMuted ? 'var(--text-muted)' : '#fff' }}>
+                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              </button>
+              <button onClick={() => { setOpen(false); synth.cancel(); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <X size={20} color="#64748b" />
+              </button>
+            </div>
           </div>
 
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '85%', padding: '12px 16px', borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  background: m.role === 'user' ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${m.role === 'user' ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                  fontSize: '13px', lineHeight: 1.6, color: 'var(--text-primary)'
+          {/* Top Toggle Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '16px 0' }}>
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '24px', padding: '4px' }}>
+              <button 
+                onClick={() => { setMode('voice'); synth.cancel(); setVoiceState('idle'); setVoiceText('Ask anything'); }}
+                style={{ 
+                  padding: '6px 20px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold',
+                  background: mode === 'voice' ? 'var(--accent-primary)' : 'transparent',
+                  color: mode === 'voice' ? '#fff' : 'var(--text-muted)',
+                  transition: 'all 0.3s'
                 }}>
-                  {renderText(m.text)}
-                </div>
-              </div>
-            ))}
-            {typing && (
-              <div style={{ display: 'flex', gap: '4px', padding: '12px 16px', background: 'rgba(255,255,255,0.04)', borderRadius: '16px', width: 'fit-content' }}>
-                {[0, 1, 2].map(i => (
-                  <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-cyan)', animation: `pulse-dot 1.2s ease-in-out ${i * 0.15}s infinite` }} />
-                ))}
-              </div>
-            )}
-            <div ref={chatEndRef} />
+                🎤 Speak
+              </button>
+              <button 
+                onClick={() => { setMode('chat'); synth.cancel(); }}
+                style={{ 
+                  padding: '6px 20px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold',
+                  background: mode === 'chat' ? 'var(--accent-primary)' : 'transparent',
+                  color: mode === 'chat' ? '#fff' : 'var(--text-muted)',
+                  transition: 'all 0.3s'
+                }}>
+                💬 Chat
+              </button>
+            </div>
           </div>
 
-          {/* Quick replies */}
-          {messages.length <= 2 && (
-            <div style={{ padding: '0 16px 8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {QUICK_REPLIES.slice(0, 3).map(q => (
-                <button key={q} onClick={() => handleSend(q)} style={{ padding: '6px 12px', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '20px', color: 'var(--accent-cyan)', fontSize: '11px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  {q}
+          {/* VOICE MODE */}
+          {mode === 'voice' && (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+              
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                width: '300px', height: '300px', borderRadius: '50%',
+                background: `radial-gradient(circle, ${orbColor}25 0%, transparent 70%)`,
+                pointerEvents: 'none', transition: 'all 0.5s ease', zIndex: 0
+              }} />
+
+              <div style={{ zIndex: 10, marginBottom: '40px' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', marginBottom: '8px', letterSpacing: '-0.5px' }}>Ask anything</h2>
+                <p style={{ color: '#94a3b8', fontSize: '14px', fontWeight: '500' }}>Speak naturally. I'll answer.</p>
+              </div>
+              
+              {/* Glowing Orb */}
+              <div style={{ marginBottom: '40px', position: 'relative', zIndex: 10 }}>
+                {isListening && (
+                  <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', animation: 'ripple-glow 1.5s infinite' }} />
+                )}
+                
+                <div style={{
+                  width: '120px', height: '120px', borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${orbColor}, #0a0a0f)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: `0 0 30px ${orbColor}60, inset 0 0 20px rgba(0,0,0,0.5)`,
+                  border: `2px solid ${orbColor}`,
+                  animation: isSpeaking ? 'pulse-orb 1.5s infinite' : 'none',
+                  transition: 'all 0.5s ease'
+                }}>
+                  {isThinking ? (
+                    <Loader2 size={40} color="#fff" style={{ animation: 'spin 1s linear infinite' }} />
+                  ) : isListening ? (
+                    <Mic size={40} color="#fff" />
+                  ) : (
+                    <Sparkles size={40} color="#fff" />
+                  )}
+                </div>
+
+                {/* Rotating Rings */}
+                {isSpeaking && (
+                  <>
+                    <div style={{ position: 'absolute', inset: -15, borderRadius: '50%', border: '2px dashed #8b5cf6', animation: 'rotate-ring 8s linear infinite', opacity: 0.5 }} />
+                    <div style={{ position: 'absolute', inset: -25, borderRadius: '50%', border: '2px dashed var(--accent-cyan)', animation: 'rotate-ring-reverse 12s linear infinite', opacity: 0.3 }} />
+                  </>
+                )}
+              </div>
+
+              <p style={{ fontSize: '15px', color: '#fff', lineHeight: '1.6', minHeight: '60px', maxWidth: '300px', zIndex: 10 }}>
+                {voiceText}
+              </p>
+
+              {/* Voice Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '20px', zIndex: 10 }}>
+                <button 
+                  onClick={toggleMic}
+                  style={{ 
+                    width: '64px', height: '64px', borderRadius: '50%', 
+                    background: isListening ? 'var(--accent-red)' : 'var(--accent-primary)', 
+                    border: 'none', color: '#fff', cursor: 'pointer', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: isListening ? '0 0 20px rgba(239,68,68,0.5)' : '0 0 20px rgba(37,99,235,0.4)',
+                    transition: 'all 0.3s'
+                  }}>
+                  <Mic size={28} />
                 </button>
-              ))}
+
+                <button 
+                  onClick={stopVoice}
+                  disabled={!isSpeaking && !isListening}
+                  style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: 'none', color: (isSpeaking || isListening) ? 'var(--accent-red)' : 'var(--text-muted)', cursor: (isSpeaking || isListening) ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <StopCircle size={24} />
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Input */}
-          <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px' }}>
-            <input
-              value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSend()}
-              placeholder="Ask me anything..."
-              style={{ flex: 1, padding: '10px 14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', fontSize: '13px', outline: 'none' }}
-            />
-            <button onClick={() => handleSend()} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--accent-cyan)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Send size={16} color="#0f172a" />
-            </button>
-          </div>
+          {/* CHAT MODE */}
+          {mode === 'chat' && (
+            <>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {messages.map((m, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    {m.role === 'ai' && (
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(37,99,235,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Sparkles size={14} color="var(--accent-primary)" />
+                      </div>
+                    )}
+                    <div style={{
+                      background: m.role === 'user' ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)',
+                      color: '#fff', padding: '12px 16px',
+                      borderRadius: m.role === 'user' ? '16px 16px 0 16px' : '16px 16px 16px 0',
+                      fontSize: '14px', lineHeight: '1.5', maxWidth: '85%'
+                    }}>
+                      {renderText(m.text)}
+                    </div>
+                  </div>
+                ))}
+                
+                {typing && (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(37,99,235,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Sparkles size={14} color="var(--accent-primary)" />
+                    </div>
+                    <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px 16px 16px 0', display: 'flex', gap: '4px' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#64748b', animation: 'pulse 1.5s infinite' }} />
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#64748b', animation: 'pulse 1.5s infinite 0.2s' }} />
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#64748b', animation: 'pulse 1.5s infinite 0.4s' }} />
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {messages.length < 3 && (
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 20px 16px', scrollbarWidth: 'none' }}>
+                  {QUICK_REPLIES.map(q => (
+                    <button key={q} onClick={() => handleSend(q)} style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', color: 'var(--accent-cyan)', padding: '8px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
+                <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <input
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && handleSend()}
+                    placeholder="Message AlphaGuard AI..."
+                    style={{ flex: 1, background: 'transparent', border: 'none', color: '#fff', padding: '8px 12px', fontSize: '14px', outline: 'none' }}
+                  />
+                  <button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim()}
+                    style={{ width: '36px', height: '36px', borderRadius: '50%', background: input.trim() ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default', transition: 'all 0.2s' }}
+                  >
+                    <Send size={16} style={{ marginLeft: '2px' }} />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
         </div>
       )}
     </>

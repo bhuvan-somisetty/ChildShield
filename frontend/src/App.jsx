@@ -110,6 +110,7 @@ const AppLayout = () => {
             </Routes>
           </React.Suspense>
         </main>
+        <AIAssistant />
         {isMobile && <BottomNav />}
       </div>
 

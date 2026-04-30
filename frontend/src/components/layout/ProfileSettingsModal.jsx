@@ -366,7 +366,7 @@ const ProfileSettingsModal = ({ onClose }) => {
               </SectionCard>
 
               <div style={{ textAlign: 'center', fontSize: '11px', color: '#1e293b', paddingTop: '8px', paddingBottom: '8px' }}>
-                ChildShield AI Â· Family Safety Platform Â· v1.0.0
+                AlphaGuard AI · Family Safety Platform · v1.0.0
               </div>
             </>
           )}

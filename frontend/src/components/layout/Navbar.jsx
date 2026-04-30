@@ -80,7 +80,7 @@ const Navbar = () => {
         {/* Left â€” title + child selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
           <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
-            ChildShield
+            AlphaGuard
           </h1>
 
           {childrenList.length > 0 && (
@@ -280,12 +280,12 @@ const Navbar = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <button onClick={() => {
-                      const reportData = `ChildShield Report\n\nParent: ${user?.fullName}\nChild: ${activeChild?.name || 'All'}\nDate: ${new Date().toLocaleString()}\n\nNote: Detailed analytics available in the dashboard.`;
+                      const reportData = `AlphaGuard Report\n\nParent: ${user?.fullName}\nChild: ${activeChild?.name || 'All'}\nDate: ${new Date().toLocaleString()}\n\nNote: Detailed analytics available in the dashboard.`;
                       const blob = new Blob([reportData], { type: 'text/plain' });
                       const url = window.URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = `ChildShield_Report_${new Date().getTime()}.txt`;
+                      a.download = `AlphaGuard_Report_${new Date().getTime()}.txt`;
                       a.click();
                       setLogoutStep('downloaded');
                     }}

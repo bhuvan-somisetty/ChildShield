@@ -558,7 +558,7 @@ const AppearanceView = ({ onBack }) => {
   ];
   return (
     <div style={{ maxWidth: '560px' }}>
-      <SubHeader title="Theme & Appearance" desc="Customize how ChildShield AI looks on your device." onBack={onBack} />
+      <SubHeader title="Theme & Appearance" desc="Customize how AlphaGuard AI looks on your device." onBack={onBack} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {themes.map(({ id, icon: Icon, label, desc, color }) => (
           <button key={id} onClick={() => applyTheme(id)} style={{
@@ -739,10 +739,10 @@ const HelpView = ({ onBack }) => {
     {
       icon: Zap, color: '#f59e0b', label: 'Getting Started',
       faqs: [
-        { q: 'How do I create a parent account?', a: 'Open ChildShield AI and tap "Sign Up". Enter your full name, email, and create a strong password plus a secret Parent Control PIN. This PIN is used to lock/unlock child devices.' },
+        { q: 'How do I create a parent account?', a: 'Open AlphaGuard AI and tap "Sign Up". Enter your full name, email, and create a strong password plus a secret Parent Control PIN. This PIN is used to lock/unlock child devices.' },
         { q: 'How do I pair a child device?', a: 'Go to Controls â†’ tap "+ Add Device". A 6-digit pairing code appears. On the child device, open the app in Child Mode, enter the child name and select gender â€” a QR code will appear. Enter that code on the parent side to link.' },
         { q: 'How many child devices can I add?', a: 'You can link multiple child devices to a single parent account. Each child profile is tracked independently with its own settings, limits, and history.' },
-        { q: 'Can I use ChildShield AI on a web browser?', a: 'Yes! The web version is fully functional. The production app will be available on both web and native Android/iOS.' },
+        { q: 'Can I use AlphaGuard AI on a web browser?', a: 'Yes! The web version is fully functional. The production app will be available on both web and native Android/iOS.' },
       ]
     },
     {
@@ -797,7 +797,7 @@ const HelpView = ({ onBack }) => {
 
   return (
     <div style={{ maxWidth: '640px' }}>
-      <SubHeader title="Help & Support" desc="Everything you need to know about ChildShield AI." onBack={onBack} />
+      <SubHeader title="Help & Support" desc="Everything you need to know about AlphaGuard AI." onBack={onBack} />
 
       {/* Search bar */}
       <div style={{ position: 'relative', marginBottom: '24px' }}>
@@ -878,8 +878,8 @@ const HelpView = ({ onBack }) => {
           <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '14px', marginTop: '8px' }}>
             <ShieldCheck size={20} color="var(--accent-cyan)" />
             <div>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>ChildShield AI Â· v1.0.0</div>
-              <div style={{ fontSize: '12px', color: '#475569' }}>Family Safety Platform Â· Free & Open Source</div>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>AlphaGuard AI · v1.0.0</div>
+              <div style={{ fontSize: '12px', color: '#475569' }}>Family Safety Platform · Free & Open Source</div>
             </div>
             <div style={{ marginLeft: 'auto', fontSize: '11px', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(16,185,129,0.2)' }}>Up to date</div>
           </div>
@@ -906,7 +906,7 @@ const ContactView = ({ onBack }) => {
 
   return (
     <div style={{ maxWidth: '580px' }}>
-      <SubHeader title="Contact Us" desc="Get in touch with the ChildShield team." onBack={onBack} />
+      <SubHeader title="Contact Us" desc="Get in touch with the AlphaGuard team." onBack={onBack} />
 
       {/* Contact channels */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
@@ -996,7 +996,7 @@ const ContactView = ({ onBack }) => {
 // â”€â”€â”€ PRIVACY POLICY VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PrivacyView = ({ onBack }) => (
   <div style={{ maxWidth: '600px' }}>
-    <SubHeader title="Privacy Policy" desc="How ChildShield AI handles your data." onBack={onBack} />
+    <SubHeader title="Privacy Policy" desc="How AlphaGuard AI handles your data." onBack={onBack} />
     {[['Data Collection', 'We collect only what is necessary: your account email, child device usage data, and app activity logs. No personal browsing content is ever stored.'],
       ['Data Usage', 'All data is used exclusively to provide parental monitoring features. We never sell or share data with third parties.'],
       ['Data Security', 'All data is encrypted in transit (TLS) and at rest. Passwords are hashed using bcrypt with salting.'],
@@ -1163,7 +1163,7 @@ const AccountSettings = () => {
         />
       </Card>
 
-      <div style={{ textAlign: 'center', fontSize: '12px', color: '#1e293b', paddingBottom: '16px' }}>ChildShield AI Â· Family Safety Platform Â· v1.0.0</div>
+      <div style={{ textAlign: 'center', fontSize: '12px', color: '#1e293b', paddingBottom: '16px' }}>AlphaGuard AI · Family Safety Platform · v1.0.0</div>
 
       {/* â”€â”€ Danger Action Modal (Logout & Delete) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {dangerAction && (

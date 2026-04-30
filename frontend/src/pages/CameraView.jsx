@@ -137,7 +137,9 @@ const CameraView = () => {
         }
       `}</style>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px' }}>ðŸ“· Remote Camera</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Camera size={28} color="var(--accent-cyan)" /> Remote Camera
+        </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View live camera feed from {activeChild?.name}'s device</p>
       </div>
 
