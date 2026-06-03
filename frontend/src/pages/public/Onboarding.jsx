@@ -42,7 +42,7 @@ const slides = [
           <div style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', fontSize: '10px', fontWeight: '800', padding: '4px 8px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.3)' }}>DEVICE LOCKED</div>
         </div>
         <div style={{ position: 'absolute', bottom: '15px', right: '-30px', background: '#3b82f6', padding: '8px 12px', borderRadius: '14px', fontSize: '12px', fontWeight: 'bold', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 4px 15px rgba(59,130,246,0.4)' }}>
-          â³ 1h 30m
+          ⏳ 1h 30m
         </div>
       </div>
     )

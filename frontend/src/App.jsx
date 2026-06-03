@@ -22,6 +22,7 @@ import AccountSettings from './pages/AccountSettings';
 import CameraView from './pages/CameraView';
 import AudioListener from './pages/AudioListener';
 import ScreenView from './pages/ScreenView';
+import EmergencyCenter from './pages/EmergencyCenter';
 
 // Public/Auth Pages
 import Welcome from './pages/public/Welcome';
@@ -37,7 +38,7 @@ import PairingSetup from './pages/child/PairingSetup';
 import ChildDeviceView from './pages/child/ChildDeviceView';
 import ChildPermissionWizard from './pages/child/ChildPermissionWizard';
 
-// â”€â”€â”€ useIsMobile hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── useIsMobile hook ──────────────────────────────────────────────────────────
 const useIsMobile = () => {
   const [mobile, setMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
@@ -53,10 +54,17 @@ const AppLayout = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const [isLoader, setIsLoader] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoader(false), 600);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleToggle = () => setIsMobileSidebarOpen(prev => !prev);
+    window.addEventListener('toggle-mobile-sidebar', handleToggle);
+    return () => window.removeEventListener('toggle-mobile-sidebar', handleToggle);
   }, []);
 
   if (isLoader) {
@@ -89,11 +97,11 @@ const AppLayout = () => {
       <EmergencyListener />
       <LogoutApprovalListener />
       <PermissionRequest />
-      {!isMobile && <Sidebar />}
+      <Sidebar isMobile={isMobile} isOpenMobile={isMobileSidebarOpen} onCloseMobile={() => setIsMobileSidebarOpen(false)} />
       <div className="main-content">
         <Navbar />
         <main className="page-content" style={isMobile ? { paddingBottom: '80px' } : undefined}>
-          <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loadingâ€¦</div>}>
+          <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>}>
             <Routes location={location} key={location.pathname}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/history" element={<WatchHistory />} />
@@ -106,6 +114,7 @@ const AppLayout = () => {
               <Route path="/audio" element={<AudioListener />} />
               <Route path="/screen" element={<ScreenView />} />
               <Route path="/account-settings" element={<AccountSettings />} />
+              <Route path="/emergency" element={<EmergencyCenter />} />
               <Route path="*" element={<Navigate to="/controls" />} />
             </Routes>
           </React.Suspense>
@@ -135,7 +144,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
-        {/* Password setup â€” standalone page, requires JWT but no password yet */}
+        {/* Password setup "” standalone page, requires JWT but no password yet */}
         <Route path="/setup-password" element={<SetupPassword />} />
         {/* Child device routes */}
         <Route path="/child-setup" element={<ChildSetup />} />

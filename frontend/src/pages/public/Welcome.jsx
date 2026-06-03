@@ -83,7 +83,7 @@ const Welcome = () => {
           fontSize: '17px', color: '#64748b', marginBottom: '48px',
           lineHeight: '1.7', maxWidth: '480px', marginInline: 'auto'
         }}>
-          Not just parental controls â€” an <strong style={{ color: '#94a3b8' }}>AI-powered behavior + safety system</strong> built for the next generation.
+          Not just parental controls – an <strong style={{ color: '#94a3b8' }}>AI-powered behavior + safety system</strong> built for the next generation.
         </p>
 
         {/* Feature Pills */}
@@ -136,7 +136,7 @@ const Welcome = () => {
         position: 'absolute', bottom: '28px', fontSize: '12px', 
         color: 'rgba(255, 255, 255, 0.4)'
       }}>
-        Â© {new Date().getFullYear()} AlphaGuard AI · All rights reserved
+        © {new Date().getFullYear()} AlphaGuard AI · All rights reserved
       </div>
 
       <style>{`

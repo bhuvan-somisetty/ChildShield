@@ -147,7 +147,7 @@ const CameraView = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', background: streaming ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)', border: `1px solid ${streaming ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '14px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {streaming ? <Wifi size={18} color="#10b981" /> : <WifiOff size={18} color="#475569" />}
         <span style={{ fontSize: '14px', fontWeight: '600', color: streaming ? '#10b981' : '#475569' }}>
-          {streaming ? 'Camera Active â€” Live Feed' : peerConnected ? 'Connecting stream...' : connected ? 'Waiting for child device...' : 'Camera Inactive'}
+          {streaming ? 'Camera Active "” Live Feed' : peerConnected ? 'Connecting stream...' : connected ? 'Waiting for child device...' : 'Camera Inactive'}
         </span>
         <div style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: streaming ? '#10b981' : '#334155', boxShadow: streaming ? '0 0 8px #10b981' : 'none', animation: streaming ? 'pulse-dot 2s infinite' : 'none' }} />
       </div>

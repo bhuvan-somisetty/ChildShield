@@ -8,8 +8,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ConfirmationModal from '../components/layout/ConfirmationModal';
 
-// â”€â”€â”€ Shared helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Shared helpers ──────────────────────────────────────────────────────────
 const Row = ({ icon: Icon, iconColor, iconBg, label, desc, right, onClick, danger, badge }) => (
   <button onClick={onClick} style={{
     display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px',
@@ -104,13 +105,13 @@ const PrimaryBtn = ({ label, loading, onClick, disabled, color = '#2563eb' }) =>
     opacity: loading ? 0.7 : 1, transition: 'all 0.2s',
     boxShadow: `0 4px 20px ${color}33`
   }}>
-    {loading ? 'â³ Savingâ€¦' : label}
+    {loading ? 'Saving...' : label}
   </button>
 );
 
-// â”€â”€â”€ PASSWORD VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PASSWORD VIEW ───────────────────────────────────────────────────────────
 const PasswordView = ({ user, token, onBack }) => {
-  const [tab, setTab]         = useState('change'); // 'change' | 'otp' | 'verify' | 'reset'
+  const [tab, setTab]         = useState('change'); // 'change' | 'otp' | 'verify' | 'reset' | 'pin'
   const [oldPass, setOldPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [conf,    setConf]    = useState('');
@@ -120,6 +121,11 @@ const PasswordView = ({ user, token, onBack }) => {
   const [ok,      setOk]      = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+
+  const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [showPinConfirm, setShowPinConfirm] = useState(false);
 
   // OTP Countdown Timer
   React.useEffect(() => {
@@ -142,9 +148,35 @@ const PasswordView = ({ user, token, onBack }) => {
     try {
       const r = await fetch('/api/auth/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass }) });
       const d = await r.json();
-      if (r.ok && d.success) { setOk('Password updated successfully! âœ“'); setOldPass(''); setNewPass(''); setConf(''); }
+      if (r.ok && d.success) { setOk('Password updated successfully!'); setOldPass(''); setNewPass(''); setConf(''); }
       else setErr(d.error || 'Failed to update password.');
     } catch (e) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const handleUpdatePin = async () => {
+    if (!newPin || !confirmPin) return setErr('All fields are required.');
+    if (newPin !== confirmPin) return setErr('PINs do not match.');
+    if (newPin.length < 4) return setErr('PIN/Password must be at least 4 characters.');
+    
+    setErr(''); setOk(''); setLoading(true);
+    try {
+      const r = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ parentControlPassword: newPin })
+      });
+      const d = await r.json();
+      if (r.ok && d.success) {
+        setOk('Parent Control PIN updated successfully!');
+        setNewPin('');
+        setConfirmPin('');
+      } else {
+        setErr(d.error || 'Failed to update Parent PIN.');
+      }
+    } catch (e) {
+      setErr(e.message);
+    }
     setLoading(false);
   };
 
@@ -154,12 +186,15 @@ const PasswordView = ({ user, token, onBack }) => {
 
       {/* Mode tabs */}
       <div style={{ display: 'flex', gap: '0', marginBottom: '28px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '4px' }}>
-        {[['change', 'Change Password'], ['otp', 'Reset via OTP']].map(([key, label]) => (
-          <button key={key} onClick={() => { setTab(key); setErr(''); setOk(''); }}
-            style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '13px', transition: 'all 0.2s', background: tab === key || (tab === 'verify' && key === 'otp') ? 'rgba(37,99,235,0.15)' : 'transparent', color: tab === key || (tab === 'verify' && key === 'otp') ? '#2563eb' : '#64748b' }}>
-            {label}
-          </button>
-        ))}
+        {[['change', 'Change Password'], ['otp', 'Reset via OTP'], ['pin', 'Parent PIN']].map(([key, label]) => {
+          const isActive = tab === key || (key === 'otp' && (tab === 'verify' || tab === 'reset'));
+          return (
+            <button key={key} onClick={() => { setTab(key); setErr(''); setOk(''); }}
+              style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '13px', transition: 'all 0.2s', background: isActive ? 'rgba(37,99,235,0.15)' : 'transparent', color: isActive ? '#2563eb' : '#64748b' }}>
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       <Alert type="error" msg={err} />
@@ -196,11 +231,61 @@ const PasswordView = ({ user, token, onBack }) => {
 
           <PremiumInput label="Confirm New Password" icon={Lock} iconColor="#2563eb" type={show.conf ? 'text' : 'password'} placeholder="Repeat new password" value={conf} onChange={e => setConf(e.target.value)}
             right={<EyeBtn show={show.conf} toggle={() => setShow(s => ({ ...s, conf: !s.conf }))} />}
-            hint={conf && newPass !== conf ? 'âš  Passwords do not match' : conf && newPass === conf ? 'âœ“ Passwords match' : ''} />
+            hint={conf && newPass !== conf ? 'Passwords do not match' : conf && newPass === conf ? 'Passwords match' : ''} />
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
             <button onClick={() => { setTab('otp'); setErr(''); setOk(''); }} style={{ background: 'transparent', border: 'none', color: '#2563eb', fontSize: '14px', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Forgot current password?</button>
-            <PrimaryBtn label="Update Password" loading={loading} onClick={doChange} />
+            <PrimaryBtn label="Update Password" loading={loading} onClick={() => {
+              if (!oldPass || !newPass || !conf) return setErr('All fields are required.');
+              if (newPass !== conf) return setErr('New passwords do not match.');
+              if (newPass.length < 6) return setErr('Password must be at least 6 characters.');
+              setShowPasswordConfirm(true);
+            }} />
+          </div>
+        </div>
+      )}
+
+      {tab === 'pin' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          {/* Decorative card */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.15)', borderRadius: '14px', marginBottom: '4px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Lock size={22} color="#2563eb" />
+            </div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>Parent Control PIN/Password</div>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>This PIN is required to unpair devices and unlock screens</div>
+            </div>
+          </div>
+
+          <PremiumInput 
+            label="New Parent PIN / Password" 
+            icon={Lock} 
+            iconColor="#2563eb" 
+            type="password" 
+            placeholder="Enter new parent PIN/password" 
+            value={newPin} 
+            onChange={e => setNewPin(e.target.value)} 
+          />
+
+          <PremiumInput 
+            label="Confirm New Parent PIN" 
+            icon={Lock} 
+            iconColor="#2563eb" 
+            type="password" 
+            placeholder="Repeat new parent PIN/password" 
+            value={confirmPin} 
+            onChange={e => setConfirmPin(e.target.value)} 
+            hint={confirmPin && newPin !== confirmPin ? 'PINs do not match' : confirmPin && newPin === confirmPin ? 'PINs match' : ''}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px' }}>
+            <PrimaryBtn label="Update PIN" loading={loading} onClick={() => {
+              if (!newPin || !confirmPin) return setErr('All fields are required.');
+              if (newPin !== confirmPin) return setErr('PINs do not match.');
+              if (newPin.length < 4) return setErr('PIN/Password must be at least 4 characters.');
+              setShowPinConfirm(true);
+            }} />
           </div>
         </div>
       )}
@@ -217,7 +302,7 @@ const PasswordView = ({ user, token, onBack }) => {
               <strong style={{ color: '#fff' }}>{user?.email}</strong>
             </div>
           </div>
-          <PrimaryBtn label="ðŸ“¨ Send OTP to Email" loading={loading} color="#2563eb" onClick={async () => {
+          <PrimaryBtn label="Send OTP to Email" loading={loading} color="#2563eb" onClick={async () => {
             setLoading(true); setErr(''); setOk('');
             try {
               const res = await fetch('/api/auth/send-otp', {
@@ -248,12 +333,12 @@ const PasswordView = ({ user, token, onBack }) => {
       {tab === 'verify' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div style={{ textAlign: 'center', padding: '16px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', fontSize: '14px', color: '#10b981' }}>
-            âœ“ OTP sent to <strong>{user?.email}</strong>
+            OTP sent to <strong>{user?.email}</strong>
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px' }}>Enter 6-digit OTP</label>
             <input maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-              placeholder="â€¢ â€¢ â€¢ â€¢ â€¢ â€¢"
+              placeholder="• • • • • •"
               style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(37,99,235,0.4)', padding: '20px', borderRadius: '14px', color: '#fff', fontSize: '28px', letterSpacing: '16px', textAlign: 'center', outline: 'none', fontWeight: '800' }}
               onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.15)'; }}
               onBlur={e => { e.target.style.borderColor = 'rgba(37,99,235,0.4)'; e.target.style.boxShadow = 'none'; }}
@@ -313,7 +398,7 @@ const PasswordView = ({ user, token, onBack }) => {
             }} 
             disabled={loading}
             style={{ flex: 2, padding: '13px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: '700', cursor: 'pointer', fontSize: '14px', opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Verifying...' : 'Verify OTP â†’'}
+              {loading ? 'Verifying...' : 'Verify OTP →'}
             </button>
           </div>
         </div>
@@ -326,7 +411,7 @@ const PasswordView = ({ user, token, onBack }) => {
           </div>
           <PremiumInput label="New Password" icon={Lock} iconColor="#2563eb" type={show.new ? 'text' : 'password'} placeholder="Min. 8 characters" value={newPass} onChange={e => setNewPass(e.target.value)} right={<EyeBtn show={show.new} toggle={() => setShow(s => ({ ...s, new: !s.new }))} />} />
           <PremiumInput label="Confirm Password" icon={Lock} iconColor="#2563eb" type={show.conf ? 'text' : 'password'} placeholder="Repeat new password" value={conf} onChange={e => setConf(e.target.value)} right={<EyeBtn show={show.conf} toggle={() => setShow(s => ({ ...s, conf: !s.conf }))} />} />
-          <PrimaryBtn label="ðŸ” Reset & Save Password" loading={loading} color="#2563eb" onClick={async () => {
+          <PrimaryBtn label="Reset & Save Password" loading={loading} color="#2563eb" onClick={async () => {
             if (newPass !== conf) return setErr('Passwords do not match');
             setLoading(true); setErr(''); setOk('');
             try {
@@ -346,6 +431,31 @@ const PasswordView = ({ user, token, onBack }) => {
           }} />
         </div>
       )}
+      <ConfirmationModal
+        isOpen={showPasswordConfirm}
+        onClose={() => setShowPasswordConfirm(false)}
+        onConfirm={() => {
+          setShowPasswordConfirm(false);
+          doChange();
+        }}
+        title="Change Password"
+        message="Are you sure you want to change your login password?"
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
+
+      <ConfirmationModal
+        isOpen={showPinConfirm}
+        onClose={() => setShowPinConfirm(false)}
+        onConfirm={() => {
+          setShowPinConfirm(false);
+          handleUpdatePin();
+        }}
+        title="Change Parent PIN"
+        message="Are you sure you want to change your Parent Control PIN/Password?"
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
     </div>
   );
 };
@@ -419,7 +529,7 @@ const ProfileView = ({ user, token, onBack }) => {
   );
 };
 
-// â”€â”€â”€ NOTIFICATIONS VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── NOTIFICATIONS VIEW ──────────────────────────────────────────────────────
 const NotificationsView = ({ onBack }) => {
   const [prefs, setPrefs] = useState({ screenTime: true, appBlocked: true, weeklyReport: true, liveAlerts: true, devicePaired: false });
   const [ok, setOk] = useState('');
@@ -460,7 +570,7 @@ const NotificationsView = ({ onBack }) => {
   );
 };
 
-// â”€â”€â”€ LANGUAGE VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── LANGUAGE VIEW ───────────────────────────────────────────────────────────
 const LanguageView = ({ onBack, currentLang, onLangChange }) => {
   const [search, setSearch] = useState('');
 
@@ -507,7 +617,7 @@ const LanguageView = ({ onBack, currentLang, onLangChange }) => {
       <div style={{ marginBottom: '20px' }}>
         <input 
           type="text" 
-          placeholder="ðŸ” Search for a language..." 
+          placeholder="Search for a language..." 
           value={search} 
           onChange={e => setSearch(e.target.value)}
           style={{ width: '100%', boxSizing: 'border-box', padding: '14px 20px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(37,99,235,0.2)', color: '#fff', fontSize: '15px', outline: 'none' }}
@@ -536,7 +646,7 @@ const LanguageView = ({ onBack, currentLang, onLangChange }) => {
   );
 };
 
-// â”€â”€â”€ APPEARANCE VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── APPEARANCE VIEW ─────────────────────────────────────────────────────────
 const AppearanceView = ({ onBack }) => {
   const [theme, setTheme] = useState(() => localStorage.getItem('cs_theme') || 'dark');
 
@@ -585,7 +695,7 @@ const AppearanceView = ({ onBack }) => {
   );
 };
 
-// â”€â”€â”€ CONNECTED DEVICES VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CONNECTED DEVICES VIEW ──────────────────────────────────────────────────
 const DevicesView = ({ onBack }) => {
   const { childrenList, token, fetchChildren, setActiveChild } = useAuth();
   const navigate = useNavigate();
@@ -730,7 +840,7 @@ const DevicesView = ({ onBack }) => {
   );
 };
 
-// â”€â”€â”€ HELP VIEW (Full Help Center) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── HELP VIEW (Full Help Center) ────────────────────────────────────────────
 const HelpView = ({ onBack }) => {
   const [openFaq, setOpenFaq] = useState(null);
   const [search, setSearch] = useState('');
@@ -740,7 +850,7 @@ const HelpView = ({ onBack }) => {
       icon: Zap, color: '#f59e0b', label: 'Getting Started',
       faqs: [
         { q: 'How do I create a parent account?', a: 'Open AlphaGuard AI and tap "Sign Up". Enter your full name, email, and create a strong password plus a secret Parent Control PIN. This PIN is used to lock/unlock child devices.' },
-        { q: 'How do I pair a child device?', a: 'Go to Controls â†’ tap "+ Add Device". A 6-digit pairing code appears. On the child device, open the app in Child Mode, enter the child name and select gender â€” a QR code will appear. Enter that code on the parent side to link.' },
+        { q: 'How do I pair a child device?', a: 'Go to Controls → tap "+ Add Device". A 6-digit pairing code appears. On the child device, open the app in Child Mode, enter the child name and select gender "” a QR code will appear. Enter that code on the parent side to link.' },
         { q: 'How many child devices can I add?', a: 'You can link multiple child devices to a single parent account. Each child profile is tracked independently with its own settings, limits, and history.' },
         { q: 'Can I use AlphaGuard AI on a web browser?', a: 'Yes! The web version is fully functional. The production app will be available on both web and native Android/iOS.' },
       ]
@@ -748,17 +858,17 @@ const HelpView = ({ onBack }) => {
     {
       icon: Clock, color: '#2563eb', label: 'Screen Time & Controls',
       faqs: [
-        { q: 'How do I set a daily screen time limit?', a: 'Go to Controls â†’ select your child â†’ use the "Daily Limit" slider to set a maximum hours cap. When the child hits the limit, the device is automatically paused.' },
+        { q: 'How do I set a daily screen time limit?', a: 'Go to Controls → select your child → use the "Daily Limit" slider to set a maximum hours cap. When the child hits the limit, the device is automatically paused.' },
         { q: 'How does Night Mode restriction work?', a: 'Enable "Night Restriction" in Controls. This blocks the child device between 9:00 PM and 7:00 AM automatically every day. You can toggle it on/off anytime.' },
-        { q: 'Can I pause or lock the device remotely?', a: 'Yes. In Controls â†’ select the child â†’ tap "Pause Session" or "Lock Device". The screen is immediately blocked with a message. You can unlock remotely anytime.' },
-        { q: 'What is a Session Timer?', a: 'A session timer lets you grant timed access â€” e.g. 30 minutes of usage. When the timer ends, the device auto-pauses. Perfect for homework breaks.' },
+        { q: 'Can I pause or lock the device remotely?', a: 'Yes. In Controls → select the child → tap "Pause Session" or "Lock Device". The screen is immediately blocked with a message. You can unlock remotely anytime.' },
+        { q: 'What is a Session Timer?', a: 'A session timer lets you grant timed access "” e.g. 30 minutes of usage. When the timer ends, the device auto-pauses. Perfect for homework breaks.' },
       ]
     },
     {
       icon: Shield, color: '#2563eb', label: 'Face Guard & Monitoring',
       faqs: [
         { q: 'What is Face Guard?', a: 'Face Guard uses the child device\'s front camera to verify who is using the device. If an unauthorized face is detected, the device is paused or locked automatically.' },
-        { q: 'How do I enroll my child\'s face?', a: 'Go to Controls â†’ select child â†’ "Face Guard" section â†’ "Enroll Face". The child must look at the camera while two clear face photos are captured. These are stored locally and never uploaded.' },
+        { q: 'How do I enroll my child\'s face?', a: 'Go to Controls → select child → "Face Guard" section → "Enroll Face". The child must look at the camera while two clear face photos are captured. These are stored locally and never uploaded.' },
         { q: 'What happens if no face is detected?', a: 'If no face is detected after the configured timeout (default 30s), the action you set triggers: Alert, Pause, or Lock. This prevents children from leaving the device unattended.' },
         { q: 'Can I view browsing and app history?', a: 'Yes. Go to "Watch History" in the sidebar to see a full timeline of all URLs visited and apps opened on the child device, grouped by day and app.' },
       ]
@@ -766,9 +876,9 @@ const HelpView = ({ onBack }) => {
     {
       icon: MapPin, color: '#10b981', label: 'Location Tracking',
       faqs: [
-        { q: 'How do I enable GPS tracking for my child?', a: 'Go to the "Location" page in the sidebar â†’ Enable "GPS Target" toggle. On the child device, the browser will ask for location permission â€” the child must tap Allow.' },
+        { q: 'How do I enable GPS tracking for my child?', a: 'Go to the "Location" page in the sidebar → Enable "GPS Target" toggle. On the child device, the browser will ask for location permission "” the child must tap Allow.' },
         { q: 'Does tracking work when the phone screen is off?', a: 'On the web version, location tracking requires the browser tab to be open and active. Full background tracking requires the native Android/iOS app, which is on the roadmap.' },
-        { q: 'How often is location updated?', a: 'The child device streams GPS using the browser\'s watchPosition API (updates every 5â€“15 seconds). The parent dashboard auto-refreshes every 15 seconds.' },
+        { q: 'How often is location updated?', a: 'The child device streams GPS using the browser\'s watchPosition API (updates every 5—15 seconds). The parent dashboard auto-refreshes every 15 seconds.' },
         { q: 'Can I see where my child has been today?', a: 'Yes! On the Location page, switch to the "Route History" tab to see a timestamped trail of every GPS point recorded in the last 24 hours, including speed and battery.' },
       ]
     },
@@ -776,7 +886,7 @@ const HelpView = ({ onBack }) => {
       icon: ShieldCheck, color: '#3b82f6', label: 'Security & Account',
       faqs: [
         { q: 'What is the Parent Control Password?', a: 'This is separate from your login password. It\'s required to disconnect a child device, override session locks, and modify critical security settings.' },
-        { q: 'How do I change my Parent Control Password?', a: 'Go to Account Settings â†’ "Password & Security". First verify your login via OTP sent to email, then you can change the Parent Control Password.' },
+        { q: 'How do I change my Parent Control Password?', a: 'Go to Account Settings → "Password & Security". First verify your login via OTP sent to email, then you can change the Parent Control Password.' },
         { q: 'Can the child log out by themselves?', a: 'No. The child cannot logout or disconnect without entering the Parent Control Password. Any attempt instantly sends an alert to the parent dashboard.' },
         { q: 'Is my data encrypted?', a: 'Yes. All data is transmitted over HTTPS/TLS. Passwords are hashed using bcrypt. Face images are stored locally on the child device and never uploaded to any server.' },
       ]
@@ -784,10 +894,10 @@ const HelpView = ({ onBack }) => {
     {
       icon: Wifi, color: '#ef4444', label: 'Troubleshooting',
       faqs: [
-        { q: 'The child device shows "Offline" â€” what do I do?', a: 'Check: (1) Is the backend server running? (2) Is the child on the same network? (3) Has the pairing been broken? Try re-pairing via Controls.' },
-        { q: 'GPS / Location not showing on the map?', a: 'Make sure: (1) GPS tracking is enabled by parent. (2) The child allowed location permission in the browser. (3) On Chrome Android â€” Location must be set to "Allow" in Site Settings.' },
+        { q: 'The child device shows "Offline" "” what do I do?', a: 'Check: (1) Is the backend server running? (2) Is the child on the same network? (3) Has the pairing been broken? Try re-pairing via Controls.' },
+        { q: 'GPS / Location not showing on the map?', a: 'Make sure: (1) GPS tracking is enabled by parent. (2) The child allowed location permission in the browser. (3) On Chrome Android "” Location must be set to "Allow" in Site Settings.' },
         { q: 'OTP email not arriving for password reset?', a: 'Check your spam/junk folder first. Make sure you\'ve generated a 16-character "App Password" and entered it in backend/.env as SMTP_PASSWORD. Standard Gmail passwords won\'t work.' },
-        { q: 'Face detection not working?', a: 'Make sure: (1) Camera permission is allowed. (2) Lighting is adequate. (3) Face is fully visible. (4) You have enrolled at least one face. Re-enroll if needed from Controls â†’ Face Guard.' },
+        { q: 'Face detection not working?', a: 'Make sure: (1) Camera permission is allowed. (2) Lighting is adequate. (3) Face is fully visible. (4) You have enrolled at least one face. Re-enroll if needed from Controls → Face Guard.' },
       ]
     },
   ];
@@ -889,7 +999,7 @@ const HelpView = ({ onBack }) => {
   );
 };
 
-// â”€â”€â”€ CONTACT VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CONTACT VIEW ─────────────────────────────────────────────────────────────
 const ContactView = ({ onBack }) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -912,7 +1022,7 @@ const ContactView = ({ onBack }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
         {[
           { icon: Mail, label: 'Email Support', value: 'support@childshield.ai', color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', href: 'mailto:support@childshield.ai', desc: 'Reply within 24 hours' },
-          { icon: MessageCircle, label: 'Live Chat', value: 'Chat with us online', color: '#10b981', bg: 'rgba(16,185,129,0.08)', href: '#', desc: 'Available 9AM â€“ 9PM IST' },
+          { icon: MessageCircle, label: 'Live Chat', value: 'Chat with us online', color: '#10b981', bg: 'rgba(16,185,129,0.08)', href: '#', desc: 'Available 9AM — 9PM IST' },
           { icon: Github, label: 'Report a Bug', value: 'GitHub Issues', color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', href: '#', desc: 'Open source project' },
         ].map(({ icon: Icon, label, value, color, bg, href, desc }) => (
           <a key={label} href={href} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 20px', background: bg, border: `1px solid ${color}30`, borderRadius: '16px', textDecoration: 'none', color: '#fff', transition: 'all 0.2s' }}
@@ -949,7 +1059,7 @@ const ContactView = ({ onBack }) => {
             <div>
               <label style={{ fontSize: '12px', color: '#475569', fontWeight: '700', letterSpacing: '0.06em', marginBottom: '8px', display: 'block' }}>TOPIC</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {[['general','ðŸ’¬ General'],['bug','ðŸ› Bug Report'],['feature','âœ¨ Feature Request'],['billing','ðŸ’³ Billing'],['privacy','ðŸ”’ Privacy']].map(([c, label]) => (
+                {[['general','General'],['bug','Bug Report'],['feature','Feature Request'],['billing','Billing'],['privacy','Privacy']].map(([c, label]) => (
                   <button key={c} type="button" onClick={() => setCategory(c)}
                     style={{ padding: '6px 14px', borderRadius: '20px', border: `1px solid ${category===c ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.08)'}`, background: category===c ? 'rgba(37,99,235,0.12)' : 'transparent', color: category===c ? 'var(--accent-cyan)' : '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
                     {label}
@@ -993,7 +1103,7 @@ const ContactView = ({ onBack }) => {
   );
 };
 
-// â”€â”€â”€ PRIVACY POLICY VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── PRIVACY POLICY VIEW ─────────────────────────────────────────────────────
 const PrivacyView = ({ onBack }) => (
   <div style={{ maxWidth: '600px' }}>
     <SubHeader title="Privacy Policy" desc="How AlphaGuard AI handles your data." onBack={onBack} />
@@ -1010,11 +1120,51 @@ const PrivacyView = ({ onBack }) => (
   </div>
 );
 
-// â”€â”€â”€ MAIN PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 const AccountSettings = () => {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, childrenList, fetchChildren } = useAuth();
+  const navigate = useNavigate();
   const [view, setView] = useState('main');
   const [langCode, setLangCode] = useState(() => localStorage.getItem('cs_lang') || 'en');
+
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState('');
+
+  const handleResetSettings = async () => {
+    try {
+      // 1. Reset theme to dark
+      localStorage.setItem('cs_theme', 'dark');
+      localStorage.setItem('ag_theme', 'dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+
+      // 2. Reset language to English
+      localStorage.setItem('cs_lang', 'en');
+      setLangCode('en');
+
+      // 3. Reset child restrictions to defaults
+      if (childrenList && childrenList.length > 0) {
+        for (const child of childrenList) {
+          await fetch(`/api/children/${child.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              safeMode: true,
+              nightRestriction: false,
+              facePresenceEnabled: false,
+              dailyLimitHours: 5,
+              deviceState: 'active'
+            })
+          });
+        }
+        await fetchChildren(token);
+      }
+      setResetSuccess('Settings successfully reset to defaults!');
+      setTimeout(() => setResetSuccess(''), 3000);
+    } catch (e) {
+      console.error('Reset error:', e);
+    }
+  };
 
   const handleLangChange = (code) => {
     localStorage.setItem('cs_lang', code);
@@ -1094,6 +1244,7 @@ const AccountSettings = () => {
 
   return (
     <div style={{ padding: '32px', maxWidth: '680px' }}>
+      {resetSuccess && <Alert type="success" msg={resetSuccess} />}
       {/* Profile hero card */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '36px', padding: '24px', background: 'linear-gradient(135deg, rgba(5,38,89,0.6), rgba(30,64,175,0.3))', borderRadius: '20px', border: '1px solid rgba(37,99,235,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
         <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, #052659, #1e40af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', fontWeight: '900', color: '#C1E8FF', border: '2px solid rgba(37,99,235,0.3)', boxShadow: '0 0 24px rgba(37,99,235,0.2)', flexShrink: 0 }}>
@@ -1154,9 +1305,15 @@ const AccountSettings = () => {
         <Row icon={MessageCircle} iconColor="#3b82f6" iconBg="rgba(59,130,246,0.1)" label="Contact Us"     desc="Email, chat & send feedback"        onClick={() => setView('contact')} />
       </Card>
 
+      <Card title="System Control">
+        <Row icon={ShieldCheck} iconColor="#10b981" iconBg="rgba(16,185,129,0.1)" label="Reset Settings" desc="Restore theme, language, and child controls to defaults" 
+          onClick={() => setShowResetConfirm(true)}
+        />
+      </Card>
+
       <Card title="Account Management">
         <Row icon={LogOut} label="Sign Out" desc="Log out of this account" 
-          onClick={() => { logout(); }}
+          onClick={() => { setShowSignOutConfirm(true); }}
         />
         <Row icon={Trash2} label="Delete Account" desc="Permanently wipe all data and unpair devices" danger
           onClick={() => setDangerAction('delete')}
@@ -1165,7 +1322,7 @@ const AccountSettings = () => {
 
       <div style={{ textAlign: 'center', fontSize: '12px', color: '#1e293b', paddingBottom: '16px' }}>AlphaGuard AI · Family Safety Platform · v1.0.0</div>
 
-      {/* â”€â”€ Danger Action Modal (Logout & Delete) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Danger Action Modal (Logout & Delete) ─────────────────────────── */}
       {dangerAction && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
@@ -1221,6 +1378,34 @@ const AccountSettings = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          logout();
+          navigate('/login');
+        }}
+        title="Sign Out"
+        message="Are you sure you want to sign out of AlphaGuard AI?"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+      />
+
+      <ConfirmationModal
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={() => {
+          setShowResetConfirm(false);
+          handleResetSettings();
+        }}
+        title="Reset Settings"
+        message="This will restore application theme, language, and all child profile restrictions back to default values. Are you sure you want to reset?"
+        confirmText="Reset"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
     </div>
   );
 };

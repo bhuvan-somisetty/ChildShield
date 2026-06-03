@@ -162,7 +162,7 @@ const EmergencyListener = () => {
                   {nearbyFacility.map((facility, idx) => (
                     <div key={idx} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ color: '#60a5fa', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>{facility.type} â€¢ {facility.distanceText}</div>
+                        <div style={{ color: '#60a5fa', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>{facility.type} • {facility.distanceText}</div>
                         <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{facility.name}</div>
                       </div>
                       <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${facility.lat},${facility.lon}&travelmode=driving`, '_blank')} style={{ background: 'rgba(59,130,246,0.2)', border: 'none', color: '#60a5fa', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}>
@@ -179,9 +179,9 @@ const EmergencyListener = () => {
             </>
           ) : (
             <div style={{ fontSize: '14px', color: '#f59e0b', textAlign: 'center', padding: '20px 0' }}>
-              {sosEvent.payload?.reason === 'denied' ? 'âš ï¸ Child device denied location permission. Accurate GPS unavailable.' :
-               sosEvent.payload?.reason === 'timeout' ? 'âš ï¸ Child device GPS signal timed out.' :
-               sosEvent.payload?.reason === 'unavailable' ? 'âš ï¸ Child device location services are unavailable.' :
+              {sosEvent.payload?.reason === 'denied' ? '⚠️ Child device denied location permission. Accurate GPS unavailable.' :
+               sosEvent.payload?.reason === 'timeout' ? '⚠️ Child device GPS signal timed out.' :
+               sosEvent.payload?.reason === 'unavailable' ? '⚠️ Child device location services are unavailable.' :
                'Waiting for live GPS coordinates... Check Location Tracker.'}
             </div>
           )}
@@ -189,14 +189,14 @@ const EmergencyListener = () => {
         
         <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
           <button onClick={snoozeAlert} style={{ flex: 1, padding: '12px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '12px', color: '#f59e0b', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
-            ðŸ”• Remind in 5 min
+            🔔 Remind in 5 min
           </button>
           <button onClick={dismissAlert} style={{ flex: 1, padding: '12px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', borderRadius: '12px', color: '#10b981', fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
-            âœ… OK, I've seen this
+            ✅ OK, I've seen this
           </button>
         </div>
         <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '12px' }}>
-          <div>ðŸ”Š</div> Samantha AI is repeating broadcast. Mute AI to stop.
+          <div>🔊</div> Samantha AI is repeating broadcast. Mute AI to stop.
         </div>
       </div>
       <style>{`@keyframes pulse-dot { 0%,100%{transform:scale(1);} 50%{transform:scale(1.02);} }`}</style>

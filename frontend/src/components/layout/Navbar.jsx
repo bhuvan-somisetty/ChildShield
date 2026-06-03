@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Bell, User, LogOut, Settings, ChevronDown, Zap, ShieldCheck, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, User, LogOut, Settings, ChevronDown, Zap, ShieldCheck, AlertTriangle, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLivePolling } from '../../hooks/useLivePolling';
 import { useNavigate } from 'react-router-dom';
+import ConfirmationModal from './ConfirmationModal';
 
 const Navbar = () => {
   const { user, logout, activeChild, childrenList, setActiveChild, isDemoMode, setIsDemoMode, token, accounts, switchAccount } = useAuth();
@@ -12,8 +13,16 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [childSelectOpen, setChildSelectOpen] = useState(false);
   const [notiOpen, setNotiOpen] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Logout modal state â€” step: 'password' | 'confirm'
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Logout modal state "” step: 'password' | 'confirm'
   const [logoutStep, setLogoutStep] = useState('password');
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [logoutPin, setLogoutPin] = useState('');
@@ -77,8 +86,26 @@ const Navbar = () => {
   return (
     <>
       <header className="navbar" style={{ justifyContent: 'space-between' }}>
-        {/* Left â€” title + child selector */}
+        {/* Left "” title + child selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+          {isMobile && (
+            <button 
+              onClick={() => window.dispatchEvent(new Event('toggle-mobile-sidebar'))}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: '4px'
+              }}
+            >
+              <Menu size={20} />
+            </button>
+          )}
           <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
             AlphaGuard
           </h1>
@@ -111,10 +138,10 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Right â€” demo toggle (desktop only), notifications, profile */}
+        {/* Right "” demo toggle (desktop only), notifications, profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
 
-          {/* Demo mode toggle â€” hidden on mobile */}
+          {/* Demo mode toggle "” hidden on mobile */}
           <div onClick={() => setIsDemoMode(!isDemoMode)} style={{
             display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
             padding: '6px 12px', borderRadius: '20px', transition: 'all 0.3s',
@@ -205,7 +232,7 @@ const Navbar = () => {
                   <Settings size={15} color="var(--text-muted)" /> Account Settings
                 </div>
                 
-                <div onClick={() => { logout(); navigate('/login'); }}
+                <div onClick={() => { setShowSignOutConfirm(true); setProfileOpen(false); }}
                   style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px', transition: 'background 0.2s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -224,7 +251,7 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* â”€â”€ Logout Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Logout Modal ───────────────────────────────────────────────────────── */}
       {logoutModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#0f172a', border: '1px solid rgba(239,68,68,0.4)', padding: '32px 28px', borderRadius: '20px', width: '100%', maxWidth: '380px', textAlign: 'center', boxShadow: '0 10px 40px rgba(239,68,68,0.2)', boxSizing: 'border-box' }}>
@@ -342,6 +369,20 @@ const Navbar = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          logout();
+          navigate('/login');
+        }}
+        title="Sign Out"
+        message="Are you sure you want to sign out of AlphaGuard AI?"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+      />
     </>
   );
 };

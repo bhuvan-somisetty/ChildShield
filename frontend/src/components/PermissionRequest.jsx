@@ -3,7 +3,7 @@ import { MapPin, Bell, Loader2 } from 'lucide-react';
 
 /**
  * PermissionRequest
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * ─────────────────
  * Shows a one-time permission banner for Location + Notifications.
  * Fixes:
  *  - useEffect no longer depends on unstable `onComplete` reference
@@ -18,7 +18,7 @@ const PermissionRequest = ({ onComplete }) => {
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    // Already interacted with banner â€” never show again
+    // Already interacted with banner - never show again
     const dismissed = localStorage.getItem('cs_permission_requested');
     if (dismissed) {
       onCompleteRef.current?.();
@@ -40,7 +40,7 @@ const PermissionRequest = ({ onComplete }) => {
       } catch {}
 
       if (locationGranted && notifyGranted) {
-        // Already have both â€” save and close
+        // Already have both - save and close
         localStorage.setItem('cs_permission_requested', 'true');
         localStorage.setItem('cs_location_permitted',     'true');
         localStorage.setItem('cs_notification_permitted', 'true');
@@ -53,7 +53,7 @@ const PermissionRequest = ({ onComplete }) => {
     };
 
     checkPermissions();
-  }, []); // â† intentionally empty â€” runs only on mount
+  }, []); // ← intentionally empty - runs only on mount
 
   const requestPermissions = async () => {
     setRequesting(true);

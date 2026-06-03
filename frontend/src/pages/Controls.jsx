@@ -5,6 +5,7 @@ import LockScreen from '../components/LockScreen';
 import { useAuth } from '../context/AuthContext';
 import jsQR from 'jsqr';
 import Webcam from 'react-webcam';
+import ConfirmationModal from '../components/layout/ConfirmationModal';
 
 // Custom Animated Toggle
 const Toggle = ({ active, onChange, danger = false }) => {
@@ -45,6 +46,8 @@ const Controls = () => {
   const [unpairStep, setUnpairStep] = useState('password');
   const [enforcingState, setEnforcingState] = useState(null);
   const [enforceMsg, setEnforceMsg] = useState('');
+  const [showLockConfirm, setShowLockConfirm] = useState(false);
+  const [showUnlockConfirm, setShowUnlockConfirm] = useState(false);
   const webcamRef = useRef(null);
 
   // Live-poll activeChild every 5s so isPaired/deviceState stay fresh
@@ -167,7 +170,7 @@ const Controls = () => {
       </div>
 
       <div style={{ marginTop: '24px', textAlign: 'center' }}>
-        <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '14px', fontWeight: 'bold' }}>Ã¢â‚¬â€ OR Ã¢â‚¬â€</p>
+        <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '14px', fontWeight: 'bold' }}>— OR —</p>
         {!scanMode ? (
           <button 
             onClick={() => setScanMode(true)}
@@ -473,7 +476,7 @@ const Controls = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <button
-                onClick={() => toggleControl('deviceState', 'locked')}
+                onClick={() => setShowLockConfirm(true)}
                 disabled={!activeChild.isPaired || !!enforcingState}
                 style={{ padding: '14px', background: 'rgba(239,68,68,0.15)', color: 'var(--accent-red)', border: '1px solid var(--accent-red)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
               >
@@ -489,7 +492,7 @@ const Controls = () => {
             </div>
 
             <button
-              onClick={() => toggleControl('deviceState', 'active')}
+              onClick={() => setShowUnlockConfirm(true)}
               disabled={!activeChild.isPaired || !!enforcingState}
               style={{ width: '100%', marginTop: '12px', padding: '14px', background: 'rgba(16,185,129,0.15)', color: 'var(--accent-green)', border: '1px solid var(--accent-green)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
             >
@@ -498,7 +501,7 @@ const Controls = () => {
 
             {!activeChild.isPaired && (
               <p style={{ fontSize: '12px', color: 'var(--accent-yellow)', marginTop: '12px', textAlign: 'center' }}>
-                Device not paired Ã¢â‚¬â€ pair a child device to enable controls.
+                Device not paired — pair a child device to enable controls.
               </p>
             )}
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', textAlign: 'center' }}>Use "Resume" to clear any active lockouts.</p>
@@ -538,7 +541,7 @@ const Controls = () => {
            <FaceRegistration />
         </div>
 
-        {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ App Manager Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+        {/* App Manager */}
         {user?.subscriptionPlan === 'premium' ? (
           <AppManager childId={activeChild?.id} token={token} childName={activeChild?.name} />
         ) : (
@@ -570,22 +573,48 @@ const Controls = () => {
 
       </div>
 
+      <ConfirmationModal
+        isOpen={showLockConfirm}
+        onClose={() => setShowLockConfirm(false)}
+        onConfirm={() => {
+          setShowLockConfirm(false);
+          toggleControl('deviceState', 'locked');
+        }}
+        title="Lock Device"
+        message={`Are you sure you want to instantly lock ${activeChild?.name || 'the child'}'s device?`}
+        confirmText="Lock Device"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
+
+      <ConfirmationModal
+        isOpen={showUnlockConfirm}
+        onClose={() => setShowUnlockConfirm(false)}
+        onConfirm={() => {
+          setShowUnlockConfirm(false);
+          toggleControl('deviceState', 'active');
+        }}
+        title="Unlock Device"
+        message={`Are you sure you want to unlock/resume ${activeChild?.name || 'the child'}'s device?`}
+        confirmText="Unlock"
+        cancelText="Cancel"
+      />
     </>
   );
 };
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ App Manager Component Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// App Manager Component
 const INSTALLED_APPS = [
   { name: 'YouTube', icon: '📺', category: 'Entertainment', avgTime: '2h 15m', color: '#ef4444' },
   { name: 'Instagram', icon: '📸', category: 'Social', avgTime: '1h 30m', color: '#e91e8c' },
   { name: 'WhatsApp', icon: '💬', category: 'Messaging', avgTime: '45m', color: '#10b981' },
   { name: 'TikTok', icon: '🎵', category: 'Entertainment', avgTime: '1h 45m', color: '#000' },
   { name: 'Snapchat', icon: '👻', category: 'Social', avgTime: '50m', color: '#f59e0b' },
-  { name: 'Chrome', icon: 'Ã°Å¸Å’Â', category: 'Browser', avgTime: '1h 10m', color: '#3b82f6' },
+  { name: 'Chrome', icon: '🌐', category: 'Browser', avgTime: '1h 10m', color: '#3b82f6' },
   { name: 'Roblox', icon: '🎮', category: 'Gaming', avgTime: '2h 00m', color: '#8b5cf6' },
   { name: 'Spotify', icon: '🎧', category: 'Music', avgTime: '30m', color: '#10b981' },
-  { name: 'Telegram', icon: 'Ã¢Å“Ë†Ã¯Â¸Â', category: 'Messaging', avgTime: '25m', color: '#0891b2' },
-  { name: 'Gallery', icon: 'Ã°Å¸â€“Â¼Ã¯Â¸Â', category: 'System', avgTime: '15m', color: '#6366f1' },
+  { name: 'Telegram', icon: '✈️', category: 'Messaging', avgTime: '25m', color: '#0891b2' },
+  { name: 'Gallery', icon: '🖼️', category: 'System', avgTime: '15m', color: '#6366f1' },
 ];
 
 const AppManager = ({ childId, token, childName }) => {
@@ -659,7 +688,7 @@ const AppManager = ({ childId, token, childName }) => {
           <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
             <span>{app.category}</span>
             <span>📊 {app.avgTime}/day</span>
-            {isLocked && <span style={{ color: '#f59e0b' }}>Ã¢ÂÂ° {getRemainingTime(lockInfo.lockedAt)}</span>}
+            {isLocked && <span style={{ color: '#f59e0b' }}>⏱️ {getRemainingTime(lockInfo.lockedAt)}</span>}
           </div>
         </div>
 
@@ -718,7 +747,7 @@ const AppManager = ({ childId, token, childName }) => {
 
         <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>
           <p style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '500' }}>
-            Ã°Å¸â€â€™ Locked apps require the parent control password to unlock on the child device, or auto-unlock after 24 hours.
+            🔒 Locked apps require the parent control password to unlock on the child device, or auto-unlock after 24 hours.
           </p>
         </div>
       </div>

@@ -2,7 +2,7 @@
  * SetupPassword.jsx
  * Standalone page shown after every new Google/OAuth login.
  * Forces user to set a Parent Control Password before accessing the app.
- * On success â†’ navigates to /controls.
+ * On success → navigates to /controls.
  */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -88,7 +88,7 @@ const SetupPassword = () => {
             Set Your Control Password
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.7, maxWidth: '340px', margin: '0 auto' }}>
-            This <strong style={{ color: '#2563eb' }}>Parent Control Password</strong> protects critical actions â€” child device logout, app unlocking, and security overrides. It is separate from your Google password.
+            This <strong style={{ color: '#2563eb' }}>Parent Control Password</strong> protects critical actions "” child device logout, app unlocking, and security overrides. It is separate from your Google password.
           </p>
         </div>
 
@@ -206,7 +206,7 @@ const SetupPassword = () => {
             boxShadow: (!loading && password && confirm) ? '0 4px 20px rgba(37,99,235,0.35)' : 'none'
           }}
         >
-          {loading ? 'Setting Password...' : 'Set Control Password & Continue â†’'}
+          {loading ? 'Setting Password...' : 'Set Control Password & Continue →'}
         </button>
       </div>
     </div>
