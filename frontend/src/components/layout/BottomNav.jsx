@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Shield, Smartphone, Bot, User } from 'lucide-react';
+import { LayoutDashboard, Shield, AlertTriangle, Bot, User } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard', path: '/dashboard', Icon: LayoutDashboard },
   { name: 'Controls',  path: '/controls',  Icon: Shield },
-  { name: 'Devices',   path: '/devices',   Icon: Smartphone },
+  { name: 'Emergency', path: '/emergency', Icon: AlertTriangle },
   { name: 'AI',        path: '/ai-insights', Icon: Bot },
   { name: 'Profile',   path: '/account-settings', Icon: User },
 ];

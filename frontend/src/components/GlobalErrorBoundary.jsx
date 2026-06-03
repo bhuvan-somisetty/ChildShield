@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * GlobalErrorBoundary
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * ───────────────────
  * Catches any uncaught render errors and shows a recovery UI
  * instead of a blank white screen. Gives users a button to reload.
  */
@@ -34,7 +34,7 @@ class GlobalErrorBoundary extends React.Component {
           background: 'rgba(239,68,68,0.1)', border: '2px solid rgba(239,68,68,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '36px'
-        }}>âš ï¸</div>
+        }}>⚠️</div>
 
         <div>
           <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: '800', marginBottom: '8px' }}>

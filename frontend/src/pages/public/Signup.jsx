@@ -59,7 +59,7 @@ const Signup = () => {
       {/* Ambience blobs */}
       <div style={{ position: 'absolute', top: '-10%', left: '50%', width: '600px', height: '600px', background: 'var(--accent-purple)', filter: 'blur(200px)', opacity: 0.15, borderRadius: '50%', transform: 'translateX(-50%)' }} />
 
-      {/* â”€â”€ Confirm modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Confirm modal ───────────────────────────────────────────────────── */}
       {showConfirmModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center' }}>
@@ -83,14 +83,14 @@ const Signup = () => {
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => setShowConfirmModal(false)} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>Review Again</button>
               <button onClick={confirmRegistration} disabled={submitting} style={{ flex: 1, padding: '12px', background: 'var(--accent-purple)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', boxShadow: 'var(--shadow-neon-purple)', opacity: submitting ? 0.7 : 1 }}>
-                {submitting ? 'Creatingâ€¦' : 'Confirm & Create'}
+                {submitting ? 'Creating...' : 'Confirm & Create'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* â”€â”€ Main card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Main card ───────────────────────────────────────────────────────── */}
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '40px', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <Shield size={40} color="var(--accent-cyan)" style={{ marginBottom: '16px', filter: 'drop-shadow(0 0 10px rgba(37,99,235,0.5))' }} />
@@ -139,7 +139,7 @@ const Signup = () => {
                   <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', top: '14px', left: '16px' }} />
                   <input type={show[key] ? 'text' : 'password'} name={name} required onChange={handleChange}
                     style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '12px 40px 12px 40px', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none' }}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" />
+                    placeholder="••••••••" />
                   <div onClick={() => toggleShow(key)} style={{ position: 'absolute', right: '12px', top: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}>
                     {show[key] ? <EyeOff size={18} /> : <Eye size={18} />}
                   </div>

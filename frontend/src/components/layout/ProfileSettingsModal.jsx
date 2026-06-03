@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-// â”€â”€â”€ Reusable Components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Reusable Components ─────────────────────────────────────────────────────
 
 const SettingRow = ({ icon: Icon, iconColor = '#64748b', iconBg = 'rgba(255,255,255,0.06)', label, desc, right, onClick, danger }) => (
   <button
@@ -84,7 +84,7 @@ const Alert = ({ type, msg }) => {
   );
 };
 
-// â”€â”€â”€ Password Change View â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Password Change View ────────────────────────────────────────────────────
 const PasswordView = ({ user, token, onBack }) => {
   const [view, setView] = useState('change');
   const [oldPass, setOldPass] = useState('');
@@ -170,7 +170,7 @@ const PasswordView = ({ user, token, onBack }) => {
           <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#2563eb" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} type={showConfirm ? 'text' : 'password'} right={<EyeBtn show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />} /></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
             <button onClick={() => { setView('otp'); setError(''); setSuccess(''); }} style={{ background: 'transparent', border: 'none', color: '#2563eb', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Forgot Old Password?</button>
-            <button onClick={handleChangePassword} disabled={loading} style={{ background: '#2563eb', color: '#000', border: 'none', padding: '11px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>{loading ? 'Savingâ€¦' : 'Update Password'}</button>
+            <button onClick={handleChangePassword} disabled={loading} style={{ background: '#2563eb', color: '#000', border: 'none', padding: '11px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>{loading ? 'Saving...' : 'Update Password'}</button>
           </div>
         </div>
       )}
@@ -180,7 +180,7 @@ const PasswordView = ({ user, token, onBack }) => {
           <div style={{ border: '1px dashed rgba(37,99,235,0.4)', padding: '20px', borderRadius: '12px', background: 'rgba(37,99,235,0.05)', marginBottom: '20px', color: '#94a3b8', fontSize: '14px', lineHeight: 1.6 }}>
             A 6-digit code will be sent to <strong style={{ color: '#fff' }}>{user?.email}</strong>
           </div>
-          <button onClick={handleSendOTP} disabled={loading} style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>{loading ? 'Sendingâ€¦' : 'Send Verification OTP'}</button>
+          <button onClick={handleSendOTP} disabled={loading} style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>{loading ? 'Sending...' : 'Send Verification OTP'}</button>
         </div>
       )}
 
@@ -196,14 +196,14 @@ const PasswordView = ({ user, token, onBack }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#2563eb" placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)} type={showNew ? 'text' : 'password'} right={<EyeBtn show={showNew} toggle={() => setShowNew(!showNew)} />} /></div>
           <div style={{ position: 'relative' }}><InputField icon={Lock} iconColor="#2563eb" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)} type={showConfirm ? 'text' : 'password'} right={<EyeBtn show={showConfirm} toggle={() => setShowConfirm(!showConfirm)} />} /></div>
-          <button onClick={handleResetPassword} disabled={loading} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', marginTop: '4px' }}>{loading ? 'Resettingâ€¦' : 'Reset & Save Password'}</button>
+          <button onClick={handleResetPassword} disabled={loading} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', marginTop: '4px' }}>{loading ? 'Resetting...' : 'Reset & Save Password'}</button>
         </div>
       )}
     </div>
   );
 };
 
-// â”€â”€â”€ Main Profile Side Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Main Profile Side Panel ─────────────────────────────────────────────────
 const ProfileSettingsModal = ({ onClose }) => {
   const { user, token, logout } = useAuth();
   const [view, setView] = useState('profile');
@@ -212,7 +212,7 @@ const ProfileSettingsModal = ({ onClose }) => {
 
   return (
     <>
-      {/* Backdrop â€” light dimming only, dashboard stays visible on left */}
+      {/* Backdrop "” light dimming only, dashboard stays visible on left */}
       <div
         onClick={onClose}
         style={{
@@ -222,7 +222,7 @@ const ProfileSettingsModal = ({ onClose }) => {
         }}
       />
 
-      {/* Right-half panel â€” exactly 50% of screen width */}
+      {/* Right-half panel "” exactly 50% of screen width */}
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
         width: '50vw',
@@ -232,7 +232,7 @@ const ProfileSettingsModal = ({ onClose }) => {
         zIndex: 9999, display: 'flex', flexDirection: 'column',
         animation: 'slideInRight 0.28s cubic-bezier(0.16,1,0.3,1)'
       }}>
-        {/* â”€â”€ Header bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── Header bar ────────────────────────────────────────────────────── */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '12px',
           padding: '16px 20px',
@@ -272,7 +272,7 @@ const ProfileSettingsModal = ({ onClose }) => {
           </button>
         </div>
 
-        {/* â”€â”€ Scrollable content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── Scrollable content ─────────────────────────────────────────────── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
 
           {view === 'password' ? (
@@ -316,7 +316,7 @@ const ProfileSettingsModal = ({ onClose }) => {
                 <SettingRow icon={Shield} iconColor="#2563eb" iconBg="rgba(37,99,235,0.08)" label="Privacy Policy" onClick={() => {}} />
               </SectionCard>
 
-              {/* Account Linking â€” Google + Facebook only (no Twitter, no Apple) */}
+              {/* Account Linking "” Google + Facebook only (no Twitter, no Apple) */}
               <SectionCard title="Account Linking">
                 <div style={{ padding: '14px 20px' }}>
                   <div style={{ fontSize: '12px', color: '#475569', marginBottom: '14px' }}>

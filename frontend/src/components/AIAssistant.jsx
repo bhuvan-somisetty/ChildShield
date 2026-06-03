@@ -312,6 +312,15 @@ const AIAssistant = () => {
             @keyframes rotate-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             @keyframes rotate-ring-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
             @keyframes ripple-glow { 0% { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.5); } 100% { box-shadow: 0 0 0 40px rgba(239, 68, 68, 0); } }
+            @keyframes ripple-pulse {
+              0% { transform: scale(0.9); opacity: 0.8; }
+              50% { transform: scale(1.15); opacity: 0.4; }
+              100% { transform: scale(1.35); opacity: 0; }
+            }
+            @keyframes eq-bar {
+              0% { height: 6px; }
+              100% { height: 28px; }
+            }
           `}</style>
 
           {/* Header */}
@@ -377,7 +386,17 @@ const AIAssistant = () => {
               {/* Glowing Orb */}
               <div style={{ marginBottom: '40px', position: 'relative', zIndex: 10 }}>
                 {isListening && (
-                  <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', animation: 'ripple-glow 1.5s infinite' }} />
+                  <>
+                    <div style={{ position: 'absolute', inset: -15, borderRadius: '50%', background: 'rgba(239,68,68,0.15)', animation: 'ripple-pulse 2s infinite', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', inset: -30, borderRadius: '50%', background: 'rgba(239,68,68,0.08)', animation: 'ripple-pulse 2s infinite 0.6s', pointerEvents: 'none' }} />
+                  </>
+                )}
+
+                {isThinking && (
+                  <>
+                    <div style={{ position: 'absolute', inset: -15, borderRadius: '50%', border: '2px dashed var(--accent-cyan)', animation: 'rotate-ring 3s linear infinite', opacity: 0.7, pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', inset: -25, borderRadius: '50%', border: '2px dotted #8b5cf6', animation: 'rotate-ring-reverse 5s linear infinite', opacity: 0.5, pointerEvents: 'none' }} />
+                  </>
                 )}
                 
                 <div style={{
@@ -398,13 +417,16 @@ const AIAssistant = () => {
                   )}
                 </div>
 
-                {/* Rotating Rings */}
-                {isSpeaking && (
-                  <>
-                    <div style={{ position: 'absolute', inset: -15, borderRadius: '50%', border: '2px dashed #8b5cf6', animation: 'rotate-ring 8s linear infinite', opacity: 0.5 }} />
-                    <div style={{ position: 'absolute', inset: -25, borderRadius: '50%', border: '2px dashed var(--accent-cyan)', animation: 'rotate-ring-reverse 12s linear infinite', opacity: 0.3 }} />
-                  </>
-                )}
+                {/* Rotating Rings / Frequency EQ Bars */}
+                {isSpeaking ? (
+                  <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center', height: '28px', marginTop: '20px' }}>
+                    <div style={{ width: '3px', height: '10px', background: '#8b5cf6', borderRadius: '2px', animation: 'eq-bar 0.8s ease-in-out infinite alternate' }} />
+                    <div style={{ width: '3px', height: '20px', background: '#8b5cf6', borderRadius: '2px', animation: 'eq-bar 0.5s ease-in-out infinite alternate 0.1s' }} />
+                    <div style={{ width: '3px', height: '15px', background: '#8b5cf6', borderRadius: '2px', animation: 'eq-bar 0.7s ease-in-out infinite alternate 0.2s' }} />
+                    <div style={{ width: '3px', height: '24px', background: '#8b5cf6', borderRadius: '2px', animation: 'eq-bar 0.6s ease-in-out infinite alternate 0.3s' }} />
+                    <div style={{ width: '3px', height: '10px', background: '#8b5cf6', borderRadius: '2px', animation: 'eq-bar 0.9s ease-in-out infinite alternate 0.4s' }} />
+                  </div>
+                ) : null}
               </div>
 
               <p style={{ fontSize: '15px', color: '#fff', lineHeight: '1.6', minHeight: '60px', maxWidth: '300px', zIndex: 10 }}>

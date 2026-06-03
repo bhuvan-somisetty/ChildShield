@@ -34,7 +34,7 @@ const ChildPairing = () => {
         if (!isMountedRef.current) return;
 
         if (res.ok && data.success && data.connected === true) {
-          // Pairing confirmed by parent â€” store full session including parent identity
+          // Pairing confirmed by parent - store full session including parent identity
           setPairingDetected(true);
           localStorage.setItem('child_session', JSON.stringify({
             childId,
@@ -44,7 +44,7 @@ const ChildPairing = () => {
             pairedAt: new Date().toISOString()
           }));
 
-          // Short delay so the user can see the âœ… "Connected!" flash
+          // Short delay so the user can see the ✅ "Connected!" flash
           setTimeout(() => {
             if (isMountedRef.current) navigate('/child/permissions', { replace: true });
           }, 1500);
@@ -96,7 +96,7 @@ const ChildPairing = () => {
 
         <h2 style={{ color: '#fff', fontSize: '26px', fontWeight: '800', marginBottom: '8px' }}>Ready to Connect</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '28px', lineHeight: 1.6 }}>
-          Open the <strong style={{ color: '#2563eb' }}>Parent App â†’ Controls</strong> and enter<br />the 6-digit sync code below.
+          Open the <strong style={{ color: '#2563eb' }}>Parent App → Controls</strong> and enter<br />the 6-digit sync code below.
         </p>
 
         {/* Error message */}
@@ -111,7 +111,7 @@ const ChildPairing = () => {
           <QRCodeSVG value={JSON.stringify({ code: livePairingCode })} size={170} fgColor="#000000" bgColor="#ffffff" />
         </div>
 
-        <p style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', letterSpacing: '2px', marginBottom: '16px' }}>â€” OR ENTER CODE â€”</p>
+        <p style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', letterSpacing: '2px', marginBottom: '16px' }}>— OR ENTER CODE —</p>
 
         {/* Pairing code display */}
         <div style={{ backgroundColor: 'rgba(37,99,235, 0.06)', padding: '16px 28px', borderRadius: '16px', border: '1px solid rgba(37,99,235, 0.25)', marginBottom: '16px' }}>
