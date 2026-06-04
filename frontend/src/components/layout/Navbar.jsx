@@ -85,52 +85,72 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="navbar" style={{ justifyContent: 'space-between' }}>
-        {/* Left "” title + child selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+      <header 
+        className="fixed top-0 left-0 right-0 z-[30] h-16 bg-[#0b0b14]/75 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4"
+        style={{ boxSizing: 'border-box' }}
+      >
+        {/* Left Side: Brand Logo and Pulsing protection active indicator */}
+        <div className="flex items-center gap-3 min-w-0">
           {isMobile && (
             <button 
               onClick={() => window.dispatchEvent(new Event('toggle-mobile-sidebar'))}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: '4px'
-              }}
+              className="p-1 text-slate-400 hover:text-white cursor-pointer mr-1"
+              aria-label="Open menu"
             >
               <Menu size={20} />
             </button>
           )}
-          <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
-            AlphaGuard
-          </h1>
 
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              {/* Premium Shield Icon */}
+              <div className="w-5 h-5 rounded bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-[0_0_8px_rgba(6,182,212,0.4)]">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z" fill="#fff" />
+                </svg>
+              </div>
+              <span className="text-[15px] font-extrabold text-white tracking-tight">
+                Alpha<span className="text-cyan-400">Guard</span> <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-1 rounded">AI</span>
+              </span>
+            </div>
+            {/* Active Protection Badge */}
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-[8px] font-bold text-emerald-400 tracking-wider uppercase">
+                Premium Protection Active
+              </span>
+            </div>
+          </div>
+
+          {/* Child Selector Dropdown */}
           {childrenList.length > 0 && (
-            <div style={{ position: 'relative', minWidth: 0 }}>
-              <div onClick={() => setChildSelectOpen(!childSelectOpen)}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.4)', borderRadius: '20px', cursor: 'pointer', color: 'var(--accent-cyan)', fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '160px' }}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeChild?.name}</span>
-                <ChevronDown size={14} style={{ flexShrink: 0 }} />
+            <div className="relative ml-2">
+              <div 
+                onClick={() => setChildSelectOpen(!childSelectOpen)}
+                className="flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full cursor-pointer text-cyan-400 font-bold text-[11px] whitespace-nowrap overflow-hidden max-w-[120px]"
+              >
+                <span className="truncate">{activeChild?.name}</span>
+                <ChevronDown size={11} className="flex-shrink-0" />
               </div>
               {childSelectOpen && (
-                <div style={{ position: 'absolute', top: '110%', left: 0, background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '6px', zIndex: 200, minWidth: '160px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                <div className="absolute top-[110%] left-0 bg-[#12121e]/95 border border-white/10 rounded-xl p-1 z-[250] min-w-[140px] shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-md">
                   {childrenList.map(child => (
-                    <div key={child.id} onClick={() => { setActiveChild(child); setChildSelectOpen(false); }}
-                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: activeChild?.id === child.id ? 'rgba(37,99,235,0.08)' : 'transparent', color: activeChild?.id === child.id ? 'var(--accent-cyan)' : 'var(--text-primary)', fontSize: '14px', transition: 'background 0.2s', whiteSpace: 'nowrap' }}>
+                    <div 
+                      key={child.id} 
+                      onClick={() => { setActiveChild(child); setChildSelectOpen(false); }}
+                      className={`px-3 py-2 rounded-lg cursor-pointer text-xs font-semibold ${activeChild?.id === child.id ? 'bg-cyan-500/15 text-cyan-400' : 'text-slate-300 hover:bg-white/5'}`}
+                    >
                       {child.name}
                     </div>
                   ))}
-                  <div onClick={() => { setActiveChild(null); setChildSelectOpen(false); navigate('/controls'); }}
-                    style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontSize: '13px', marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>+</div>
-                    Add Child Device
+                  <div 
+                    onClick={() => { setActiveChild(null); setChildSelectOpen(false); navigate('/controls'); }}
+                    className="px-3 py-2 rounded-lg cursor-pointer flex items-center gap-1.5 text-xs text-slate-400 hover:bg-white/5 mt-1 border-t border-white/5"
+                  >
+                    <span>+</span> Add Device
                   </div>
                 </div>
               )}
@@ -138,40 +158,48 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Right "” demo toggle (desktop only), notifications, profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+        {/* Right Side: Search, Bell Notification, and Profile Avatar */}
+        <div className="flex items-center gap-3">
+          
+          {/* Search Trigger */}
+          <button 
+            onClick={() => navigate('/controls')}
+            className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5 text-slate-300 hover:text-white cursor-pointer"
+            aria-label="Search"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
 
-          {/* Demo mode toggle "” hidden on mobile */}
-          <div onClick={() => setIsDemoMode(!isDemoMode)} style={{
-            display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
-            padding: '6px 12px', borderRadius: '20px', transition: 'all 0.3s',
-            background: isDemoMode ? 'rgba(37,99,235,0.2)' : 'rgba(255,255,255,0.05)',
-            border: isDemoMode ? '1px solid var(--accent-purple)' : '1px solid rgba(255,255,255,0.1)',
-          }} className="demo-toggle-btn">
-            <Zap size={14} color={isDemoMode ? 'var(--accent-purple)' : 'var(--text-muted)'} fill={isDemoMode ? 'var(--accent-purple)' : 'none'} />
-            <span style={{ fontSize: '11px', fontWeight: '700', color: isDemoMode ? 'var(--accent-purple)' : 'var(--text-secondary)', display: 'none' }}
-              className="demo-label">DEMO {isDemoMode ? 'ON' : 'OFF'}</span>
-          </div>
-
-          {/* Notifications */}
-          <div style={{ position: 'relative' }}>
-            <div onClick={() => setNotiOpen(!notiOpen)} style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <Bell size={18} color="var(--text-primary)" />
+          {/* Notifications Bell */}
+          <div className="relative">
+            <div 
+              onClick={() => setNotiOpen(!notiOpen)} 
+              className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5 cursor-pointer text-slate-300 hover:text-white"
+            >
+              <Bell size={15} />
             </div>
             {unreadCount > 0 && (
-              <div style={{ position: 'absolute', top: '-3px', right: '-3px', width: '17px', height: '17px', backgroundColor: 'var(--accent-red)', borderRadius: '50%', border: '2px solid var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '700', color: '#fff' }}>
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full border-2 border-[#0b0b14] flex items-center justify-center text-[8px] font-extrabold text-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
-              </div>
+              </span>
             )}
             {notiOpen && (
-              <div style={{ position: 'absolute', top: '110%', right: 0, width: 'min(300px, calc(100vw - 32px))', background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '16px', zIndex: 200, boxShadow: '0 10px 40px rgba(0,0,0,0.7)' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px', color: 'var(--text-primary)' }}>Live Alerts</h3>
-                <div style={{ maxHeight: '260px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {notifications.length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: '13px', padding: '12px', textAlign: 'center' }}>No active alerts.</div>}
+              <div className="absolute top-[120%] right-0 w-72 bg-[#12121e]/95 border border-white/10 rounded-xl p-4 z-[250] shadow-[0_10px_40px_rgba(0,0,0,0.6)] backdrop-blur-md">
+                <h3 className="text-xs font-bold mb-3 border-b border-white/5 pb-2 text-white">Live Alerts</h3>
+                <div className="max-h-60 overflow-y-auto flex flex-col gap-2">
+                  {notifications.length === 0 && (
+                    <div className="text-slate-400 text-xs py-3 text-center">No active alerts.</div>
+                  )}
                   {notifications.map(n => (
-                    <div key={n.id} style={{ padding: '12px', borderRadius: '8px', fontSize: '13px', background: n.severity === 'critical' ? 'rgba(239,68,68,0.1)' : n.severity === 'warning' ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.02)', borderLeft: `3px solid ${n.severity === 'critical' ? 'var(--accent-red)' : n.severity === 'warning' ? '#f59e0b' : 'var(--accent-cyan)'}` }}>
-                      <div style={{ fontWeight: '500', color: 'var(--text-primary)', marginBottom: '4px' }}>{n.message}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(n.time).toLocaleTimeString()}</div>
+                    <div 
+                      key={n.id} 
+                      className={`p-2.5 rounded-lg text-[11px] border-l-2 ${n.severity === 'critical' ? 'bg-red-500/10 border-red-500 text-red-200' : n.severity === 'warning' ? 'bg-amber-500/10 border-amber-500 text-amber-200' : 'bg-white/5 border-cyan-500 text-slate-300'}`}
+                    >
+                      <div className="font-semibold mb-1">{n.message}</div>
+                      <div className="text-[9px] opacity-60">{new Date(n.time).toLocaleTimeString()}</div>
                     </div>
                   ))}
                 </div>
@@ -179,77 +207,58 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Profile */}
-          <div style={{ position: 'relative' }}>
-            <div onClick={() => setProfileOpen(!profileOpen)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', padding: '5px 10px 5px 5px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.07)', transition: 'all 0.2s', maxWidth: '160px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-blue), var(--accent-purple))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <User size={14} color="#fff" />
+          {/* Parent Avatar Dropdown */}
+          <div className="relative">
+            <div 
+              onClick={() => {
+                if (isMobile) {
+                  window.dispatchEvent(new Event('toggle-mobile-sidebar'));
+                } else {
+                  setProfileOpen(!profileOpen);
+                }
+              }} 
+              className="flex items-center gap-1.5 cursor-pointer bg-white/5 pl-1.5 pr-2.5 py-1.5 rounded-full border border-white/5 hover:border-white/10 transition-all duration-200"
+            >
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm overflow-hidden">
+                {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'P'}
               </div>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'none' }} className="profile-name">
-                {(user?.fullName || 'Parent').split(' ')[0]}
-              </span>
-              <ChevronDown size={13} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+              <ChevronDown size={11} className="text-slate-400 flex-shrink-0" />
             </div>
 
-            {profileOpen && (
-              <div style={{ position: 'absolute', top: '110%', right: 0, width: '220px', background: 'var(--bg-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '8px', zIndex: 200, boxShadow: '0 10px 30px rgba(0,0,0,0.6)', overflow: 'visible' }}>
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '6px' }}>
-                  <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName || 'Parent'}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email || ''}</div>
-                  <span style={{ display: 'inline-block', marginTop: '6px', fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '10px', background: 'rgba(37,99,235,0.15)', color: 'var(--accent-primary)', border: '1px solid rgba(37,99,235,0.3)' }}>PROTECTED</span>
+            {profileOpen && !isMobile && (
+              <div className="absolute top-[120%] right-0 w-52 bg-[#12121e]/95 border border-white/10 rounded-xl p-1 z-[250] shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-md">
+                <div className="px-3 py-2.5 border-b border-white/5 mb-1.5">
+                  <div className="font-bold text-xs text-white truncate">{user?.fullName || 'Parent'}</div>
+                  <div className="text-[10px] text-slate-400 truncate mt-0.5">{user?.email || ''}</div>
                 </div>
-                {/* Multi-Account List */}
-                {accounts && accounts.length > 0 && (
-                  <div style={{ marginBottom: '6px', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    {accounts.map(acc => (
-                      <div key={acc.user.email} onClick={() => { switchAccount(acc.token); setProfileOpen(false); }}
-                        style={{ padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', background: acc.user.email === user?.email ? 'rgba(255,255,255,0.08)' : 'transparent', color: acc.user.email === user?.email ? '#fff' : 'var(--text-secondary)' }}
-                        onMouseEnter={e => { if (acc.user.email !== user?.email) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                        onMouseLeave={e => { if (acc.user.email !== user?.email) e.currentTarget.style.background = 'transparent'; }}>
-                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '10px' }}>
-                          {acc.user.fullName.charAt(0)}
-                        </div>
-                        <div style={{ overflow: 'hidden' }}>
-                          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: acc.user.email === user?.email ? 'bold' : 'normal' }}>{acc.user.fullName}</div>
-                        </div>
-                        {acc.user.email === user?.email && <ShieldCheck size={14} color="var(--accent-cyan)" style={{ marginLeft: 'auto' }} />}
-                      </div>
-                    ))}
-                    <div onClick={() => { navigate('/login'); setProfileOpen(false); }}
-                      style={{ padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--text-primary)', marginTop: '4px' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>+</div>
-                      Add Account
-                    </div>
-                  </div>
-                )}
 
-                <div onClick={() => { navigate('/account-settings'); setProfileOpen(false); }}
-                  style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', fontSize: '14px', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <Settings size={15} color="var(--text-muted)" /> Account Settings
+                <div 
+                  onClick={() => { navigate('/account-settings'); setProfileOpen(false); }}
+                  className="px-3 py-2 rounded-lg cursor-pointer flex items-center gap-2 text-xs text-slate-300 hover:bg-white/5"
+                >
+                  <Settings size={13} className="text-slate-400" /> Account Settings
                 </div>
                 
-                <div onClick={() => { setShowSignOutConfirm(true); setProfileOpen(false); }}
-                  style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <LogOut size={15} color="var(--text-muted)" /> Sign Out
+                <div 
+                  onClick={() => { setShowSignOutConfirm(true); setProfileOpen(false); }}
+                  className="px-3 py-2 rounded-lg cursor-pointer flex items-center gap-2 text-xs text-slate-300 hover:bg-white/5"
+                >
+                  <LogOut size={13} className="text-slate-400" /> Sign Out
                 </div>
 
-                <div onClick={openLogout}
-                  style={{ padding: '10px 14px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-red)', fontSize: '14px', marginTop: '2px', borderTop: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.05)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <AlertTriangle size={15} /> Delete Account
+                <div 
+                  onClick={openLogout}
+                  className="px-3 py-2 rounded-lg cursor-pointer flex items-center gap-2 text-xs text-red-400 hover:bg-red-500/10 mt-1 border-t border-white/5"
+                >
+                  <AlertTriangle size={13} /> Delete Account
                 </div>
               </div>
             )}
           </div>
+
         </div>
       </header>
+
 
       {/* ── Logout Modal ───────────────────────────────────────────────────────── */}
       {logoutModalOpen && (

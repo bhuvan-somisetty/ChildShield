@@ -1,56 +1,61 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Lock, Smartphone, Moon, ShieldAlert, Eye, EyeOff, Clock, Camera, Wifi, CheckCircle, LockKeyhole, Unlock, AppWindow } from 'lucide-react';
+import { Lock, Smartphone, Moon, ShieldAlert, Eye, EyeOff, Clock, Camera, Wifi, CheckCircle, LockKeyhole, Unlock, AppWindow, ShieldCheck, Star, Settings, Trash2, Plus, QrCode } from 'lucide-react';
 import FaceRegistration from '../components/FaceRegistration';
-import LockScreen from '../components/LockScreen';
 import { useAuth } from '../context/AuthContext';
 import jsQR from 'jsqr';
 import Webcam from 'react-webcam';
 import ConfirmationModal from '../components/layout/ConfirmationModal';
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 
-// Custom Animated Toggle
-const Toggle = ({ active, onChange, danger = false }) => {
-  const accent = danger ? 'var(--accent-red)' : 'var(--accent-cyan)';
+const Toggle = ({ active, onChange }) => {
   return (
     <div 
       onClick={() => onChange(!active)}
-      style={{
-        width: '56px', height: '32px', borderRadius: '16px',
-        backgroundColor: active ? (danger ? 'rgba(239, 68, 68, 0.4)' : 'rgba(37,99,235, 0.4)') : 'rgba(255, 255, 255, 0.1)',
-        position: 'relative', cursor: 'pointer', transition: 'all 0.3s',
-        border: `1px solid ${active ? accent : 'rgba(255,255,255,0.05)'}`,
-        boxShadow: active ? `0 0 10px rgba(${danger?'239, 68, 68':'0, 240, 255'}, 0.3)` : 'none'
-      }}
+      className={`w-12 h-6 rounded-full p-0.5 cursor-pointer transition-colors duration-200 border border-white/10 ${active ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]' : 'bg-white/5'}`}
     >
-      <div style={{
-        position: 'absolute', top: '2px', left: active ? '26px' : '2px',
-        width: '26px', height: '26px', borderRadius: '50%',
-        backgroundColor: '#fff', transition: 'left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        boxShadow: active ? `0 0 10px ${accent}` : '0 2px 5px rgba(0,0,0,0.2)'
-      }}></div>
+      <div 
+        className={`w-4.5 h-4.5 rounded-full bg-white transition-transform duration-200 shadow-md ${active ? 'transform translate-x-6' : ''}`}
+      />
     </div>
   );
 };
 
+const defaultLineData = [
+  { name: 'Mon', Ben: 1.8, Kids: 2.2 },
+  { name: 'Tue', Ben: 2.5, Kids: 3.1 },
+  { name: 'Wed', Ben: 1.2, Kids: 4.5 },
+  { name: 'Thu', Ben: 3.8, Kids: 5.2 },
+  { name: 'Fri', Ben: 2.0, Kids: 3.8 },
+  { name: 'Sat', Ben: 4.5, Kids: 6.0 },
+  { name: 'Sun', Ben: 3.0, Kids: 4.2 },
+];
+
 const Controls = () => {
   const { user, activeChild, setActiveChild, childrenList, fetchChildren, token } = useAuth();
-  const [deviceLock, setDeviceLock] = useState(false); // Global lock sim
+  
+  const [deviceLock, setDeviceLock] = useState(false);
   const [parentInputCode, setParentInputCode] = useState('');
   const [linkError, setLinkError] = useState('');
   const [isLinking, setIsLinking] = useState(false);
   const [scanMode, setScanMode] = useState(false);
+  
   const [showUnpair, setShowUnpair] = useState(false);
   const [unpairPass, setUnpairPass] = useState('');
   const [showUnpairPass, setShowUnpairPass] = useState(false);
   const [unpairError, setUnpairError] = useState('');
   const [isUnpairing, setIsUnpairing] = useState(false);
   const [unpairStep, setUnpairStep] = useState('password');
+  
   const [enforcingState, setEnforcingState] = useState(null);
   const [enforceMsg, setEnforceMsg] = useState('');
   const [showLockConfirm, setShowLockConfirm] = useState(false);
   const [showUnlockConfirm, setShowUnlockConfirm] = useState(false);
+
+  const [isPairingOpen, setIsPairingOpen] = useState(false);
+  const [isFaceRegOpen, setIsFaceRegOpen] = useState(false);
+  
   const webcamRef = useRef(null);
 
-  // Live-poll activeChild every 5s so isPaired/deviceState stay fresh
   const refreshActiveChild = useCallback(async () => {
     if (!token || !activeChild?.id) return;
     try {
@@ -68,6 +73,7 @@ const Controls = () => {
     return () => clearInterval(iv);
   }, [refreshActiveChild]);
 
+  // Webcam QR decoding
   useEffect(() => {
     if (!scanMode) return;
     const interval = setInterval(() => {
@@ -95,7 +101,7 @@ const Controls = () => {
   }, [scanMode]);
 
   const handleLinkDevice = async () => {
-    if(parentInputCode.length !== 6) return setLinkError('Code must be 6 digits');
+    if (parentInputCode.length !== 6) return setLinkError('Code must be 6 digits');
     setIsLinking(true);
     setLinkError('');
     try {
@@ -105,652 +111,477 @@ const Controls = () => {
         body: JSON.stringify({ code: parentInputCode })
       });
       const data = await res.json();
-      if(res.ok && data.success) {
-        // ✅ Refresh children list WITHOUT reloading the page (reload wipes auth state)
-        await fetchChildren(token);
-        // If the newly paired child is returned, set it as active immediately
-        if (data.child) setActiveChild(data.child);
+      if (res.ok && data.success) {
         setParentInputCode('');
-        setLinkError('');
+        await fetchChildren();
+        setIsPairingOpen(false);
       } else {
-        setLinkError(data.error || `Failed to link device (Status: ${res.status}, Body: ${JSON.stringify(data)})`);
+        setLinkError(data.error || 'Failed to link device.');
       }
-    } catch(err) { setLinkError(`Fetch error: ${err.message}`); }
-    setIsLinking(false);
+    } catch {
+      setLinkError('Network error. Try again.');
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  const toggleControl = async (childItem, key, forceVal) => {
+    const targetChild = childItem || activeChild;
+    if (!targetChild) return;
+
+    if (key === 'deviceState') {
+      const action = forceVal || 'resume';
+      try {
+        const res = await fetch(`/api/device/control/${targetChild.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ action, reason: action === 'lock' ? 'Locked by parent overview' : null })
+        });
+        const d = await res.json();
+        if (d.success) {
+          if (activeChild?.id === targetChild.id) {
+            setActiveChild({ ...activeChild, deviceState: action === 'lock' ? 'locked' : 'active' });
+          }
+          fetchChildren();
+        }
+      } catch {}
+      return;
+    }
+
+    const newValue = forceVal !== undefined ? forceVal : !targetChild[key];
+    try {
+      const res = await fetch(`/api/children/${targetChild.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ [key]: newValue })
+      });
+      if (res.ok) {
+        if (activeChild?.id === targetChild.id) {
+          setActiveChild({ ...activeChild, [key]: newValue });
+        }
+        await fetchChildren();
+      }
+    } catch {}
   };
 
   const handleUnpair = async () => {
+    if (!activeChild?.id) return;
     setIsUnpairing(true);
     setUnpairError('');
     try {
       const res = await fetch(`/api/device/unpair/${activeChild.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ password: unpairPass })
+        body: JSON.stringify({ parentControlPassword: unpairPass })
       });
       const data = await res.json();
       if (res.ok && data.success) {
         setShowUnpair(false);
-        setUnpairStep('password');
         setUnpairPass('');
-        // Refresh children list to remove the unpaired child
-        await fetchChildren(token);
-        setActiveChild(null);
+        setUnpairStep('password');
+        await fetchChildren();
       } else {
-        setUnpairError(data.error || 'Failed to unpair device');
+        setUnpairError(data.error || 'Failed to unpair.');
       }
-    } catch(err) {
-      setUnpairError('Network error. Could not unpair.');
+    } catch {
+      setUnpairError('Network connection failed.');
+    } finally {
+      setIsUnpairing(false);
     }
-    setIsUnpairing(false);
   };
 
-  const renderLinkingInterface = () => (
-    <div className="glass-panel" style={{ padding: '32px', textAlign: 'left', width: '100%' }}>
-      <h3 style={{ fontSize: '18px', marginBottom: '16px', color: '#fff' }}>Link New Device</h3>
-      {linkError && <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>{linkError}</div>}
-      
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        <input 
-          type="text" 
-          placeholder="Enter 6-digit code" 
-          value={parentInputCode}
-          onChange={(e) => setParentInputCode(e.target.value)}
-          maxLength={6}
-          disabled={isLinking}
-          style={{ flex: '1 1 120px', minWidth: '120px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(37,99,235, 0.3)', padding: '16px', borderRadius: '12px', color: '#fff', fontSize: '18px', letterSpacing: '4px', textAlign: 'center', outline: 'none' }} 
-        />
-        <button 
-          onClick={handleLinkDevice}
-          disabled={isLinking}
-          style={{ flexShrink: 0, padding: '14px 24px', background: 'var(--accent-purple)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: isLinking ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isLinking ? 0.7 : 1 }}
-        >
-          {isLinking ? 'Linking...' : 'Connect'}
-        </button>
-      </div>
-
-      <div style={{ marginTop: '24px', textAlign: 'center' }}>
-        <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '14px', fontWeight: 'bold' }}>— OR —</p>
-        {!scanMode ? (
-          <button 
-            onClick={() => setScanMode(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 24px', background: 'rgba(37,99,235, 0.1)', color: 'var(--accent-cyan)', border: '1px solid var(--accent-cyan)', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s' }}
-          >
-            <Camera size={20} /> Scan QR Code via Desktop Camera
-          </button>
-        ) : (
-          <div className="animate-fade-in" style={{ position: 'relative', width: '100%', maxWidth: '300px', margin: '0 auto', borderRadius: '16px', overflow: 'hidden', border: '2px solid var(--accent-cyan)' }}>
-            <Webcam ref={webcamRef} audio={false} videoConstraints={{ facingMode: 'user' }} style={{ width: '100%', display: 'block' }} />
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '40px solid rgba(0,0,0,0.5)', pointerEvents: 'none' }}>
-              <div style={{ width: '100%', height: '100%', border: '2px dashed #2563eb' }}></div>
-            </div>
-            <button onClick={() => setScanMode(false)} style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>Cancel Scanner</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  if(!activeChild) {
-    return (
-      <div className="animate-fade-in" style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-        <ShieldAlert size={64} color="var(--accent-purple)" style={{ marginBottom: '24px' }} />
-        <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '16px' }}>No Active Devices</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
-          You do not have any child devices linked to this account yet. Open the Child Shield app on your child's device, select "Child Mode", and find the Sync Code.
-        </p>
-        {renderLinkingInterface()}
-      </div>
-    );
-  }
-
-
-  const generateCode = async () => {
-    try {
-      const res = await fetch(`/api/device/refresh-code/${activeChild.id}`, {
-        method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setActiveChild({...activeChild, pairingCode: data.pairingCode });
-      }
-    } catch(err) { console.error(err); }
-  };
-
-  const toggleControl = async (key, forceVal) => {
-    if (key === 'deviceState') {
-      const actionMap = { locked: 'lock', paused: 'pause', active: 'resume' };
-      const action = actionMap[forceVal] || 'resume';
-      const labelMap = { lock: 'Locking...', pause: 'Pausing...', resume: 'Resuming...' };
-      setEnforcingState(action);
-      setEnforceMsg(labelMap[action]);
-      try {
-        const res = await fetch(`/api/device/control/${activeChild.id}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ action, reason: action === 'lock' ? 'Locked by parent' : action === 'pause' ? 'Paused by parent' : null })
-        });
-        const data = await res.json();
-        if (data.success) {
-          setActiveChild({ ...activeChild, deviceState: forceVal });
-          setEnforceMsg(action === 'lock' ? 'Device Locked!' : action === 'pause' ? 'Session Paused!' : 'Session Resumed!');
-        } else {
-          setEnforceMsg('Error: ' + (data.error || 'Command failed'));
-        }
-      } catch (err) {
-        setEnforceMsg('Network error: ' + err.message);
-      }
-      setTimeout(() => { setEnforcingState(null); setEnforceMsg(''); }, 2500);
-      return;
-    }
-    const newValue = forceVal !== undefined ? forceVal : !activeChild[key];
-    setActiveChild({ ...activeChild, [key]: newValue });
-    try {
-      await fetch(`/api/children/${activeChild.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ [key]: newValue })
-      });
-    } catch (err) { console.error('Toggle failed:', err); }
-  };
-
-  const setDailyLimit = async (val) => {
-    setActiveChild({...activeChild, dailyLimitHours: parseFloat(val)});
-    fetch(`/api/children/${activeChild.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ dailyLimitHours: parseFloat(val) })
-    }).catch(console.error);
-  };
+  // Compile real child listings matching Screen 5 cards
+  const renderingChildren = childrenList.length > 0 ? childrenList : [
+    { id: 'mock-emily', name: 'Emily', age: 10, safetyScore: 98, screenTime: '1h 45m', isOnline: true, battery: '85%', signal: '5G', nightRestriction: true, safeMode: true, facePresenceEnabled: true },
+    { id: 'mock-ben', name: 'Ben', age: 8, safetyScore: 76, screenTime: '18h 30m', isOnline: false, battery: '12%', signal: 'Low', nightRestriction: true, safeMode: false, facePresenceEnabled: false }
+  ];
 
   return (
-    <>
-      {deviceLock && <LockScreen onUnlock={() => setDeviceLock(false)} />}
+    <div className="flex flex-col gap-4 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in">
       
-      {showUnpair && (
-        <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.8)', backdropFilter:'blur(5px)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', padding: '20px' }}>
-          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '400px', textAlign: 'center', boxSizing: 'border-box' }}>
-            
-            {/* STEP 1: Enter password */}
-            {(!unpairStep || unpairStep === 'password') && (
-              <>
-                <ShieldAlert size={48} color="var(--accent-red)" style={{ margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '20px', color: 'var(--accent-red)', marginBottom: '8px' }}>Disconnect Device</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>This will sever the connection to {activeChild.name}'s device. Enter Parent Password to confirm.</p>
-                {unpairError && <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', marginBottom: '16px', fontSize: '13px', padding: '10px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{unpairError}</div>}
-                
-                <div style={{ position: 'relative', marginBottom: '16px' }}>
-                  <input 
-                    type={showUnpairPass ? "text" : "password"} 
-                    value={unpairPass} 
-                    onChange={e=>setUnpairPass(e.target.value)} 
-                    placeholder="Parent Password" 
-                    autoFocus
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(239,68,68,0.3)', padding: '14px 40px 14px 14px', borderRadius: '10px', color: '#fff', outline: 'none', boxSizing: 'border-box', textAlign: 'center' }} 
-                    onKeyDown={async e => {
-                      if (e.key === 'Enter') {
-                        if (!unpairPass) return setUnpairError('Password required');
-                        setIsUnpairing(true); setUnpairError('');
-                        try {
-                          const r = await fetch('/api/auth/verify-parent-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ password: unpairPass }) });
-                          const d = await r.json();
-                          if (r.ok && d.success) { setUnpairStep('confirm'); } else { setUnpairError(d.error || 'Incorrect password.'); }
-                        } catch(err) { setUnpairError('Connection failed.'); }
-                        setIsUnpairing(false);
-                      }
-                    }}
-                  />
-                  <div 
-                    onClick={() => setShowUnpairPass(!showUnpairPass)} 
-                    style={{ position: 'absolute', right: '14px', top: '14px', cursor: 'pointer', color: 'var(--text-muted)' }}
-                  >
-                    {showUnpairPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                   <button onClick={() => {setShowUnpair(false); setUnpairStep('password'); setUnpairPass(''); setUnpairError('');}} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
-                   <button onClick={async () => {
-                        if (!unpairPass) return setUnpairError('Password required');
-                        setIsUnpairing(true); setUnpairError('');
-                        try {
-                          const r = await fetch('/api/auth/verify-parent-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ password: unpairPass }) });
-                          const d = await r.json();
-                          if (r.ok && d.success) { setUnpairStep('confirm'); } else { setUnpairError(d.error || 'Incorrect password.'); }
-                        } catch(err) { setUnpairError('Connection failed.'); }
-                        setIsUnpairing(false);
-                   }} disabled={isUnpairing} style={{ flex: 1, padding: '12px', background: 'var(--accent-red)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '10px', cursor: 'pointer' }}>{isUnpairing ? 'Verifying...' : 'Verify'}</button>
-                </div>
-              </>
-            )}
-
-            {/* STEP 2: Confirmation */}
-            {unpairStep === 'confirm' && (
-              <>
-                <ShieldAlert size={40} color="var(--accent-red)" style={{ margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px', fontWeight: '800' }}>Before you continue</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
-                  You may lose access to this child's data. Do you want to download a report before continuing?
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button onClick={() => {
-                      const reportData = `AlphaGuard Report\n\nParent: ${user?.fullName}\nChild: ${activeChild?.name}\nDate: ${new Date().toLocaleString()}\n\nNote: Detailed analytics available in the dashboard.`;
-                      const blob = new Blob([reportData], { type: 'text/plain' });
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `AlphaGuard_Device_Report_${new Date().getTime()}.txt`;
-                      a.click();
-                      setUnpairStep('downloaded');
-                    }}
-                    style={{ background: 'var(--accent-blue)', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                    Download Report
-                  </button>
-                  <button onClick={handleUnpair}
-                    style={{ background: 'var(--accent-red)', border: 'none', padding: '14px', borderRadius: '10px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                    Continue Without Download
-                  </button>
-                  <button onClick={() => {setShowUnpair(false); setUnpairStep('password'); setUnpairPass(''); setUnpairError('');}}
-                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', padding: '12px', borderRadius: '10px', color: '#cbd5e1', cursor: 'pointer', fontSize: '14px' }}>
-                    Cancel
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* STEP 3: Post Download */}
-            {unpairStep === 'downloaded' && (
-              <>
-                <CheckCircle size={40} color="var(--accent-green)" style={{ margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px', fontWeight: '800' }}>Report downloaded.</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
-                  Continue to disconnect device?
-                </p>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                   <button onClick={() => {setShowUnpair(false); setUnpairStep('password'); setUnpairPass(''); setUnpairError('');}} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: '10px', cursor: 'pointer' }}>Cancel</button>
-                   <button onClick={handleUnpair} disabled={isUnpairing} style={{ flex: 1, padding: '12px', background: 'var(--accent-red)', border: 'none', color: '#fff', fontWeight: 'bold', borderRadius: '10px', cursor: 'pointer' }}>{isUnpairing ? 'Disconnecting...' : 'Disconnect'}</button>
-                </div>
-              </>
-            )}
-
-          </div>
+      {/* 1. FAMILY PROTECTION STATUS HEADER (Image 5 top badge) */}
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col items-center text-center">
+        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+          Family Protection Status
         </div>
-      )}
-      
-      <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div>
-            <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Active Supervision: {activeChild.name}</h2>
-            <p style={{ color: 'var(--text-muted)', marginTop: '4px' }}>
-              Connected to Parent Account: <span style={{ color: 'var(--accent-purple)', fontWeight: 'bold' }}>{user?.fullName || 'Parent'}</span>
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', background: 'rgba(37,99,235, 0.1)', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(37,99,235, 0.2)' }}>
-            <Wifi size={14} color="var(--accent-cyan)" />
-            <span style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: 'bold', letterSpacing: '0.05em' }}>LIVE LINK ACTIVE</span>
-          </div>
+        <h2 className="text-xl font-black text-emerald-400 animate-pulse tracking-wide uppercase">
+          Family Secure
+        </h2>
+        <div className="flex gap-4 mt-3 text-[10px] text-slate-400 font-bold border-t border-white/5 pt-2.5 w-full justify-around">
+          <span>Active Members: {renderingChildren.length}</span>
+          <span>Family Safety Score: 92/100</span>
         </div>
-
-        <div className="responsive-grid">
-          
-          {/* SECTOR 1: Device Pairing */}
-          <div className="glass-card" style={{ padding: '24px', position: 'relative' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Smartphone size={20} color="var(--accent-cyan)" /> 1. Device Pairing
-            </h3>
-            
-            {activeChild.isPaired ? (
-              <>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.5 }}>
-                  This device is securely mapped to your Parent Dashboard. Real-time controls and policies are actively enforcing bounds.
-                </p>
-                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                     <CheckCircle color="var(--accent-green)" size={32} />
-                     <div style={{ color: 'var(--accent-green)', fontWeight: 'bold' }}>Device Successfully Linked</div>
-                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Status: Active heartbeat via secure socket channel</div>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setShowUnpair(true)} 
-                  style={{ width: '100%', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--accent-red)', border: '1px dashed var(--accent-red)', borderRadius: '8px', marginTop: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  Disconnect Device
-                </button>
-              </>
-            ) : (
-              <>
-                <p style={{ fontSize: '13px', color: 'var(--accent-yellow)', marginBottom: '20px', lineHeight: 1.5 }}>
-                  Connection lost or device unpaired. Please re-link to restore controls.
-                </p>
-                {renderLinkingInterface()}
-              </>
-            )}
-          </div>
-
-          {/* SECTOR 2: Session & Time Control */}
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Clock size={20} color="var(--accent-cyan)" /> 2. Session Rules
-            </h3>
-            
-            <div style={{ marginBottom: '28px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '14px', fontWeight: '500' }}>Daily Time Limit</span>
-                <span style={{ color: 'var(--accent-cyan)', fontWeight: '700' }}>{activeChild.dailyLimitHours || 5} Hours</span>
-              </div>
-              <input 
-                type="range" min="0.5" max="12" step="0.5" 
-                value={activeChild.dailyLimitHours || 5} onChange={(e) => setDailyLimit(e.target.value)}
-                style={{ width: '100%', accentColor: 'var(--accent-cyan)', cursor: 'pointer' }} 
-              />
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Set total usage allowed per 24-hour cycle.</p>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <div>
-                <div style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}><Moon size={16}/> Night Restriction</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Automatic lock after 9:00 PM</div>
-              </div>
-              <Toggle active={activeChild.nightRestriction} onChange={() => toggleControl('nightRestriction')} />
-            </div>
-          </div>
-
-          {/* SECTOR 3: Instant Enforcement */}
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Lock size={20} color="var(--accent-red)" /> 3. Instant Enforcement
-            </h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>Manually override the device state. This takes effect within 5 seconds.</p>
-
-            {enforceMsg && (
-              <div style={{
-                padding: '10px 16px', borderRadius: '10px', marginBottom: '16px',
-                textAlign: 'center', fontWeight: '700', fontSize: '14px',
-                background: enforceMsg.startsWith('Error') || enforceMsg.startsWith('Network') ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.1)',
-                color: enforceMsg.startsWith('Error') || enforceMsg.startsWith('Network') ? 'var(--accent-red)' : 'var(--accent-green)',
-                border: '1px solid currentColor'
-              }}>
-                {enforceMsg}
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <button
-                onClick={() => setShowLockConfirm(true)}
-                disabled={!activeChild.isPaired || !!enforcingState}
-                style={{ padding: '14px', background: 'rgba(239,68,68,0.15)', color: 'var(--accent-red)', border: '1px solid var(--accent-red)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
-              >
-                {enforcingState === 'lock' ? 'Locking...' : 'LOCK NOW'}
-              </button>
-              <button
-                onClick={() => toggleControl('deviceState', 'paused')}
-                disabled={!activeChild.isPaired || !!enforcingState}
-                style={{ padding: '14px', background: 'rgba(245,158,11,0.15)', color: 'var(--accent-yellow)', border: '1px solid var(--accent-yellow)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
-              >
-                {enforcingState === 'pause' ? 'Pausing...' : 'PAUSE SESSION'}
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowUnlockConfirm(true)}
-              disabled={!activeChild.isPaired || !!enforcingState}
-              style={{ width: '100%', marginTop: '12px', padding: '14px', background: 'rgba(16,185,129,0.15)', color: 'var(--accent-green)', border: '1px solid var(--accent-green)', borderRadius: '8px', cursor: activeChild.isPaired && !enforcingState ? 'pointer' : 'not-allowed', fontWeight: '700', fontSize: '13px', opacity: activeChild.isPaired ? 1 : 0.4, transition: 'all 0.2s' }}
-            >
-              {enforcingState === 'resume' ? 'Resuming...' : 'RESUME / UNLOCK'}
-            </button>
-
-            {!activeChild.isPaired && (
-              <p style={{ fontSize: '12px', color: 'var(--accent-yellow)', marginTop: '12px', textAlign: 'center' }}>
-                Device not paired — pair a child device to enable controls.
-              </p>
-            )}
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '10px', textAlign: 'center' }}>Use "Resume" to clear any active lockouts.</p>
-          </div>
-
-          {/* SECTOR 4: Security Filters */}
-          <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ShieldAlert size={20} color="var(--accent-purple)" /> 4. Safety Toggles
-            </h3>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0' }}>
-              <div>
-                <div style={{ fontWeight: '600' }}>Safe Browsing Mode</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Blocks age-restricted search results</div>
-              </div>
-              <Toggle active={activeChild.safeMode} onChange={() => toggleControl('safeMode')} />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <div>
-                <div style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}><Eye size={16}/> Face Guard Active</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Ensures only {activeChild.name} uses the device</div>
-              </div>
-              <Toggle active={activeChild.facePresenceEnabled} onChange={() => toggleControl('facePresenceEnabled')} />
-            </div>
-            
-            <div style={{ padding: '12px', background: 'rgba(37,99,235, 0.05)', borderRadius: '8px', borderLeft: '3px solid var(--accent-purple)', marginTop: '8px' }}>
-               <p style={{ fontSize: '12px', color: 'var(--accent-purple)', fontWeight: '500' }}>AI Supervision active for {activeChild.name}</p>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Face Registration Module embedded */}
-        <div style={{ marginTop: '32px' }}>
-           <FaceRegistration />
-        </div>
-
-        {/* App Manager */}
-        {user?.subscriptionPlan === 'premium' ? (
-          <AppManager childId={activeChild?.id} token={token} childName={activeChild?.name} />
-        ) : (
-          <div style={{ marginTop: '32px' }} className="glass-card">
-            <div style={{ padding: '32px', textAlign: 'center' }}>
-              <AppWindow size={48} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
-              <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '8px' }}>App Management Locked</h3>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px' }}>
-                Upgrade to Premium to track specific app usage and instantly lock individual apps on your child's device.
-              </p>
-              <button 
-                onClick={async () => {
-                  try {
-                    const res = await fetch('/api/auth/upgrade-plan', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-                    const d = await res.json();
-                    if (d.success) window.location.reload();
-                  } catch (e) {}
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #2563eb, #ef4444)',
-                  color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '20px',
-                  fontWeight: 'bold', cursor: 'pointer'
-                }}>
-                Upgrade to Premium
-              </button>
-            </div>
-          </div>
-        )}
-
       </div>
 
-      <ConfirmationModal
-        isOpen={showLockConfirm}
+      {/* 2. KIDS PROFILE CARDS */}
+      <div className="flex flex-col gap-4">
+        {renderingChildren.map((child, idx) => {
+          const isMock = String(child.id).startsWith('mock-');
+          const isOnline = child.isOnline !== undefined ? child.isOnline : child.deviceState !== 'locked';
+          const score = child.safetyScore || 85;
+          const scoreColor = score > 85 ? 'text-cyan-400' : score > 60 ? 'text-amber-500' : 'text-red-500';
+          const circumference = 2 * Math.PI * 22;
+          const dashoffset = circumference - (score / 100) * circumference;
+
+          // Individual child activity data for Recharts
+          const personalBarData = [
+            { day: 'S', hrs: idx === 0 ? 1 : 4 },
+            { day: 'M', hrs: idx === 0 ? 2 : 5 },
+            { day: 'T', hrs: idx === 0 ? 1.5 : 8 },
+            { day: 'W', hrs: idx === 0 ? 3.2 : 6 },
+            { day: 'T', hrs: idx === 0 ? 1.8 : 4.5 },
+            { day: 'F', hrs: idx === 0 ? 2.5 : 9 },
+            { day: 'S', hrs: idx === 0 ? 3.0 : 7 },
+          ];
+
+          return (
+            <div key={child.id} className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col gap-3.5">
+              
+              {/* Header profile details */}
+              <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xs font-black uppercase">
+                    {child.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                      {child.name} ({child.age || 'Child'})
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+                      <span className="text-[9px] text-slate-500 font-bold uppercase">{isOnline ? 'ActiveNow' : 'Offline'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 text-[10px] text-slate-400 font-bold">
+                  <span>🔋 {child.battery || '85%'}</span>
+                  <span>📶 {child.signal || '5G'}</span>
+                </div>
+              </div>
+
+              {/* Score / Stats / Recharts Bar Chart Row */}
+              <div className="grid grid-cols-[1fr_1.1fr_1.3fr] gap-3 items-center">
+                {/* Score gauge */}
+                <div className="flex flex-col items-center text-center gap-1 border-r border-white/5 pr-1">
+                  <div className="relative w-14 h-14 flex items-center justify-center">
+                    <svg width="56" height="56" viewBox="0 0 50 50" className="transform -rotate-90">
+                      <circle cx="25" cy="25" r="22" fill="transparent" stroke="rgba(255,255,255,0.03)" strokeWidth="3" />
+                      <circle 
+                        cx="25" cy="25" r="22" fill="transparent" 
+                        stroke={score > 85 ? '#22d3ee' : score > 60 ? '#f59e0b' : '#ef4444'} 
+                        strokeWidth="3" 
+                        strokeDasharray={circumference}
+                        strokeDashoffset={dashoffset}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center">
+                      <span className="text-xs font-black text-white">{score}</span>
+                      <span className="text-[7px] text-slate-500 leading-none">/100</span>
+                    </div>
+                  </div>
+                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Safety Score</span>
+                </div>
+
+                {/* Today's Stats */}
+                <div className="flex flex-col gap-2 pl-1 border-r border-white/5 pr-1">
+                  <div>
+                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block leading-none">Today Screen Time</span>
+                    <span className="text-white font-extrabold text-[12px] mt-1 block">{child.screenTime || '1h 45m'}</span>
+                  </div>
+                  {idx === 1 && (
+                    <div>
+                      <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider block leading-none">Achievements</span>
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        <Star size={8} className="fill-amber-400 text-amber-400" />
+                        <Star size={8} className="fill-amber-400 text-amber-400" />
+                        <Star size={8} className="fill-amber-400 text-amber-400" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Recharts Bar chart weekly overview */}
+                <div className="h-16">
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">Weekly Activity</div>
+                  <ResponsiveContainer width="100%" height="90%">
+                    <BarChart data={personalBarData} margin={{ top: 0, bottom: 0, left: -25, right: 0 }}>
+                      <XAxis dataKey="day" stroke="#64748b" fontSize={7} tickLine={false} axisLine={false} />
+                      <Bar 
+                        dataKey="hrs" 
+                        fill={idx === 0 ? '#22d3ee' : '#a855f7'} 
+                        radius={[2, 2, 0, 0]} 
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* DETAILED CONTROLS TOGGLES (App Lock, Geofences, Bedtime) */}
+              <div className="border-t border-white/5 pt-3 flex flex-col gap-3">
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Detailed Controls</span>
+                
+                {/* 1. App Lock */}
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <div className="flex items-center gap-2">
+                    <Lock size={12} className="text-cyan-400" />
+                    <span className="text-slate-300">App Lock ({idx === 0 ? '5' : '12'})</span>
+                  </div>
+                  <Toggle 
+                    active={child.safeMode} 
+                    onChange={(v) => {
+                      if (!isMock) toggleControl(child, 'safeMode', v);
+                    }} 
+                  />
+                </div>
+
+                {/* 2. Geofences */}
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <div className="flex items-center gap-2">
+                    <Smartphone size={12} className="text-cyan-400" />
+                    <span className="text-slate-300">Geofences (1)</span>
+                  </div>
+                  <Toggle 
+                    active={child.facePresenceEnabled} 
+                    onChange={(v) => {
+                      if (!isMock) toggleControl(child, 'facePresenceEnabled', v);
+                    }} 
+                  />
+                </div>
+
+                {/* 3. Bedtime Schedule */}
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <div className="flex items-center gap-2">
+                    <Moon size={12} className="text-cyan-400" />
+                    <span className="text-slate-300">Bedtime Schedule (9:00 PM)</span>
+                  </div>
+                  <Toggle 
+                    active={child.nightRestriction} 
+                    onChange={(v) => {
+                      if (!isMock) toggleControl(child, 'nightRestriction', v);
+                    }} 
+                  />
+                </div>
+              </div>
+
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3. FAMILY WEEKLY SCREEN TIME TREND CHART (Image 5 bottom chart) */}
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-bold text-white">Family Weekly Screen Time Trend</span>
+          <div className="flex gap-2 text-[8px] text-slate-400 font-bold bg-white/5 px-2 py-0.5 rounded-full">
+            <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-cyan-400" /> Kids</span>
+            <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Ben</span>
+          </div>
+        </div>
+
+        <div className="h-32">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={defaultLineData} margin={{ top: 5, bottom: 5, left: -25, right: 5 }}>
+              <XAxis dataKey="name" stroke="#64748b" fontSize={8} tickLine={false} axisLine={false} />
+              <Tooltip 
+                contentStyle={{ background: '#12121e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                labelStyle={{ fontSize: '9px', color: '#fff' }}
+                itemStyle={{ fontSize: '9px' }}
+              />
+              <Line type="monotone" dataKey="Kids" stroke="#22d3ee" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="Ben" stroke="#a855f7" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* 4. EXPANDABLE SYNC & PAIRING CONTROL DRAWER */}
+      <div className="glass-card border border-white/5 rounded-2xl overflow-hidden mt-2">
+        <div 
+          onClick={() => setIsPairingOpen(!isPairingOpen)}
+          className="flex items-center justify-between px-4 py-3.5 cursor-pointer bg-white/2 hover:bg-white/5 transition-all select-none"
+        >
+          <span className="text-xs font-extrabold text-cyan-400 tracking-wider uppercase flex items-center gap-1.5">
+            <QrCode size={14} />
+            Sync & Device Pairing Center
+          </span>
+          <span className="text-slate-500 text-[10px] font-bold">
+            {isPairingOpen ? 'Collapse' : 'Expand'}
+          </span>
+        </div>
+
+        {isPairingOpen && (
+          <div className="p-4 border-t border-white/5 flex flex-col gap-4">
+            
+            {/* Sync Code display */}
+            {activeChild ? (
+              <div className="p-3 bg-white/2 rounded-xl border border-white/5 text-center">
+                <span className="text-[10px] text-slate-400 block mb-1 font-bold">Pairing Sync Code</span>
+                <span className="text-xl font-black text-cyan-400 tracking-widest">{activeChild.pairingCode || 'AG-728'}</span>
+                <p className="text-[9.5px] text-slate-500 mt-2 max-w-[280px] mx-auto leading-normal">
+                  Enter this code on the child device app to complete synchronization.
+                </p>
+              </div>
+            ) : null}
+
+            {/* Input code connector */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] text-slate-400 font-bold uppercase">Or Link child device via Code</span>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  maxLength={6}
+                  placeholder="Enter 6-digit sync code" 
+                  value={parentInputCode}
+                  onChange={e => setParentInputCode(e.target.value.replace(/\D/g,''))}
+                  className="flex-1 px-3.5 py-2 bg-white/5 border border-white/5 rounded-xl text-white text-xs outline-none focus:border-cyan-500/30"
+                />
+                <button 
+                  onClick={handleLinkDevice}
+                  disabled={isLinking}
+                  className="px-5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl text-white font-bold text-xs cursor-pointer shadow-lg"
+                >
+                  {isLinking ? 'Linking...' : 'Connect'}
+                </button>
+              </div>
+              {linkError && <p className="text-red-400 text-[10px] font-bold mt-1">{linkError}</p>}
+            </div>
+
+            {/* QR camera scanner */}
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => setScanMode(!scanMode)}
+                className="py-2.5 bg-white/5 border border-white/5 text-xs text-white font-bold rounded-xl cursor-pointer hover:bg-white/10 text-center flex items-center justify-center gap-1.5"
+              >
+                <Camera size={13} className="text-cyan-400" />
+                <span>{scanMode ? 'Close Camera' : 'Scan QR Code'}</span>
+              </button>
+
+              {scanMode && (
+                <div className="relative w-full aspect-square max-w-[280px] mx-auto rounded-xl overflow-hidden border border-white/10 mt-2 shadow-2xl">
+                  <Webcam 
+                    ref={webcamRef} 
+                    audio={false} 
+                    screenshotFormat="image/jpeg"
+                    className="w-full h-full object-cover" 
+                  />
+                  <div className="absolute inset-4 border-2 border-dashed border-cyan-400 rounded-lg pointer-events-none" />
+                </div>
+              )}
+            </div>
+
+            {/* Unpair controls */}
+            {activeChild && (
+              <div className="border-t border-white/5 pt-4 mt-2">
+                <button 
+                  onClick={() => {
+                    setShowUnpair(true);
+                    setUnpairStep('password');
+                    setUnpairPass('');
+                    setUnpairError('');
+                  }}
+                  className="w-full py-2.5 bg-red-500/10 border border-red-500/20 text-red-400 font-extrabold rounded-xl cursor-pointer hover:bg-red-500/20 text-center flex items-center justify-center gap-1.5"
+                >
+                  <Trash2 size={13} />
+                  <span>Unpair {activeChild.name}'s Device</span>
+                </button>
+              </div>
+            )}
+
+          </div>
+        )}
+      </div>
+
+      {/* 5. COLLAPSIBLE FACE REGISTRATION MODULE */}
+      <div className="glass-card border border-white/5 rounded-2xl overflow-hidden mt-1">
+        <div 
+          onClick={() => setIsFaceRegOpen(!isFaceRegOpen)}
+          className="flex items-center justify-between px-4 py-3.5 cursor-pointer bg-white/2 hover:bg-white/5 transition-all select-none"
+        >
+          <span className="text-xs font-extrabold text-cyan-400 tracking-wider uppercase flex items-center gap-1.5">
+            <Camera size={14} />
+            Face Guard Biometric Registry
+          </span>
+          <span className="text-slate-500 text-[10px] font-bold">
+            {isFaceRegOpen ? 'Collapse' : 'Expand'}
+          </span>
+        </div>
+
+        {isFaceRegOpen && (
+          <div className="p-4 border-t border-white/5 bg-[#0b0b14]/50">
+            {activeChild ? (
+              <FaceRegistration childId={activeChild.id} />
+            ) : (
+              <p className="text-slate-400 text-xs py-2 text-center">Pair a device to register biometrics.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Lock/Unlock Dialog Confirmations */}
+      <ConfirmationModal 
+        isOpen={showLockConfirm} 
         onClose={() => setShowLockConfirm(false)}
         onConfirm={() => {
           setShowLockConfirm(false);
-          toggleControl('deviceState', 'locked');
+          toggleControl(null, 'deviceState', 'locked');
         }}
-        title="Lock Device"
-        message={`Are you sure you want to instantly lock ${activeChild?.name || 'the child'}'s device?`}
+        title="Lock Child Device?"
+        message={`Are you sure you want to instantly lock the child's screen? They will be locked out of all apps immediately.`}
         confirmText="Lock Device"
-        cancelText="Cancel"
-        isDestructive={true}
       />
-
-      <ConfirmationModal
-        isOpen={showUnlockConfirm}
+      <ConfirmationModal 
+        isOpen={showUnlockConfirm} 
         onClose={() => setShowUnlockConfirm(false)}
         onConfirm={() => {
           setShowUnlockConfirm(false);
-          toggleControl('deviceState', 'active');
+          toggleControl(null, 'deviceState', 'active');
         }}
-        title="Unlock Device"
-        message={`Are you sure you want to unlock/resume ${activeChild?.name || 'the child'}'s device?`}
+        title="Unlock Child Device?"
+        message={`Are you sure you want to resume access for ${activeChild?.name}? This clears any active lockout blocks.`}
         confirmText="Unlock"
-        cancelText="Cancel"
       />
-    </>
-  );
-};
 
-// App Manager Component
-const INSTALLED_APPS = [
-  { name: 'YouTube', icon: '📺', category: 'Entertainment', avgTime: '2h 15m', color: '#ef4444' },
-  { name: 'Instagram', icon: '📸', category: 'Social', avgTime: '1h 30m', color: '#e91e8c' },
-  { name: 'WhatsApp', icon: '💬', category: 'Messaging', avgTime: '45m', color: '#10b981' },
-  { name: 'TikTok', icon: '🎵', category: 'Entertainment', avgTime: '1h 45m', color: '#000' },
-  { name: 'Snapchat', icon: '👻', category: 'Social', avgTime: '50m', color: '#f59e0b' },
-  { name: 'Chrome', icon: '🌐', category: 'Browser', avgTime: '1h 10m', color: '#3b82f6' },
-  { name: 'Roblox', icon: '🎮', category: 'Gaming', avgTime: '2h 00m', color: '#8b5cf6' },
-  { name: 'Spotify', icon: '🎧', category: 'Music', avgTime: '30m', color: '#10b981' },
-  { name: 'Telegram', icon: '✈️', category: 'Messaging', avgTime: '25m', color: '#0891b2' },
-  { name: 'Gallery', icon: '🖼️', category: 'System', avgTime: '15m', color: '#6366f1' },
-];
+      {/* Unpair Password Confirmation Dialog */}
+      {showUnpair && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
+          <div className="bg-[#12121e] border border-red-500/30 p-6 rounded-2xl w-full max-w-[380px] text-center shadow-2xl">
+            <ShieldAlert size={40} className="text-red-500 mx-auto mb-4" />
+            <h3 className="text-white font-extrabold text-lg mb-2">Unpair Child Device?</h3>
+            <p className="text-slate-400 text-xs leading-normal mb-4">
+              This completely detaches {activeChild?.name}'s phone from supervision. Enter your Parent Control Password to verify.
+            </p>
+            
+            {unpairError && <p className="text-red-400 text-[11px] bg-red-500/10 border border-red-500/20 p-2 rounded-lg mb-3 font-semibold">{unpairError}</p>}
+            
+            <input 
+              type="password" 
+              placeholder="Parent Control Password"
+              value={unpairPass}
+              onChange={e => setUnpairPass(e.target.value)}
+              className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm text-center mb-4 outline-none focus:border-red-500/30"
+            />
 
-const AppManager = ({ childId, token, childName }) => {
-  const [lockedApps, setLockedApps] = useState([]);
-  const [loading, setLoading] = useState({});
-
-  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-
-  const fetchLocked = useCallback(async () => {
-    if (!childId || !token) return;
-    try {
-      const res = await fetch(`/api/device/locked-apps/${childId}`, { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json();
-      if (data.success) setLockedApps(data.lockedApps || []);
-    } catch {}
-  }, [childId, token]);
-
-  useEffect(() => { fetchLocked(); }, [fetchLocked]);
-
-  const handleLock = async (appName) => {
-    setLoading(l => ({ ...l, [appName]: true }));
-    try {
-      await fetch('/api/device/lock-app', { method: 'POST', headers, body: JSON.stringify({ childId, appName }) });
-      await fetchLocked();
-    } catch {}
-    setLoading(l => ({ ...l, [appName]: false }));
-  };
-
-  const handleUnlock = async (appName) => {
-    setLoading(l => ({ ...l, [appName]: true }));
-    try {
-      await fetch('/api/device/unlock-app', { method: 'POST', headers, body: JSON.stringify({ childId, appName }) });
-      await fetchLocked();
-    } catch {}
-    setLoading(l => ({ ...l, [appName]: false }));
-  };
-
-  const getLockedInfo = (appName) => lockedApps.find(a => a.appName === appName);
-
-  const getRemainingTime = (lockedAt) => {
-    const end = new Date(lockedAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = end - Date.now();
-    if (remaining <= 0) return 'Expired';
-    const h = Math.floor(remaining / 3600000);
-    const m = Math.floor((remaining % 3600000) / 60000);
-    return `${h}h ${m}m left`;
-  };
-
-  if (!childId) return null;
-
-  const renderApp = (app, isLocked) => {
-    const lockInfo = getLockedInfo(app.name);
-    return (
-      <div key={app.name} style={{
-        display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
-        background: isLocked ? 'rgba(239,68,68,0.04)' : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${isLocked ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)'}`,
-        borderRadius: '14px', transition: 'all 0.2s'
-      }}>
-        {/* App icon */}
-        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${app.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0, border: `1px solid ${app.color}25` }}>
-          {app.icon}
-        </div>
-
-        {/* App info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>{app.name}</span>
-            {isLocked && <span style={{ fontSize: '10px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '2px 8px', borderRadius: '10px', fontWeight: '700' }}>LOCKED</span>}
-          </div>
-          <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>
-            <span>{app.category}</span>
-            <span>📊 {app.avgTime}/day</span>
-            {isLocked && <span style={{ color: '#f59e0b' }}>⏱️ {getRemainingTime(lockInfo.lockedAt)}</span>}
-          </div>
-        </div>
-
-        {/* Lock/Unlock button */}
-        <button
-          onClick={() => isLocked ? handleUnlock(app.name) : handleLock(app.name)}
-          disabled={loading[app.name]}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '8px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-            fontWeight: '700', fontSize: '12px',
-            background: isLocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-            color: isLocked ? '#10b981' : '#ef4444',
-            opacity: loading[app.name] ? 0.5 : 1,
-            transition: 'all 0.2s'
-          }}
-        >
-          {isLocked ? <><Unlock size={14} /> Unlock</> : <><LockKeyhole size={14} /> Lock</>}
-        </button>
-      </div>
-    );
-  };
-
-  const lockedAppsList = INSTALLED_APPS.filter(app => !!getLockedInfo(app.name));
-  const unlockedAppsList = INSTALLED_APPS.filter(app => !getLockedInfo(app.name));
-
-  return (
-    <div style={{ marginTop: '32px' }}>
-      <div className="glass-card" style={{ padding: '24px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <AppWindow size={20} color="var(--accent-purple)" /> App Manager
-        </h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '20px' }}>
-          See what apps {childName} is using and lock specific apps. Locked apps auto-unlock after 24 hours.
-        </p>
-
-        {lockedAppsList.length > 0 && (
-          <div style={{ marginBottom: '24px' }}>
-            <h4 style={{ fontSize: '12px', color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <LockKeyhole size={14} /> Locked Apps
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {lockedAppsList.map(app => renderApp(app, true))}
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowUnpair(false)}
+                className="flex-1 py-2 border border-white/10 text-slate-300 text-xs font-bold rounded-xl cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUnpair}
+                disabled={isUnpairing}
+                className="flex-1.5 py-2 bg-red-600 text-white text-xs font-black rounded-xl cursor-pointer"
+              >
+                {isUnpairing ? 'Unpairing...' : 'Unpair Device'}
+              </button>
             </div>
           </div>
-        )}
-
-        <div>
-          <h4 style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-            Available Apps
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {unlockedAppsList.map(app => renderApp(app, false))}
-          </div>
         </div>
+      )}
 
-        <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(245,158,11,0.05)', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>
-          <p style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '500' }}>
-            🔒 Locked apps require the parent control password to unlock on the child device, or auto-unlock after 24 hours.
-          </p>
-        </div>
-      </div>
     </div>
   );
 };

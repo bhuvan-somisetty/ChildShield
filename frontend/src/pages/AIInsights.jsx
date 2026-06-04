@@ -1,155 +1,288 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Brain, Activity, ShieldAlert, Zap, TrendingUp, TrendingDown, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { useLivePolling } from '../hooks/useLivePolling';
+import { Brain, Sparkles, Mic, BarChart2, CheckCircle2, AlertCircle, Volume2, ShieldAlert } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area } from 'recharts';
+
+const chartData = [
+  { time: '4:00', usage: 10 },
+  { time: '4:20', usage: 15 },
+  { time: '4:40', usage: 35 },
+  { time: '5:00', usage: 45 },
+  { time: '5:20', usage: 50 },
+  { time: '5:40', usage: 20 },
+];
 
 const AIInsights = () => {
   const { activeChild, token } = useAuth();
   const childId = activeChild?.id;
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
 
+  const [chatLog, setChatLog] = useState({
+    user: "Summarize Lily's day, please.",
+    ai: "Examining geofence logs... Lily arrived at School Zone at 8:30 AM and departed at 3:20 PM. No safety breaches. Behavioral data analysis follows..."
+  });
+  
+  const [orbState, setOrbState] = useState('idle'); // 'idle' | 'listening' | 'speaking'
+  const [reportData, setReportData] = useState(null);
+  const [queryInput, setQueryInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const recognitionRef = useRef(null);
+
+  // Poll report details for safety score
   useEffect(() => {
     if (!childId) return;
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Fetch report full to get a comprehensive view for the AI
-        const res = await fetch(`/api/reports/full?childId=${childId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const json = await res.json();
-        if (json.success) setData(json.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetch(`/api/reports/full?childId=${childId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) setReportData(d.data);
+    })
+    .catch(() => {});
   }, [childId, token]);
+
+  // Setup speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+
+      recognitionRef.current.onstart = () => {
+        setOrbState('listening');
+      };
+
+      recognitionRef.current.onresult = async (event) => {
+        const text = event.results[0][0].transcript;
+        if (text) {
+          setChatLog(prev => ({ ...prev, user: text, ai: "Analyzing your request..." }));
+          setOrbState('speaking');
+          
+          // Send query to AI backend
+          try {
+            const res = await fetch('/api/ai/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ message: text, role: 'parent' })
+            });
+            const data = await res.json();
+            if (data.success) {
+              setChatLog(prev => ({ ...prev, ai: data.reply }));
+              // Speak out response if supported and not muted
+              if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(data.reply);
+                utterance.onend = () => setOrbState('idle');
+                window.speechSynthesis.speak(utterance);
+              } else {
+                setTimeout(() => setOrbState('idle'), 3000);
+              }
+            } else {
+              setChatLog(prev => ({ ...prev, ai: "Sorry, I had trouble processing that query." }));
+              setOrbState('idle');
+            }
+          } catch {
+            setChatLog(prev => ({ ...prev, ai: "Network connection error." }));
+            setOrbState('idle');
+          }
+        }
+      };
+
+      recognitionRef.current.onerror = () => {
+        setOrbState('idle');
+      };
+
+      recognitionRef.current.onend = () => {
+        if (orbState === 'listening') setOrbState('idle');
+      };
+    }
+  }, [token, orbState]);
+
+  const toggleMicInput = () => {
+    if (orbState === 'listening') {
+      recognitionRef.current?.stop();
+    } else {
+      window.speechSynthesis.cancel();
+      setOrbState('listening');
+      recognitionRef.current?.start();
+    }
+  };
 
   if (!childId) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#475569', textAlign: 'center', padding: '20px' }}>
-        <div>
-          <Brain size={48} color="#334155" style={{ marginBottom: '16px' }} />
-          <p style={{ fontSize: '16px' }}>No child device selected</p>
-          <p style={{ fontSize: '14px', marginTop: '8px' }}>Pair a device from Controls first to see AI Insights</p>
-        </div>
+      <div className="glass-card max-w-[600px] mx-auto mt-16 p-10 text-center border border-white/5">
+        <Brain size={48} className="text-slate-500 mx-auto mb-4" />
+        <p className="text-white text-lg font-bold">No child profile selected</p>
+        <p className="text-slate-400 text-sm mt-2">Connect a device to activate the AI Parenting Assistant.</p>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ width: '50px', height: '50px', borderRadius: '50%', border: '3px solid rgba(37,99,235,0.2)', borderTopColor: '#2563eb', animation: 'spin 1s linear infinite' }} />
-        <p style={{ color: '#64748b', fontSize: '14px', fontWeight: '600' }}>AlphaGuard AI is analyzing data...</p>
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  if (!data) return <div style={{ padding: '24px', color: '#fff' }}>Failed to load insights.</div>;
-
-  const score = data.riskScore || 85;
-  const level = data.riskLevel || 'Low Risk';
-  const getScoreColor = (s) => s > 75 ? '#10b981' : s > 40 ? '#f59e0b' : '#ef4444';
-  const scoreColor = getScoreColor(score);
+  const safetyScore = reportData?.riskScore ? Math.max(30, 100 - reportData.riskScore) : 92;
+  const childName = activeChild?.name || 'Lily';
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 16px 40px', height: 'calc(100vh - 100px)', overflowY: 'auto' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Brain size={28} color="#2563eb" />
-          AI Insights
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Automated analysis of {activeChild?.name}'s digital behavior</p>
+    <div className="flex flex-col gap-4 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in relative min-h-screen">
+      
+      {/* Dynamic Header */}
+      <div className="text-center mb-1">
+        <h2 className="text-base font-black text-white">AI Parenting Assistant</h2>
+        <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 font-semibold mt-1">
+          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          <span>Active Assistant for: {childName} Online</span>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+      {/* Top Dialogue Cards matching Screen 3 layout */}
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col gap-3 shadow-lg">
+        <div className="text-xs">
+          <span className="text-cyan-400 font-extrabold mr-1.5">User:</span>
+          <span className="text-slate-300 font-medium">{chatLog.user}</span>
+        </div>
+        <div className="border-t border-white/5 pt-3 text-xs leading-relaxed">
+          <span className="text-indigo-400 font-extrabold mr-1.5">AI Assistant:</span>
+          <span className="text-slate-300 font-medium">{chatLog.ai}</span>
+        </div>
+      </div>
+
+      {/* Pulsing AI Glassmorphic Assistant Orb (Middle Stage) */}
+      <div className="relative flex flex-col items-center justify-center py-6">
         
-        {/* Wellbeing Score Card */}
-        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-          <div style={{ fontSize: '14px', color: '#94a3b8', fontWeight: '700', letterSpacing: '1px', marginBottom: '16px', textTransform: 'uppercase' }}>Overall Safety Score</div>
-          <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-            <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
-              <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
-              <circle cx="60" cy="60" r="54" fill="none" stroke={scoreColor} strokeWidth="12" strokeDasharray="339.29" strokeDashoffset={339.29 - (339.29 * score / 100)} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
+        {/* Swirling Waves background */}
+        <div className="absolute w-80 h-80 rounded-full bg-gradient-to-tr from-cyan-500/10 via-purple-500/10 to-transparent blur-3xl pointer-events-none" />
+
+        {/* The Spherical Glass Orb */}
+        <div 
+          onClick={toggleMicInput}
+          className={`relative w-44 h-44 rounded-full border-2 border-white/10 bg-gradient-to-tr from-[#141525]/80 via-cyan-500/10 to-purple-500/20 shadow-[0_0_40px_rgba(6,182,212,0.15)] flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300 overflow-hidden ${orbState === 'listening' ? 'shadow-[0_0_50px_rgba(239,68,68,0.4)] border-red-500/30' : orbState === 'speaking' ? 'shadow-[0_0_50px_rgba(139,92,246,0.4)] border-purple-500/30' : ''}`}
+        >
+          {/* Internal Swirling Waveforms using styled SVGs */}
+          <div className="absolute inset-2 rounded-full border border-white/5 flex items-center justify-center overflow-hidden">
+            <svg viewBox="0 0 100 100" className="w-full h-full opacity-60">
+              <path 
+                d="M0,50 Q25,30 50,50 T100,50" 
+                fill="none" 
+                stroke="#22d3ee" 
+                strokeWidth="1.5"
+                className={`transform origin-center ${orbState === 'listening' ? 'animate-[spin_4s_linear_infinite]' : orbState === 'speaking' ? 'animate-[spin_1s_linear_infinite]' : 'animate-[spin_12s_linear_infinite]'}`}
+              />
+              <path 
+                d="M0,50 Q25,70 50,50 T100,50" 
+                fill="none" 
+                stroke="#a855f7" 
+                strokeWidth="1.5"
+                className={`transform origin-center ${orbState === 'listening' ? 'animate-[spin_6s_linear_infinite_reverse]' : orbState === 'speaking' ? 'animate-[spin_1.5s_linear_infinite_reverse]' : 'animate-[spin_18s_linear_infinite_reverse]'}`}
+              />
             </svg>
-            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '32px', fontWeight: '900', color: '#fff', lineHeight: '1' }}>{score}</span>
-              <span style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>/ 100</span>
+          </div>
+
+          {/* Central Orb Content */}
+          <div className="relative z-10 flex flex-col items-center gap-1.5">
+            <div className="w-12 h-12 rounded-full bg-slate-950/70 border border-white/10 flex items-center justify-center shadow-lg">
+              <Brain size={20} className={orbState === 'listening' ? 'text-red-500 animate-pulse' : orbState === 'speaking' ? 'text-purple-400' : 'text-cyan-400'} />
             </div>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+              {orbState === 'listening' ? 'Listening' : orbState === 'speaking' ? 'Speaking' : 'System Ready'}
+            </span>
           </div>
-          <div style={{ padding: '6px 16px', background: `${scoreColor}15`, border: `1px solid ${scoreColor}40`, borderRadius: '20px', color: scoreColor, fontSize: '14px', fontWeight: '700' }}>
-            {level}
-          </div>
+
+          {/* Glowing Filter Overlay */}
+          <div className="absolute inset-0 bg-radial-gradient pointer-events-none opacity-40 mix-blend-color-dodge" />
         </div>
 
-        {/* AI Summary Card */}
-        <div className="glass-card" style={{ padding: '24px', gridColumn: 'auto / span 2' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(37,99,235,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={20} color="#2563eb" />
-            </div>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>AlphaGuard Analysis</div>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <p style={{ color: '#e2e8f0', fontSize: '15px', lineHeight: '1.6' }}>
-              Based on the last 7 days of activity, {activeChild?.name} is spending an average of <strong>{data.last30DaysSummary?.averageDailyFormatted || '2h'}</strong> per day on their device. 
-              The most heavily used category is <strong>{data.mostWatchedCategory || 'Entertainment'}</strong>.
+        {/* Waveform EQ Spectrum Visualizer beneath the Orb */}
+        <div className="flex items-center gap-1 h-6 mt-4 w-40 justify-center">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(bar => {
+            const h = orbState === 'speaking' ? [12, 22, 16, 26, 10, 20, 14, 18][bar - 1] : orbState === 'listening' ? [8, 14, 10, 18, 12, 16, 8, 10][bar - 1] : 4;
+            return (
+              <div 
+                key={bar} 
+                className={`w-0.5 rounded-full transition-all duration-300 ${orbState === 'listening' ? 'bg-red-400' : orbState === 'speaking' ? 'bg-purple-400' : 'bg-cyan-500'}`} 
+                style={{ height: `${h}px` }} 
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Grid Row: Behavioral cards */}
+      <div className="grid grid-cols-2 gap-4">
+        
+        {/* Card 1: Behavioral Insight */}
+        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col justify-between shadow-lg">
+          <div>
+            <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider mb-1">Behavioral Insight</h4>
+            <p className="text-[9.5px] text-slate-400 leading-snug">
+              {childName}'s Screen Time: Unusual uptick in app usage after school (4:00-5:30 PM).
             </p>
-            {data.unauthorizedAccessCount > 0 ? (
-              <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', borderLeft: '4px solid #ef4444', borderRadius: '8px 12px 12px 8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ef4444', fontWeight: '700', marginBottom: '4px', fontSize: '14px' }}>
-                  <AlertTriangle size={16} /> Security Alert
-                </div>
-                <div style={{ color: '#fca5a5', fontSize: '13px' }}>Face Guard detected {data.unauthorizedAccessCount} unauthorized access attempts. Please review the camera logs.</div>
-              </div>
-            ) : (
-              <div style={{ padding: '16px', background: 'rgba(16,185,129,0.1)', borderLeft: '4px solid #10b981', borderRadius: '8px 12px 12px 8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontWeight: '700', marginBottom: '4px', fontSize: '14px' }}>
-                  <ShieldCheck size={16} /> Device Secure
-                </div>
-                <div style={{ color: '#a7f3d0', fontSize: '13px' }}>No unauthorized access attempts detected by Face Guard recently.</div>
-              </div>
-            )}
+          </div>
+          {/* Recharts Area Curve Preview */}
+          <div className="h-14 w-full mt-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 0, bottom: 0, left: -10, right: 0 }}>
+                <defs>
+                  <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Area type="monotone" dataKey="usage" stroke="#06b6d4" strokeWidth={1.5} fillOpacity={1} fill="url(#cyanGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Card 2: Daily AI Report Card */}
+        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col shadow-lg text-xs justify-between">
+          <div>
+            <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider mb-2">Daily AI Report Card</h4>
+            <div className="text-xl font-black text-white mb-2">{safetyScore}/100</div>
+            <div className="flex flex-col gap-1 text-[9.5px] text-slate-400 font-semibold">
+              <div className="flex items-center justify-between">
+                <span>Focus:</span>
+                <span className="text-cyan-400">Spanning</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Routine:</span>
+                <span className="text-indigo-400">Monanion</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Safety:</span>
+                <span className="text-emerald-400">Rerommendant</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Parenting Recommendation */}
+        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col gap-1 shadow-lg text-xs col-span-1">
+          <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider">Parenting Recommendation</h4>
+          <p className="text-[9.5px] text-slate-300 leading-snug mt-1">
+            <span className="font-extrabold text-cyan-400">Recommended:</span> Organize a 'Family Board Game' hour for connection after dinner.
+          </p>
+        </div>
+
+        {/* Card 4: Smart Suggestion */}
+        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col gap-1 shadow-lg text-xs col-span-1 cursor-pointer hover:border-white/10">
+          <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider">Smart Suggestion</h4>
+          <p className="text-[9.5px] text-slate-300 leading-snug mt-1">
+            Enable 'Homework Focus Mode' during specified hours. <span className="text-cyan-400 font-bold block mt-1">(Tap to schedule)</span>
+          </p>
+        </div>
+
       </div>
 
-      <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '16px', marginTop: '32px' }}>Smart Recommendations</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        {data.recommendations && data.recommendations.length > 0 ? data.recommendations.map((rec, i) => (
-          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '20px', display: 'flex', gap: '16px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <TrendingUp size={20} color="#a78bfa" />
-            </div>
-            <div>
-              <div style={{ fontSize: '14px', color: '#e2e8f0', lineHeight: '1.5' }}>{rec}</div>
-            </div>
-          </div>
-        )) : (
-           <div style={{ color: '#94a3b8', fontSize: '14px', gridColumn: '1 / -1', textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>
-             No urgent recommendations at this time.
-           </div>
-        )}
-      </div>
-
-      <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '16px' }}>Recent Behavioral Flags</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {data.flags && data.flags.length > 0 ? data.flags.map((flag, i) => (
-          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 8px #f59e0b' }} />
-            <div style={{ fontSize: '14px', color: '#e2e8f0' }}>{flag}</div>
-          </div>
-        )) : (
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>
-            No recent behavioral flags detected. Great job!
-          </div>
-        )}
+      {/* Floating HOLD TO SPEAK Microphone Button */}
+      <div className="mt-4 flex flex-col items-center z-[20]">
+        <button 
+          onMouseDown={toggleMicInput}
+          onTouchStart={toggleMicInput}
+          className={`px-8 py-3.5 bg-gradient-to-r from-cyan-600 via-blue-500 to-indigo-600 rounded-full text-white font-extrabold text-xs tracking-widest uppercase cursor-pointer shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all ${orbState === 'listening' ? 'from-red-600 to-rose-600 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : ''}`}
+        >
+          <Mic size={14} className={orbState === 'listening' ? 'animate-bounce' : ''} />
+          <span>{orbState === 'listening' ? 'Listening...' : 'Hold to Speak'}</span>
+        </button>
       </div>
 
     </div>
