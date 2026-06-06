@@ -1,51 +1,67 @@
-import React from 'react';
-import { Download, FileText, CheckCircle, AlertTriangle, ShieldX, Activity } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, FileText, CheckCircle, AlertTriangle, ShieldX, Activity, BarChart2, TrendingUp } from 'lucide-react';
 import { useLivePolling } from '../hooks/useLivePolling';
 import { useAuth } from '../context/AuthContext';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line } from 'recharts';
 
-const Reports = () => {
-  const { activeChild } = useAuth();
-  const data = useLivePolling('/api/reports/full');
+const InsightsHub = () => {
+  const { activeChild, token } = useAuth();
+  const [activeTab, setActiveTab] = useState('activity'); // 'activity' | 'reports' | 'analytics' | 'trends'
 
-  if (!activeChild || !activeChild.isPaired) {
+  // Fetch from both reporting and dashboard endpoints
+  const reportData = useLivePolling('/api/reports/full');
+  const dashboardData = useLivePolling('/api/dashboard');
+
+  if (!activeChild) {
     return (
-      <div className="animate-fade-in" style={{ padding: '60px', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
-        <ShieldX size={64} color="var(--accent-purple)" style={{ marginBottom: '24px' }} />
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Device Not Connected</h2>
-        <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>Reports cannot be generated without an active connection. Please link a child device to begin compiling historical behavioral analysis.</p>
+      <div className="glass-card max-w-[600px] mx-auto mt-16 p-10 text-center border border-white/5 backdrop-blur-md shadow-2xl font-sans">
+        <div className="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500 flex items-center justify-center mx-auto mb-6">
+          <ShieldX size={32} className="text-cyan-400" />
+        </div>
+        <h2 className="text-xl font-extrabold text-white mb-3">Insights Hub Locked</h2>
+        <p className="text-slate-400 text-sm leading-relaxed max-w-[400px] mx-auto">
+          Please link a child device to begin compiling historical safety diagnostics and usage charts.
+        </p>
       </div>
     );
   }
 
-  if(!data) return <div className="animate-fade-in" style={{ padding: '24px', textAlign: 'center' }}>Synchronizing reporting data...</div>;
+  if (!reportData || !dashboardData) {
+    return (
+      <div className="h-[50vh] flex flex-col items-center justify-center gap-4 font-sans">
+        <div className="w-10 h-10 rounded-full border-3 border-white/10 border-t-cyan-500 animate-spin" />
+        <div className="text-slate-500 text-xs font-bold uppercase tracking-widest">Compiling Analytics & Logs...</div>
+      </div>
+    );
+  }
 
   const handleDownload = () => {
-    if (!data) return;
+    if (!reportData) return;
     const lines = [
       '══════════════════════════════════════════════════════',
-      '        ALPHAGUARD AI — PARENTAL INSIGHTS REPORT',
+      '        ALPHAGUARD OS — PARENTAL INSIGHTS REPORT',
       '══════════════════════════════════════════════════════',
       `Generated: ${new Date().toLocaleString()}`,
-      `Child: ${activeChild?.name || 'Unknown'}`,
+      `Child ID: ${activeChild?.name || 'Device'}`,
       '',
       '── SUMMARY ──────────────────────────────────────────',
-      `Average Daily Screen Time: ${data.last30DaysSummary?.averageDailyFormatted || '0h 00m'}`,
-      `Risk Score: ${data.riskScore}/100 (${data.riskLevel})`,
-      `Security Flags: ${data.alertCount}`,
+      `Average Daily Screen Time: ${reportData.last30DaysSummary?.averageDailyFormatted || '0h 00m'}`,
+      `Risk Score: ${reportData.riskScore || 0}/100`,
+      `Security Flags: ${reportData.alertCount || 0}`,
       '',
       '── TOP APPS ─────────────────────────────────────────',
-      ...(data.topApps || []).map((app, i) => `  ${i + 1}. ${app.name} — ${app.time}`),
+      ...(reportData.topApps || []).map((app, i) => `  ${i + 1}. ${app.name} — ${app.time}`),
       '',
-      `Most Watched Category: ${data.mostWatchedCategory || 'N/A'}`,
+      `Most Watched Category: ${reportData.mostWatchedCategory || 'N/A'}`,
       '',
       '── SAFETY RECOMMENDATIONS ───────────────────────────',
-      ...(data.recommendations || []).map((r, i) => `  ${i + 1}. ${r}`),
+      ...(reportData.recommendations || []).map((r, i) => `  ${i + 1}. ${r}`),
       '',
       '── CRITICAL INCIDENTS ───────────────────────────────',
-      ...(data.flags && data.flags.length > 0 ? data.flags.map((f, i) => `  ${i + 1}. ${f}`) : ['  No critical incidents documented.']),
+      ...(reportData.flags && reportData.flags.length > 0 ? reportData.flags.map((f, i) => `  ${i + 1}. ${f}`) : ['  No critical incidents documented.']),
       '',
       '══════════════════════════════════════════════════════',
-      '  This report was generated by AlphaGuard AI.',
+      '  This report was generated by AlphaGuard OS.',
       '  All data is encrypted and private.',
       '══════════════════════════════════════════════════════'
     ];
@@ -58,108 +74,211 @@ const Reports = () => {
     URL.revokeObjectURL(url);
   };
 
+  const trendData = [
+    { name: 'W1', score: 90 },
+    { name: 'W2', score: 94 },
+    { name: 'W3', score: 92 },
+    { name: 'W4', score: 98 },
+  ];
+
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '60px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in font-sans">
+      
+      {/* Header bar */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Parental Insights Report</h2>
-          <p style={{ color: 'var(--text-muted)', marginTop: '4px' }}>Detailed behavioral analysis for the past 30 days.</p>
+          <h2 className="text-lg font-black text-white leading-none uppercase tracking-wider">Insights Hub</h2>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1.5">Family safety os analytics</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-           <div style={{ padding: '8px 16px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', color: 'var(--accent-green)', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-              DATA VERIFIED
-           </div>
-           <button onClick={handleDownload} style={{ 
-            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
-            background: 'var(--accent-purple)', border: 'none',
-            borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: 'bold'
-          }}>
-            <Download size={16} /> DOWNLOAD REPORT
+        <button 
+          onClick={handleDownload}
+          className="flex items-center gap-1.5 py-2 px-3.5 bg-white/5 border border-white/5 rounded-full text-cyan-400 font-black text-[10px] tracking-wider uppercase cursor-pointer hover:bg-white/10 active:scale-95 transition-all shadow-md"
+        >
+          <Download size={12} />
+          <span>Export Logs</span>
+        </button>
+      </div>
+
+      {/* Grid: 3 summary stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Avg Screen Time', val: reportData.last30DaysSummary?.averageDailyFormatted || '0h 00m', desc: 'Past 30 days' },
+          { label: 'Risk Index', val: `${reportData.riskScore || 0}/100`, desc: 'Live Telemetry' },
+          { label: 'Flags Logged', val: reportData.alertCount || 0, desc: 'Critical alerts' }
+        ].map(card => (
+          <div key={card.label} className="glass-card p-4 border border-white/5 rounded-2xl bg-white/[0.02] flex flex-col justify-between">
+            <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider leading-none mb-2">{card.label}</span>
+            <div className="text-lg font-black text-white tracking-tight">{card.val}</div>
+            <span className="text-[8.5px] text-slate-500 font-bold mt-1 leading-none">{card.desc}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Premium Glass tab bar navigation */}
+      <div className="flex p-1 bg-white/5 border border-white/5 rounded-2xl backdrop-blur-md">
+        {[
+          { id: 'activity', label: 'Activity' },
+          { id: 'reports', label: 'Reports' },
+          { id: 'analytics', label: 'Analytics' },
+          { id: 'trends', label: 'Trends' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 py-2 text-center text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${activeTab === tab.id ? 'bg-[#0b0c14] text-cyan-400 shadow' : 'text-slate-400'}`}
+          >
+            {tab.label}
           </button>
-        </div>
+        ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
-         <div className="glass-card" style={{ padding: '24px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>AVG DAILY SCREEN TIME</div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--accent-cyan)' }}>{data.last30DaysSummary?.averageDailyFormatted || '0h 00m'}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Based on last 30 days</div>
-         </div>
-         <div className="glass-card" style={{ padding: '24px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>RISK SCORE (LIVE)</div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: data.riskScore > 70 ? 'var(--accent-green)' : '#f59e0b' }}>{data.riskScore}/100</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>{data.riskLevel} alert status</div>
-         </div>
-         <div className="glass-card" style={{ padding: '24px' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>SECURITY FLAGS</div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: data.alertCount > 0 ? 'var(--accent-red)' : '#fff' }}>{data.alertCount}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>Total incidents detected</div>
-         </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-         
-         <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               <Activity size={18} color="var(--accent-cyan)" /> Activity Breakdown
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-               {data.topApps?.map((app, i) => (
-                  <div key={app.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: app.color }} />
-                     <div style={{ flex: 1, fontSize: '14px' }}>{app.name}</div>
-                     <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{app.time}</div>
+      {/* Dynamic Tab Contents */}
+      <div className="min-h-[250px]">
+        {activeTab === 'activity' && (
+          <div className="glass-card p-4 border border-white/5 rounded-2xl bg-white/[0.02] flex flex-col gap-4 animate-fade-in">
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">
+              <Activity size={13} className="text-cyan-400" />
+              <span>Activity Breakdown</span>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              {reportData.topApps && reportData.topApps.length > 0 ? (
+                reportData.topApps.map(app => (
+                  <div key={app.name} className="flex items-center justify-between border-b border-white/[0.02] pb-2 last:border-0 last:pb-0 text-xs font-semibold">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: app.color || '#4f46e5' }} />
+                      <span className="text-white">{app.name}</span>
+                    </div>
+                    <span className="text-slate-400 font-extrabold">{app.time}</span>
                   </div>
-               ))}
+                ))
+              ) : (
+                <div className="text-[10px] text-slate-500 font-bold py-6 text-center">No recent application events compiled.</div>
+              )}
             </div>
-            <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-               <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>Most Watched Category</div>
-               <div style={{ padding: '12px', background: 'rgba(37,99,235, 0.1)', color: 'var(--accent-cyan)', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold' }}>
-                  {data.mostWatchedCategory || 'N/A'}
-               </div>
+
+            <div className="mt-2 pt-4 border-t border-white/5">
+              <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Dominant Category</div>
+              <div className="py-2.5 px-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl text-center text-xs font-extrabold uppercase tracking-wider">
+                {reportData.mostWatchedCategory || 'Pending'}
+              </div>
             </div>
-         </div>
+          </div>
+        )}
 
-         <div className="glass-card" style={{ padding: '24px' }}>
-            <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               <FileText size={18} color="var(--accent-purple)" /> Safety Recommendations
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-               {(data.recommendations || []).map((rec, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '12px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                     <CheckCircle size={16} color="var(--accent-green)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                     <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>{rec}</p>
-                  </div>
-               ))}
-               {(!data.recommendations || data.recommendations.length === 0) && (
-                 <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Continuing monitoring to generate insights...</p>
-               )}
+        {activeTab === 'reports' && (
+          <div className="flex flex-col gap-4 animate-fade-in">
+            
+            {/* Safety Recommendations */}
+            <div className="glass-card p-4 border border-white/5 rounded-2xl bg-white/[0.02] flex flex-col gap-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">
+                <FileText size={13} className="text-indigo-400" />
+                <span>Safety Recommendations</span>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {reportData.recommendations && reportData.recommendations.length > 0 ? (
+                  reportData.recommendations.map((rec, i) => (
+                    <div key={i} className="flex gap-2 p-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs font-semibold leading-relaxed text-slate-300">
+                      <CheckCircle size={14} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>{rec}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-[10px] text-slate-500 font-bold py-4 text-center">No safety instructions formulated yet.</div>
+                )}
+              </div>
             </div>
-         </div>
 
-      </div>
+            {/* Critical Incidents Log */}
+            <div className="glass-card p-4 border border-white/5 rounded-2xl bg-white/[0.02] flex flex-col gap-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">
+                <AlertTriangle size={13} className="text-red-400" />
+                <span>Critical Incidents Log</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {reportData.flags && reportData.flags.length > 0 ? (
+                  reportData.flags.map((flag, i) => (
+                    <div key={i} className="flex items-center gap-2.5 p-3 bg-red-500/5 border border-red-500/10 rounded-xl text-xs font-bold text-slate-200">
+                      <AlertTriangle size={14} className="text-red-500 flex-shrink-0" />
+                      <span>{flag}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-[10px] text-slate-500 font-bold py-4 text-center">No critical incidents registered in system storage.</div>
+                )}
+              </div>
+            </div>
 
-      <div className="glass-card" style={{ marginTop: '24px', padding: '24px' }}>
-         <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldX size={18} color="var(--accent-red)" /> Critical Incidents Log
-         </h3>
-         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {data.flags?.map((flag, i) => (
-               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>
-                  <AlertTriangle size={16} color="var(--accent-red)" />
-                  <span style={{ fontSize: '13px', color: '#fff' }}>{flag}</span>
-               </div>
-            ))}
-            {(!data.flags || data.flags.length === 0) && (
-               <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-                  No critical security incidents documented in this period.
-               </div>
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="glass-card p-4 border border-white/5 rounded-2xl bg-white/[0.02] flex flex-col gap-4 animate-fade-in">
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">
+              <BarChart2 size={13} className="text-cyan-400" />
+              <span>Category Distribution (Minutes)</span>
+            </div>
+            
+            {dashboardData.categoryDistribution && dashboardData.categoryDistribution.length > 0 ? (
+              <div className="w-full h-56 -ml-5 mt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dashboardData.categoryDistribution} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                      contentStyle={{ backgroundColor: '#0b0c14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', color: '#fff' }}
+                      itemStyle={{ color: '#fff', fontSize: '10px' }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                      {dashboardData.categoryDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || '#06b6d4'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-[10px] text-slate-500 font-bold py-10 text-center">No telemetry data recorded for categories.</div>
             )}
-         </div>
+          </div>
+        )}
+
+        {activeTab === 'trends' && (
+          <div className="glass-card p-4 border border-white/5 rounded-2xl bg-white/[0.02] flex flex-col gap-4 animate-fade-in">
+            <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">
+              <TrendingUp size={13} className="text-indigo-400" />
+              <span>Weekly Safety index Trends</span>
+            </div>
+            
+            <div className="w-full h-56 -ml-5 mt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData} margin={{ top: 10, right: 15, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0b0c14', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', color: '#fff' }}
+                    itemStyle={{ color: '#06b6d4', fontSize: '10px' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="score" 
+                    stroke="#4f46e5" 
+                    strokeWidth={2.5} 
+                    dot={{ r: 4, stroke: '#030307', strokeWidth: 2 }}
+                    activeDot={{ r: 6 }} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
 
-
-export default Reports;
+export default InsightsHub;

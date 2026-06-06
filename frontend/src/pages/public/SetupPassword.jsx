@@ -1,26 +1,19 @@
-/**
- * SetupPassword.jsx
- * Standalone page shown after every new Google/OAuth login.
- * Forces user to set a Parent Control Password before accessing the app.
- * On success → navigates to /controls.
- */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, ShieldCheck, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Delete, ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SetupPassword = () => {
   const navigate = useNavigate();
   const { user, token, updateUser } = useAuth();
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [stage, setStage] = useState(1); // 1 = Enter PIN, 2 = Confirm PIN
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // If user somehow lands here without needing setup, redirect
   useEffect(() => {
     if (user && !user.needsPasswordSetup) {
       navigate('/controls', { replace: true });
@@ -30,183 +23,178 @@ const SetupPassword = () => {
     }
   }, [user, token, navigate]);
 
-  const strength = password.length === 0 ? 0
-    : password.length < 5 ? 1
-    : password.length < 8 ? 2
-    : /[A-Z]/.test(password) && /[0-9]/.test(password) ? 4
-    : 3;
-  const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong'][strength];
-  const strengthColorClass = [
-    '',
-    'text-red-400 bg-red-500/20',
-    'text-amber-400 bg-amber-500/20',
-    'text-blue-400 bg-blue-500/20',
-    'text-emerald-400 bg-emerald-500/20'
-  ][strength];
-  
-  const strengthBarClass = [
-    'bg-white/5',
-    'bg-red-500',
-    'bg-amber-500',
-    'bg-blue-500',
-    'bg-emerald-500'
-  ][strength];
+  const handleKeyPress = (num) => {
+    setError('');
+    const target = stage === 1 ? pin : confirmPin;
+    if (target.length < 4) {
+      const newVal = target + num;
+      if (stage === 1) {
+        setPin(newVal);
+        if (newVal.length === 4) {
+          // Auto-advance to confirm stage after slight delay
+          setTimeout(() => setStage(2), 300);
+        }
+      } else {
+        setConfirmPin(newVal);
+      }
+    }
+  };
+
+  const handleBackspace = () => {
+    if (stage === 1) {
+      setPin(prev => prev.slice(0, -1));
+    } else {
+      setConfirmPin(prev => prev.slice(0, -1));
+    }
+  };
+
+  const resetFlow = () => {
+    setPin('');
+    setConfirmPin('');
+    setStage(1);
+    setError('');
+  };
 
   const handleSubmit = async () => {
-    if (password.length < 4) { setError('Password must be at least 4 characters'); return; }
-    if (password !== confirm) { setError('Passwords do not match'); return; }
-    setLoading(true); setError('');
+    if (pin !== confirmPin) {
+      setError('PINs do not match. Please try again.');
+      resetFlow();
+      return;
+    }
+    setLoading(true);
+    setError('');
     try {
       const jwt = token || localStorage.getItem('cs_token');
       const res = await fetch('/api/auth/set-control-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
-        body: JSON.stringify({ parentControlPassword: password })
+        body: JSON.stringify({ parentControlPassword: pin })
       });
       const data = await res.json();
       if (data.success) {
         updateUser({ needsPasswordSetup: false });
         navigate('/controls', { replace: true });
       } else {
-        setError(data.error || 'Failed to set password. Try again.');
+        setError(data.error || 'Failed to set PIN. Try again.');
+        resetFlow();
       }
     } catch {
-      setError('Network error. Please check your connection.');
+      setError('Network error. Check your connection.');
+      resetFlow();
     }
     setLoading(false);
   };
 
+  useEffect(() => {
+    if (stage === 2 && confirmPin.length === 4) {
+      handleSubmit();
+    }
+  }, [confirmPin, stage]);
+
+  const activeVal = stage === 1 ? pin : confirmPin;
+
   return (
-    <div className="relative min-h-screen w-full bg-[#07070c] overflow-hidden flex items-center justify-center px-4 py-8 font-sans">
+    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex items-center justify-center px-4 py-8 font-sans">
       
       {/* Background Ambience */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#020617] to-[#0f172a] pointer-events-none" />
-      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] rounded-full bg-blue-600/10 filter blur-[100px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[10%] right-[10%] w-[380px] h-[380px] rounded-full bg-purple-600/10 filter blur-[100px] pointer-events-none animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
+      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] rounded-full bg-indigo-600/10 filter blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[10%] w-[380px] h-[380px] rounded-full bg-cyan-600/10 filter blur-[100px] pointer-events-none" />
 
       <motion.div 
         initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[460px] px-6 py-10 bg-white/5 border border-white/5 rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl flex flex-col"
+        className="relative z-10 w-full max-w-[430px] px-6 py-8 bg-white/5 border border-white/5 rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col items-center"
       >
+        
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-500/10 border border-blue-500/30 mx-auto mb-4 shadow-[0_0_20px_rgba(59,130,246,0.15)] animate-pulse">
-            <ShieldCheck size={32} className="text-blue-400" />
+        <div className="text-center mb-6 flex flex-col items-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/30 mb-4 animate-pulse">
+            <ShieldCheck size={26} className="text-cyan-400" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight leading-tight">
-            Set Your Control Password
+          <h1 className="text-xl font-black text-white tracking-tight leading-none">
+            {stage === 1 ? 'Set Override PIN' : 'Confirm Override PIN'}
           </h1>
-          <p className="text-slate-400 text-xs mt-2 leading-relaxed max-w-[340px] mx-auto font-semibold">
-            This <strong className="text-blue-400">Parent Control Password</strong> protects critical actions — child device logout, app unlocking, and security overrides. It is separate from your Google password.
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1.5">
+            {stage === 1 ? 'Choose 4-Digit Parent Code' : 'Verify chosen parent code'}
           </p>
         </div>
 
         {/* Warning Alert */}
-        <div className="flex items-start gap-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-2xl mb-6">
-          <AlertTriangle size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
-          <span className="text-[11px] text-amber-500/95 leading-normal font-bold">
-            Remember this password! Children cannot log out without it and you cannot unlock apps without it.
+        <div className="flex items-start gap-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-2xl mb-6 max-w-[340px]">
+          <AlertTriangle size={15} className="text-amber-500 mt-0.5 flex-shrink-0" />
+          <span className="text-[10px] text-amber-500/90 leading-normal font-bold">
+            Do not forget this PIN! Children cannot log out without it and override features require it.
           </span>
         </div>
 
-        {/* Input Fields */}
-        <div className="flex flex-col gap-4 mb-6">
-          
-          {/* Password field */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">
-              Control Password
-            </label>
-            <div className="relative">
-              <Lock size={16} className="absolute top-3.5 left-4 text-slate-500" />
-              <input
-                type={showPass ? 'text' : 'password'}
-                placeholder="Min. 4 characters"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && document.getElementById('confirm-input')?.focus()}
-                className="w-full pl-11 pr-10 py-3 bg-black/30 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all"
-              />
-              <button 
-                onClick={() => setShowPass(!showPass)} 
-                className="absolute right-3.5 top-3.5 cursor-pointer text-slate-500 hover:text-white transition-colors"
-              >
-                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {/* Strength meter */}
-            {password.length > 0 && (
-              <div className="mt-1.5 flex flex-col gap-1">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4].map(i => (
-                    <div 
-                      key={i} 
-                      className={`flex-1 h-[3px] rounded-full transition-all duration-300 ${i <= strength ? strengthBarClass : 'bg-white/5'}`} 
-                    />
-                  ))}
-                </div>
-                <span className={`text-[10px] font-black uppercase tracking-wider inline-block self-start px-2 py-0.5 rounded ${strengthColorClass}`}>
-                  {strengthLabel}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Confirm field */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <Lock size={16} className="absolute top-3.5 left-4 text-slate-500" />
-              <input
-                id="confirm-input"
-                type={showConfirm ? 'text' : 'password'}
-                placeholder="Repeat your password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                className="w-full pl-11 pr-10 py-3 bg-black/30 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all"
-              />
-              <button 
-                onClick={() => setShowConfirm(!showConfirm)} 
-                className="absolute right-3.5 top-3.5 cursor-pointer text-slate-500 hover:text-white transition-colors"
-              >
-                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {/* Match indicator */}
-            {confirm.length > 0 && (
-              <div className={`mt-1.5 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide ${password === confirm ? 'text-emerald-400' : 'text-red-400'}`}>
-                {password === confirm ? (
-                  <>
-                    <CheckCircle size={12} />
-                    <span>Passwords match</span>
-                  </>
-                ) : (
-                  <span>Passwords do not match</span>
-                )}
-              </div>
-            )}
-          </div>
+        {/* Dots Indicator */}
+        <div className="flex items-center gap-4 my-4">
+          {[0, 1, 2, 3].map(i => (
+            <div 
+              key={i}
+              className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 ${
+                i < activeVal.length 
+                  ? 'bg-cyan-400 border-cyan-400 scale-110 shadow-[0_0_8px_rgba(34,211,238,0.4)]' 
+                  : 'bg-transparent border-slate-700'
+              }`}
+            />
+          ))}
         </div>
 
         {/* Error alert */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-4 text-center font-semibold animate-fade-in">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs py-2 px-4 rounded-xl mb-4 text-center font-bold">
             {error}
           </div>
         )}
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !password || !confirm || password !== confirm}
-          className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-xl text-white font-extrabold text-xs tracking-wider uppercase cursor-pointer shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Setting Password...' : 'Set Control Password & Continue →'}
-        </button>
+        {/* Custom Keypad dialpad grid */}
+        <div className="grid grid-cols-3 gap-y-4 gap-x-8 w-full max-w-[280px] my-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+            <button
+              key={num}
+              onClick={() => handleKeyPress(num.toString())}
+              disabled={loading}
+              className="w-16 h-16 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center text-white text-lg font-black hover:bg-white/10 active:scale-95 transition-all cursor-pointer mx-auto"
+            >
+              {num}
+            </button>
+          ))}
+          {/* Back/Reset Option */}
+          <button
+            onClick={stage === 2 && confirmPin.length === 0 ? () => setStage(1) : resetFlow}
+            disabled={loading}
+            className="w-16 h-16 rounded-full flex items-center justify-center text-slate-500 hover:text-white text-xs font-bold transition-all cursor-pointer mx-auto"
+          >
+            {stage === 2 && confirmPin.length === 0 ? <ArrowLeft size={18} /> : 'Reset'}
+          </button>
+          {/* 0 Key */}
+          <button
+            onClick={() => handleKeyPress('0')}
+            disabled={loading}
+            className="w-16 h-16 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center text-white text-lg font-black hover:bg-white/10 active:scale-95 transition-all cursor-pointer mx-auto"
+          >
+            0
+          </button>
+          {/* Backspace Key */}
+          <button
+            onClick={handleBackspace}
+            disabled={loading}
+            className="w-16 h-16 rounded-full flex items-center justify-center text-slate-500 hover:text-white transition-all cursor-pointer mx-auto"
+          >
+            <Delete size={18} />
+          </button>
+        </div>
+
+        {loading && (
+          <div className="flex items-center gap-2 text-xs text-cyan-400 font-extrabold mt-2 animate-pulse">
+            <RefreshCw size={14} className="animate-spin" />
+            <span>COMMITTING PIN...</span>
+          </div>
+        )}
+
       </motion.div>
     </div>
   );
