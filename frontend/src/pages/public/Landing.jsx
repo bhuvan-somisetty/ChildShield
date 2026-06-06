@@ -1,73 +1,87 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, User, Smartphone } from 'lucide-react';
+import { ShieldCheck, User, Smartphone, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { motion } from 'framer-motion';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
   return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+    <div className="relative min-h-screen w-full bg-[#07070c] overflow-hidden flex items-center justify-center px-4 font-sans">
+      
       {/* Background Ambience */}
-      <div style={{ position: 'absolute', top: '10%', left: '10%', width: '400px', height: '400px', background: 'var(--accent-purple)', filter: 'blur(150px)', opacity: 0.15, borderRadius: '50%' }}></div>
-      <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '400px', height: '400px', background: 'var(--accent-cyan)', filter: 'blur(150px)', opacity: 0.15, borderRadius: '50%' }}></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#020617] to-[#0f172a] pointer-events-none" />
+      <div className="absolute top-[10%] left-[10%] w-[350px] h-[350px] rounded-full bg-purple-600/10 filter blur-[100px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[10%] right-[10%] w-[350px] h-[350px] rounded-full bg-cyan-600/10 filter blur-[100px] pointer-events-none animate-pulse" />
 
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '40px', position: 'relative', zIndex: 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(37,99,235, 0.1)', marginBottom: '16px', border: '1px solid rgba(37,99,235, 0.3)' }}>
-            <ShieldCheck size={40} color="var(--accent-cyan)" />
-          </div>
-          <h2 style={{ fontSize: '32px', fontWeight: '700', color: '#fff' }}>Choose Mode</h2>
-          <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '16px' }}>Continue as Parent or Child</p>
+      {/* Main glass card container */}
+      <div className="relative z-10 w-full max-w-[460px] px-6 py-10 bg-white/5 border border-white/5 rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl flex flex-col">
+        
+        {/* Brand/Header */}
+        <div className="text-center mb-8">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 mb-4 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+          >
+            <ShieldCheck size={32} className="text-cyan-400" />
+          </motion.div>
+          <h2 className="text-2xl font-black text-white tracking-wide">Choose Mode</h2>
+          <p className="text-slate-400 text-xs md:text-sm mt-1.5 font-semibold">
+            Continue as Parent supervisor or Child device
+          </p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '30px' }}>
-          {/* Parent Mode Button - always clear session to force Login page */}
-          <button 
+        {/* Option cards */}
+        <div className="flex flex-col gap-4">
+          
+          {/* Parent Mode Option */}
+          <motion.button 
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
-              // Clear any stale session so Login page does NOT auto-redirect
-              localStorage.removeItem('cs_token');
+              localStorage.removeItem('cs_token'); // Clear stale tokens
               navigate('/login');
             }}
-            style={{
-              display: 'flex', alignItems: 'center', background: 'rgba(30, 30, 45, 0.6)',
-              padding: '20px', borderRadius: '16px', border: '1px solid rgba(37,99,235, 0.3)',
-              cursor: 'pointer', color: '#fff', textAlign: 'left', transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(37,99,235, 0.1)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 30, 45, 0.6)'}
+            className="group w-full flex items-center p-4 bg-white/2 hover:bg-cyan-500/5 border border-white/5 hover:border-cyan-500/30 rounded-2xl text-left cursor-pointer transition-all duration-300 shadow-md"
           >
-            <div style={{ width: '56px', height: '56px', borderRadius: '28px', backgroundColor: 'rgba(37,99,235, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '16px' }}>
-              <User color="#2563eb" size={28} />
+            <div className="w-11 h-11 rounded-full bg-cyan-500/10 group-hover:bg-cyan-500/20 flex items-center justify-center mr-4 transition-colors">
+              <User size={22} className="text-cyan-400" />
             </div>
-            <div>
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600' }}>Parent Mode</h3>
-              <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Login to monitor & manage devices</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-white leading-tight">Parent Mode</h3>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Login to monitor activity & set supervision rules
+              </p>
             </div>
-          </button>
+            <ChevronRight size={14} className="text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all ml-2" strokeWidth={3} />
+          </motion.button>
 
-          {/* Child Mode Button */}
-          <button 
+          {/* Child Mode Option */}
+          <motion.button 
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/child-setup')}
-            style={{
-              display: 'flex', alignItems: 'center', background: 'rgba(30, 30, 45, 0.6)',
-              padding: '20px', borderRadius: '16px', border: '1px solid rgba(37,99,235, 0.3)',
-              cursor: 'pointer', color: '#fff', textAlign: 'left', transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(37,99,235, 0.1)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 30, 45, 0.6)'}
+            className="group w-full flex items-center p-4 bg-white/2 hover:bg-purple-500/5 border border-white/5 hover:border-purple-500/30 rounded-2xl text-left cursor-pointer transition-all duration-300 shadow-md"
           >
-            <div style={{ width: '56px', height: '56px', borderRadius: '28px', backgroundColor: 'rgba(37,99,235, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '16px' }}>
-              <Smartphone color="#2563eb" size={28} />
+            <div className="w-11 h-11 rounded-full bg-purple-500/10 group-hover:bg-purple-500/20 flex items-center justify-center mr-4 transition-colors">
+              <Smartphone size={22} className="text-purple-400" />
             </div>
-            <div>
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600' }}>Child Mode</h3>
-              <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>Set up supervision on this device</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-white leading-tight">Child Mode</h3>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Pair and register this device to begin protection
+              </p>
             </div>
-          </button>
+            <ChevronRight size={14} className="text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all ml-2" strokeWidth={3} />
+          </motion.button>
+
         </div>
+
       </div>
+
     </div>
   );
 };
