@@ -22,14 +22,12 @@ const SetupPassword = () => {
 
   // If user somehow lands here without needing setup, redirect
   useEffect(() => {
-    /*
     if (user && !user.needsPasswordSetup) {
       navigate('/controls', { replace: true });
     }
     if (!user && !token && !localStorage.getItem('cs_token')) {
       navigate('/login', { replace: true });
     }
-    */
   }, [user, token, navigate]);
 
   const strength = password.length === 0 ? 0

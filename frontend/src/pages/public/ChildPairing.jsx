@@ -7,9 +7,9 @@ import { motion } from 'framer-motion';
 const ChildPairing = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { childId, pairingCode, childName } = location.state || { childId: 'demo-id', pairingCode: '839210', childName: 'Alex' };
+  const { childId, pairingCode, childName } = location.state || {};
 
-  const [livePairingCode, setLivePairingCode] = useState(pairingCode || '839210');
+  const [livePairingCode, setLivePairingCode] = useState(pairingCode);
   const [refreshing, setRefreshing] = useState(false);
   const [pairingDetected, setPairingDetected] = useState(false);
   const [error, setError] = useState('');
@@ -17,11 +17,9 @@ const ChildPairing = () => {
 
   // Redirect to setup if no state available
   useEffect(() => {
-    /*
     if (!childId) {
       navigate('/child-setup');
     }
-    */
   }, [childId, navigate]);
 
   // Poll backend every 3s to detect when parent has confirmed pairing
@@ -84,7 +82,7 @@ const ChildPairing = () => {
     }
   };
 
-  if (!childId && false) return null; // redirecting
+  if (!childId) return null; // redirecting
 
   return (
     <div className="relative min-h-screen w-full bg-[#07070c] overflow-hidden flex items-center justify-center px-4 py-8 font-sans">
