@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const createChildAvatarIcon = (name = 'Lily', battery = '88%', isOnline = true) => {
+const createChildAvatarIcon = (name = 'Device', battery = '--', isOnline = true) => {
   const initial = name.charAt(0).toUpperCase();
   return L.divIcon({
     html: `
@@ -138,20 +138,20 @@ const LocationTracker = () => {
   }
 
   const mapCenter = latestLocation ? [latestLocation.latitude, latestLocation.longitude] : [34.0522, -118.2437];
-  const batteryPct = latestLocation?.battery != null ? `${latestLocation.battery}%` : '88%';
-  const speed = latestLocation?.speed != null ? `${Math.round(latestLocation.speed * 2.237)} mph` : '3 mph (walking)';
+  const batteryPct = latestLocation?.battery != null ? `${latestLocation.battery}%` : '--';
+  const speed = latestLocation?.speed != null ? `${Math.round(latestLocation.speed * 2.237)} mph` : 'Active';
 
   // Build geofences list, fall back to beautiful overlays if empty as per adjustments
   const displayedZones = safeZones.length > 0 ? safeZones : [
-    { id: 'mock-home', name: "David's Home Safe Zone", type: 'home', latitude: mapCenter[0] + 0.0015, longitude: mapCenter[1] - 0.002, radiusMeters: 120 },
-    { id: 'mock-school', name: "Hillsborough Elementary", type: 'school', latitude: mapCenter[0] - 0.002, longitude: mapCenter[1] + 0.0025, radiusMeters: 140 }
+    { id: 'mock-home', name: "Safe Perimeter A", type: 'home', latitude: mapCenter[0] + 0.0015, longitude: mapCenter[1] - 0.002, radiusMeters: 120 },
+    { id: 'mock-school', name: "Safe Perimeter B", type: 'school', latitude: mapCenter[0] - 0.002, longitude: mapCenter[1] + 0.0025, radiusMeters: 140 }
   ];
 
   // Map route trace points
   const routePoints = locations.length > 0 ? locations.map(l => [l.latitude, l.longitude]) : [
-    [mapCenter[0] - 0.002, mapCenter[1] + 0.0025], // School
+    [mapCenter[0] - 0.002, mapCenter[1] + 0.0025],
     [mapCenter[0] - 0.001, mapCenter[1] + 0.001],
-    [mapCenter[0], mapCenter[1]] // Present child position
+    [mapCenter[0], mapCenter[1]] 
   ];
 
   return (
@@ -229,7 +229,7 @@ const LocationTracker = () => {
         <div className="text-cyan-400 font-extrabold text-[11px] mt-0.5">{speed}</div>
         <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wide mt-2">Location</div>
         <div className="text-slate-300 font-semibold text-[10px] mt-0.5 leading-snug">
-          {childGeo?.displayName?.split(',')[0] || childGeo?.city || 'Hillsborough Elementary'}
+          {childGeo?.displayName?.split(',')[0] || childGeo?.city || 'Secure Location'}
         </div>
       </div>
 
@@ -347,12 +347,12 @@ const LocationTracker = () => {
                   <div className="relative flex flex-col gap-0.5">
                     <span className="absolute -left-[20px] top-1 w-2 h-2 rounded-full bg-slate-700" />
                     <div className="text-[9px] text-slate-500 font-bold">3:25 PM</div>
-                    <div className="text-[11px] font-bold text-slate-300">Arrived at School</div>
+                    <div className="text-[11px] font-bold text-slate-300">Arrived at Perimeter B</div>
                   </div>
                   <div className="relative flex flex-col gap-0.5">
                     <span className="absolute -left-[20px] top-1 w-2 h-2 rounded-full bg-slate-700" />
                     <div className="text-[9px] text-slate-500 font-bold">2:30 PM</div>
-                    <div className="text-[11px] font-bold text-slate-300">Left Home Zone</div>
+                    <div className="text-[11px] font-bold text-slate-300">Left Perimeter A</div>
                   </div>
                 </>
               )}

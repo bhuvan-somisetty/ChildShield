@@ -21,13 +21,13 @@ const Toggle = ({ active, onChange }) => {
 };
 
 const defaultLineData = [
-  { name: 'Mon', Ben: 1.8, Kids: 2.2 },
-  { name: 'Tue', Ben: 2.5, Kids: 3.1 },
-  { name: 'Wed', Ben: 1.2, Kids: 4.5 },
-  { name: 'Thu', Ben: 3.8, Kids: 5.2 },
-  { name: 'Fri', Ben: 2.0, Kids: 3.8 },
-  { name: 'Sat', Ben: 4.5, Kids: 6.0 },
-  { name: 'Sun', Ben: 3.0, Kids: 4.2 },
+  { name: 'Mon', DeviceA: 1.8, DeviceB: 2.2 },
+  { name: 'Tue', DeviceA: 2.5, DeviceB: 3.1 },
+  { name: 'Wed', DeviceA: 1.2, DeviceB: 4.5 },
+  { name: 'Thu', DeviceA: 3.8, DeviceB: 5.2 },
+  { name: 'Fri', DeviceA: 2.0, DeviceB: 3.8 },
+  { name: 'Sat', DeviceA: 4.5, DeviceB: 6.0 },
+  { name: 'Sun', DeviceA: 3.0, DeviceB: 4.2 },
 ];
 
 const Controls = () => {
@@ -192,8 +192,8 @@ const Controls = () => {
 
   // Compile real child listings matching Screen 5 cards
   const renderingChildren = childrenList.length > 0 ? childrenList : [
-    { id: 'mock-emily', name: 'Emily', age: 10, safetyScore: 98, screenTime: '1h 45m', isOnline: true, battery: '85%', signal: '5G', nightRestriction: true, safeMode: true, facePresenceEnabled: true },
-    { id: 'mock-ben', name: 'Ben', age: 8, safetyScore: 76, screenTime: '18h 30m', isOnline: false, battery: '12%', signal: 'Low', nightRestriction: true, safeMode: false, facePresenceEnabled: false }
+    { id: 'mock-child-a', name: 'Device A', age: 10, safetyScore: 98, screenTime: '1h 45m', isOnline: true, battery: '85%', signal: '5G', nightRestriction: true, safeMode: true, facePresenceEnabled: true },
+    { id: 'mock-child-b', name: 'Device B', age: 8, safetyScore: 76, screenTime: '3h 30m', isOnline: false, battery: '12%', signal: 'Low', nightRestriction: true, safeMode: false, facePresenceEnabled: false }
   ];
 
   return (
@@ -375,8 +375,8 @@ const Controls = () => {
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold text-white">Family Weekly Screen Time Trend</span>
           <div className="flex gap-2 text-[8px] text-slate-400 font-bold bg-white/5 px-2 py-0.5 rounded-full">
-            <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-cyan-400" /> Kids</span>
-            <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Ben</span>
+            <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-cyan-400" /> Device A</span>
+            <span className="flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-purple-500" /> Device B</span>
           </div>
         </div>
 
@@ -389,8 +389,8 @@ const Controls = () => {
                 labelStyle={{ fontSize: '9px', color: '#fff' }}
                 itemStyle={{ fontSize: '9px' }}
               />
-              <Line type="monotone" dataKey="Kids" stroke="#22d3ee" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Ben" stroke="#a855f7" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="DeviceA" stroke="#22d3ee" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="DeviceB" stroke="#a855f7" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, MapPin, Phone, Shield, Plus, Trash2, Heart, Activity, ShieldCheck, RefreshCw, Signal } from 'lucide-react';
+import { AlertTriangle, MapPin, Phone, Shield, Plus, Trash2, Heart, Activity, ShieldCheck, RefreshCw, Signal, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import ConfirmationModal from '../components/layout/ConfirmationModal';
@@ -18,13 +18,11 @@ const createEmoji = (emoji, size = 26) => L.divIcon({
   html: `<div style="font-size:${size}px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">${emoji}</div>`,
   className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2]
 });
-const CHILD_SECURE_ICON = createEmoji('🧒', 24);
 const CHILD_ALERT_ICON = createEmoji('🚨', 24);
-const PARENT_ICON = createEmoji('🧑', 24);
 
 const EmergencyCenter = () => {
   const { activeChild, childrenList, token } = useAuth();
-  const [coords, setCoords] = useState({ lat: 34.0522, lon: -118.2437, speed: '0 mph', battery: '85%', accuracy: '12m' });
+  const [coords, setCoords] = useState({ lat: 34.0522, lon: -118.2437, speed: 'Active', battery: '--', accuracy: '--' });
   const [facilities, setFacilities] = useState([]);
   const [facilityType, setFacilityType] = useState('hospital'); // 'hospital' | 'police'
   const [loadingFacilities, setLoadingFacilities] = useState(false);
@@ -34,16 +32,15 @@ const EmergencyCenter = () => {
   const [contacts, setContacts] = useState(() => {
     const saved = localStorage.getItem('emergency_contacts');
     return saved ? JSON.parse(saved) : [
-      { name: 'Dad', phone: '****-***-***' },
-      { name: 'Mom', phone: '****-***-***' },
-      { name: 'Grandma', phone: '****-***-***' }
+      { name: 'Primary Guard A', phone: '****-***-***' },
+      { name: 'Primary Guard B', phone: '****-***-***' }
     ];
   });
 
   const [newContactName, setNewContactName] = useState('');
   const [newContactPhone, setNewContactPhone] = useState('');
 
-  // 1. Fetch locations for the active child
+  // Fetch locations for active child
   useEffect(() => {
     if (activeChild && token) {
       fetch(`/api/device/locations/${activeChild.id}`, {
@@ -56,9 +53,9 @@ const EmergencyCenter = () => {
           setCoords({
             lat: parseFloat(latest.latitude),
             lon: parseFloat(latest.longitude),
-            speed: latest.speed ? `${Math.round(latest.speed * 2.237)} mph` : '0 mph',
-            battery: latest.battery ? `${latest.battery}%` : '85%',
-            accuracy: latest.accuracy ? `${Math.round(latest.accuracy)}m` : '12m'
+            speed: latest.speed ? `${Math.round(latest.speed * 2.237)} mph` : 'Active',
+            battery: latest.battery ? `${latest.battery}%` : '--',
+            accuracy: latest.accuracy ? `${Math.round(latest.accuracy)}m` : '--'
           });
         }
       })
@@ -66,7 +63,7 @@ const EmergencyCenter = () => {
     }
   }, [activeChild, token, refreshKey]);
 
-  // 2. Fetch nearby OSM facilities
+  // Fetch nearby OSM facilities
   useEffect(() => {
     if (!coords.lat || !coords.lon) return;
     setLoadingFacilities(true);
@@ -110,50 +107,63 @@ const EmergencyCenter = () => {
   };
 
   // Compile real status summaries dynamically from the child list
-  const kidsSummary = childrenList.length > 0 ? childrenList.map(child => {
+  const kidsSummary = childrenList && childrenList.length > 0 ? childrenList.map(child => {
     const isAlert = child.deviceState === 'locked';
     return {
       name: child.name,
-      status: isAlert ? 'ALERT' : 'SECURE',
-      battery: '85%',
-      signal: isAlert ? 'Low Signal' : '5G',
-      color: isAlert ? 'text-amber-500' : 'text-emerald-400'
+      status: isAlert ? 'WARNING' : 'SAFE',
+      battery: child.battery != null ? `${child.battery}%` : '--',
+      signal: isAlert ? 'Low Alert' : 'Active',
+      color: isAlert ? 'text-amber-400' : 'text-emerald-400'
     };
   }) : [
-    { name: 'Emily', status: 'SECURE', battery: '85%', signal: '5G', color: 'text-emerald-400' },
-    { name: 'Ben', status: 'ALERT', battery: '12%', signal: 'Low Signal', color: 'text-amber-500' }
+    { name: 'Companion Device A', status: 'SAFE', battery: '--', signal: 'Active', color: 'text-emerald-400' }
   ];
 
+  // Overall family state (Safe, Warning, Emergency)
+  const isSOSActive = activeChild?.deviceState === 'locked';
+  const overallState = isSOSActive ? 'EMERGENCY' : (kidsSummary.some(k => k.status === 'WARNING') ? 'WARNING' : 'SAFE');
+  const overallColor = overallState === 'EMERGENCY' ? 'from-red-600 to-rose-600 border-red-500/30 text-white' : overallState === 'WARNING' ? 'from-amber-600 to-yellow-600 border-amber-500/30 text-white' : 'from-emerald-600 to-teal-600 border-emerald-500/30 text-white';
+
   return (
-    <div className="flex flex-col gap-4 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in">
+    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in font-sans">
       
       {/* Header title */}
       <div className="text-center mb-1">
-        <h2 className="text-base font-black text-white">Emergency Center</h2>
-        <p className="text-[10px] text-slate-400 font-semibold mt-1">
+        <h2 className="text-base font-black text-white uppercase tracking-wider">Emergency Monitor</h2>
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
           Active distress monitoring & quick response lines
         </p>
       </div>
 
-      {/* FAMILY STATUS SUMMARY (Image 4 top component) */}
-      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col">
-        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">
-          Family Status Summary
+      {/* FAMILY STATUS OVERVIEW */}
+      <div className={`p-5 rounded-[24px] border bg-gradient-to-tr ${overallColor} shadow-xl flex flex-col items-center justify-center text-center gap-2`}>
+        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Family Status State</span>
+        <h3 className="text-3xl font-black tracking-tight">{overallState}</h3>
+        <p className="text-[10.5px] opacity-75 font-semibold max-w-[280px]">
+          {overallState === 'EMERGENCY' ? 'Active distress override triggered. Immediate response advised.' : 'All synchronized devices are linked and reporting safety.'}
+        </p>
+      </div>
+
+      {/* Device List Status Deck */}
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] shadow-lg flex flex-col">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+          Linked Devices Status
         </div>
         <div className="flex flex-col gap-3">
           {kidsSummary.map((kid, idx) => (
             <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-2.5 last:border-b-0 last:pb-0">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-[11px] font-black uppercase">
+                <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-[11px] font-black uppercase">
                   {kid.name.charAt(0)}
                 </div>
                 <span className="text-xs font-bold text-white">{kid.name}</span>
               </div>
-              <div className="flex items-center gap-4 text-[11px] font-bold">
+              <div className="flex items-center gap-4 text-[10px] font-black uppercase">
                 <span className={kid.color}>{kid.status}</span>
                 <span className="text-slate-400">🔋 {kid.battery}</span>
                 <span className="text-slate-400 flex items-center gap-0.5">
-                  <Signal size={10} /> {kid.signal}
+                  <Signal size={10} className="text-cyan-400" /> {kid.signal}
                 </span>
               </div>
             </div>
@@ -161,25 +171,24 @@ const EmergencyCenter = () => {
         </div>
       </div>
 
-      {/* Pulsing SOS Panic Button Card (Tap SOS -> Confirmation Modal -> Trigger Emergency Flow) */}
-      <div className="glass-card p-6 border border-red-500/20 backdrop-blur-md shadow-xl flex flex-col items-center justify-center text-center">
+      {/* Pulsing SOS Panic Button Card */}
+      <div className="glass-card p-6 border border-red-500/15 backdrop-blur-xl rounded-[24px] bg-white/[0.02] shadow-xl flex flex-col items-center justify-center text-center">
         <button 
           onClick={() => setShowSosConfirm(true)}
-          className="w-24 h-24 rounded-full bg-gradient-to-tr from-red-600 via-rose-500 to-red-600 text-white font-black text-xs tracking-wider flex flex-col items-center justify-center shadow-[0_0_35px_rgba(239,68,68,0.55)] border-4 border-[#0b0b14] active:scale-95 transition-transform cursor-pointer"
+          className="w-24 h-24 rounded-full bg-gradient-to-tr from-red-600 via-rose-500 to-red-600 text-white font-black text-xs tracking-wider flex flex-col items-center justify-center shadow-[0_0_35px_rgba(239,68,68,0.55)] border-4 border-[#0b0c14] active:scale-95 transition-transform cursor-pointer"
         >
-          <span className="text-sm font-black leading-none block uppercase">SOS Panic</span>
-          <span className="text-[8px] opacity-75 font-semibold mt-1 block">Tap to trigger</span>
+          <span className="text-xs font-black leading-none block uppercase tracking-wider">Trigger SOS</span>
         </button>
-        <p className="text-[9.5px] text-slate-400 mt-4 leading-normal max-w-[320px]">
-          Tap to trigger confirmation modal. Broadcasting coordinates overrides local mute systems and rings alarm lines.
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-4 leading-normal max-w-[320px]">
+          Tap to trigger confirmation modal. Broadcasting distress overrides child device mute systems.
         </p>
       </div>
 
       {/* LIVE GPS COORDINATES */}
-      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col">
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] shadow-lg flex flex-col">
         <div className="flex items-center justify-between mb-3.5">
-          <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-            Live GPS Coordinates
+          <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            Last GPS Coordinates
           </div>
           <button 
             onClick={() => setRefreshKey(prev => prev + 1)}
@@ -202,13 +211,13 @@ const EmergencyCenter = () => {
       </div>
 
       {/* PRIMARY EMERGENCY CONTACTS */}
-      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col">
-        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">
-          Primary Emergency Contacts
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] shadow-lg flex flex-col">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+          Emergency Contacts List
         </div>
         <div className="flex flex-col gap-2.5">
           {contacts.map((contact, idx) => (
-            <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-b-0 last:pb-0">
+            <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-2.5 last:border-b-0 last:pb-0">
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs font-bold text-white">{contact.name}</span>
                 <span className="text-[10px] text-slate-500">{contact.phone}</span>
@@ -218,7 +227,7 @@ const EmergencyCenter = () => {
                   onClick={() => window.open(`tel:${contact.phone.replace(/[^\d+]/g, '')}`, '_self')}
                   className="py-1.5 px-3 bg-red-500/10 border border-red-500/20 text-red-400 font-extrabold rounded-lg text-[10px] cursor-pointer hover:bg-red-500/20"
                 >
-                  One-Tap Call
+                  Call
                 </button>
                 <button 
                   onClick={() => handleRemoveContact(idx)} 
@@ -239,7 +248,7 @@ const EmergencyCenter = () => {
               onClick={() => window.open('tel:911', '_self')}
               className="py-1.5 px-3 bg-red-500/10 border border-red-500/20 text-red-400 font-extrabold rounded-lg text-[10px] cursor-pointer hover:bg-red-500/20"
             >
-              One-Tap Call
+              Call 911
             </button>
           </div>
         </div>
@@ -251,14 +260,14 @@ const EmergencyCenter = () => {
             placeholder="Contact Name" 
             value={newContactName}
             onChange={e => setNewContactName(e.target.value)}
-            className="flex-1 px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-white text-xs outline-none focus:border-cyan-500/30"
+            className="flex-1 px-3 py-1.5 bg-[#0b0c14] border border-white/5 rounded-lg text-white text-xs outline-none focus:border-cyan-500/30"
           />
           <input 
             type="text" 
             placeholder="Phone Number" 
             value={newContactPhone}
             onChange={e => setNewContactPhone(e.target.value)}
-            className="flex-1 px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-white text-xs outline-none focus:border-cyan-500/30"
+            className="flex-1 px-3 py-1.5 bg-[#0b0c14] border border-white/5 rounded-lg text-white text-xs outline-none focus:border-cyan-500/30"
           />
           <button 
             type="submit" 
@@ -270,11 +279,11 @@ const EmergencyCenter = () => {
       </div>
 
       {/* MINI LIVE MAP */}
-      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col">
-        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] shadow-lg flex flex-col">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
           Mini Live Map
         </div>
-        <div className="relative w-full h-36 rounded-xl overflow-hidden border border-white/5">
+        <div className="relative w-full h-36 rounded-2xl overflow-hidden border border-white/5">
           <MapContainer 
             center={[coords.lat, coords.lon]} 
             zoom={14} 
@@ -289,9 +298,9 @@ const EmergencyCenter = () => {
       </div>
 
       {/* NEARBY EMERGENCY SERVICES */}
-      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col">
-        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">
-          Nearby Emergency Services
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] shadow-lg flex flex-col">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+          Nearby Emergency Responders
         </div>
         
         {/* Toggle options */}
@@ -336,37 +345,13 @@ const EmergencyCenter = () => {
         </div>
       </div>
 
-      {/* EMERGENCY TIMELINE & ALERTS */}
-      <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col">
-        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">
-          Emergency Timeline & Alerts
-        </div>
-        <div className="flex flex-col gap-3 pl-1 border-l border-white/5 ml-1">
-          <div className="relative pl-3 flex flex-col gap-0.5">
-            <span className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-[8.5px] text-slate-500">2m ago</span>
-            <span className="text-[10px] font-bold text-white">Child Ben Triggered SOS</span>
-          </div>
-          <div className="relative pl-3 flex flex-col gap-0.5">
-            <span className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-amber-500" />
-            <span className="text-[8.5px] text-slate-500">2m ago</span>
-            <span className="text-[10px] font-bold text-white">Alert Sent to Emergency Contacts</span>
-          </div>
-          <div className="relative pl-3 flex flex-col gap-0.5">
-            <span className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-cyan-400" />
-            <span className="text-[8.5px] text-slate-500">Just now</span>
-            <span className="text-[10px] font-bold text-white">Parent Acknowledged SOS</span>
-          </div>
-        </div>
-      </div>
-
       {/* SOS confirmation dialog overlay */}
       <ConfirmationModal 
         isOpen={showSosConfirm}
         onClose={() => setShowSosConfirm(false)}
         onConfirm={triggerSOS}
         title="Broadcast Emergency SOS?"
-        message={`Are you sure you want to broadcast a distress signal for ${activeChild?.name}? This tests speaker alarms, sends geo-signals to contacts, and alerts response staff.`}
+        message={`Are you sure you want to broadcast a distress signal? This tests speaker alarms, sends geo-signals to contacts, and alerts response staff.`}
         confirmText="Trigger SOS"
         cancelText="Cancel"
         isDestructive={true}

@@ -1,47 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useLivePolling } from '../hooks/useLivePolling';
-import { Brain, Sparkles, Mic, BarChart2, CheckCircle2, AlertCircle, Volume2, ShieldAlert } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Brain, Sparkles, Mic, BarChart2, AlertTriangle, ShieldCheck, Send, Activity, Heart, Eye } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, Tooltip } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const chartData = [
-  { time: '4:00', usage: 10 },
-  { time: '4:20', usage: 15 },
-  { time: '4:40', usage: 35 },
-  { time: '5:00', usage: 45 },
-  { time: '5:20', usage: 50 },
-  { time: '5:40', usage: 20 },
+const trendChartData = [
+  { time: '08:00', load: 10 },
+  { time: '10:00', load: 20 },
+  { time: '12:00', load: 45 },
+  { time: '14:00', load: 15 },
+  { time: '16:00', load: 55 },
+  { time: '18:00', load: 30 },
 ];
 
 const AIInsights = () => {
   const { activeChild, token } = useAuth();
   const childId = activeChild?.id;
 
-  const [chatLog, setChatLog] = useState({
-    user: "Summarize Lily's day, please.",
-    ai: "Examining geofence logs... Lily arrived at School Zone at 8:30 AM and departed at 3:20 PM. No safety breaches. Behavioral data analysis follows..."
-  });
+  const [chatLog, setChatLog] = useState([
+    { role: 'assistant', text: "Alpha AI online. Systems synchronized. How can I help you supervise today?" }
+  ]);
   
   const [orbState, setOrbState] = useState('idle'); // 'idle' | 'listening' | 'speaking'
-  const [reportData, setReportData] = useState(null);
   const [queryInput, setQueryInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  // Poll report details for safety score
+  // Auto-scroll chat logs
   useEffect(() => {
-    if (!childId) return;
-    fetch(`/api/reports/full?childId=${childId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(r => r.json())
-    .then(d => {
-      if (d.success) setReportData(d.data);
-    })
-    .catch(() => {});
-  }, [childId, token]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatLog]);
 
-  // Setup speech recognition
+  // Setup Speech Recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.webkitSpeechRecognition;
@@ -56,36 +47,7 @@ const AIInsights = () => {
       recognitionRef.current.onresult = async (event) => {
         const text = event.results[0][0].transcript;
         if (text) {
-          setChatLog(prev => ({ ...prev, user: text, ai: "Analyzing your request..." }));
-          setOrbState('speaking');
-          
-          // Send query to AI backend
-          try {
-            const res = await fetch('/api/ai/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ message: text, role: 'parent' })
-            });
-            const data = await res.json();
-            if (data.success) {
-              setChatLog(prev => ({ ...prev, ai: data.reply }));
-              // Speak out response if supported and not muted
-              if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(data.reply);
-                utterance.onend = () => setOrbState('idle');
-                window.speechSynthesis.speak(utterance);
-              } else {
-                setTimeout(() => setOrbState('idle'), 3000);
-              }
-            } else {
-              setChatLog(prev => ({ ...prev, ai: "Sorry, I had trouble processing that query." }));
-              setOrbState('idle');
-            }
-          } catch {
-            setChatLog(prev => ({ ...prev, ai: "Network connection error." }));
-            setOrbState('idle');
-          }
+          handleChatSubmit(null, text);
         }
       };
 
@@ -94,10 +56,10 @@ const AIInsights = () => {
       };
 
       recognitionRef.current.onend = () => {
-        if (orbState === 'listening') setOrbState('idle');
+        setOrbState('idle');
       };
     }
-  }, [token, orbState]);
+  }, [token]);
 
   const toggleMicInput = () => {
     if (orbState === 'listening') {
@@ -109,180 +71,226 @@ const AIInsights = () => {
     }
   };
 
+  const handleChatSubmit = async (e, customText = null) => {
+    if (e) e.preventDefault();
+    const query = customText || queryInput;
+    if (!query.trim() || submitting) return;
+
+    setSubmitting(true);
+    setQueryInput('');
+    setChatLog(prev => [...prev, { role: 'user', text: query }]);
+    setOrbState('speaking');
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message: query, role: 'parent' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatLog(prev => [...prev, { role: 'assistant', text: data.reply }]);
+        
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(data.reply);
+          utterance.onend = () => setOrbState('idle');
+          window.speechSynthesis.speak(utterance);
+        } else {
+          setTimeout(() => setOrbState('idle'), 2000);
+        }
+      } else {
+        setChatLog(prev => [...prev, { role: 'assistant', text: "Sorry, I had trouble processing that query." }]);
+        setOrbState('idle');
+      }
+    } catch {
+      setChatLog(prev => [...prev, { role: 'assistant', text: "Network connection error." }]);
+      setOrbState('idle');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (!childId) {
     return (
-      <div className="glass-card max-w-[600px] mx-auto mt-16 p-10 text-center border border-white/5">
+      <div className="glass-card max-w-[600px] mx-auto mt-16 p-10 text-center border border-white/5 shadow-2xl font-sans">
         <Brain size={48} className="text-slate-500 mx-auto mb-4" />
-        <p className="text-white text-lg font-bold">No child profile selected</p>
-        <p className="text-slate-400 text-sm mt-2">Connect a device to activate the AI Parenting Assistant.</p>
+        <p className="text-white text-lg font-bold">No active child profile</p>
+        <p className="text-slate-400 text-sm mt-2">Connect a device to activate the Alpha AI Command Center.</p>
       </div>
     );
   }
 
-  const safetyScore = reportData?.riskScore ? Math.max(30, 100 - reportData.riskScore) : 92;
-  const childName = activeChild?.name || 'Lily';
+  const childName = activeChild?.name || 'Device';
 
   return (
-    <div className="flex flex-col gap-4 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in relative min-h-screen">
+    <div className="flex flex-col gap-5 px-3 pb-28 pt-4 max-w-[640px] mx-auto animate-fade-in relative min-h-screen font-sans">
       
-      {/* Dynamic Header */}
+      {/* Header Title */}
       <div className="text-center mb-1">
-        <h2 className="text-base font-black text-white">AI Parenting Assistant</h2>
-        <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 font-semibold mt-1">
+        <h2 className="text-base font-black text-white uppercase tracking-wider">Alpha AI Command Center</h2>
+        <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-          <span>Active Assistant for: {childName} Online</span>
+          <span>Active Parenting Telemetry: {childName}</span>
         </div>
       </div>
 
-      {/* Top Dialogue Cards matching Screen 3 layout */}
-      <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col gap-3 shadow-lg">
-        <div className="text-xs">
-          <span className="text-cyan-400 font-extrabold mr-1.5">User:</span>
-          <span className="text-slate-300 font-medium">{chatLog.user}</span>
-        </div>
-        <div className="border-t border-white/5 pt-3 text-xs leading-relaxed">
-          <span className="text-indigo-400 font-extrabold mr-1.5">AI Assistant:</span>
-          <span className="text-slate-300 font-medium">{chatLog.ai}</span>
-        </div>
-      </div>
-
-      {/* Pulsing AI Glassmorphic Assistant Orb (Middle Stage) */}
-      <div className="relative flex flex-col items-center justify-center py-6">
+      {/* Grid: Orb centerpiece & recommendations */}
+      <div className="grid grid-cols-[1.2fr_1fr] gap-4 items-stretch">
         
-        {/* Swirling Waves background */}
-        <div className="absolute w-80 h-80 rounded-full bg-gradient-to-tr from-cyan-500/10 via-purple-500/10 to-transparent blur-3xl pointer-events-none" />
-
-        {/* The Spherical Glass Orb */}
-        <div 
-          onClick={toggleMicInput}
-          className={`relative w-44 h-44 rounded-full border-2 border-white/10 bg-gradient-to-tr from-[#141525]/80 via-cyan-500/10 to-purple-500/20 shadow-[0_0_40px_rgba(6,182,212,0.15)] flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300 overflow-hidden ${orbState === 'listening' ? 'shadow-[0_0_50px_rgba(239,68,68,0.4)] border-red-500/30' : orbState === 'speaking' ? 'shadow-[0_0_50px_rgba(139,92,246,0.4)] border-purple-500/30' : ''}`}
-        >
-          {/* Internal Swirling Waveforms using styled SVGs */}
-          <div className="absolute inset-2 rounded-full border border-white/5 flex items-center justify-center overflow-hidden">
-            <svg viewBox="0 0 100 100" className="w-full h-full opacity-60">
-              <path 
-                d="M0,50 Q25,30 50,50 T100,50" 
-                fill="none" 
-                stroke="#22d3ee" 
-                strokeWidth="1.5"
-                className={`transform origin-center ${orbState === 'listening' ? 'animate-[spin_4s_linear_infinite]' : orbState === 'speaking' ? 'animate-[spin_1s_linear_infinite]' : 'animate-[spin_12s_linear_infinite]'}`}
-              />
-              <path 
-                d="M0,50 Q25,70 50,50 T100,50" 
-                fill="none" 
-                stroke="#a855f7" 
-                strokeWidth="1.5"
-                className={`transform origin-center ${orbState === 'listening' ? 'animate-[spin_6s_linear_infinite_reverse]' : orbState === 'speaking' ? 'animate-[spin_1.5s_linear_infinite_reverse]' : 'animate-[spin_18s_linear_infinite_reverse]'}`}
-              />
-            </svg>
-          </div>
-
-          {/* Central Orb Content */}
-          <div className="relative z-10 flex flex-col items-center gap-1.5">
-            <div className="w-12 h-12 rounded-full bg-slate-950/70 border border-white/10 flex items-center justify-center shadow-lg">
-              <Brain size={20} className={orbState === 'listening' ? 'text-red-500 animate-pulse' : orbState === 'speaking' ? 'text-purple-400' : 'text-cyan-400'} />
+        {/* Left Column: Glassmorphic Orb centerpiece */}
+        <div className="glass-card p-5 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
+          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(79,70,229,0.06)_0%,transparent_70%)] pointer-events-none" />
+          
+          <div 
+            onClick={toggleMicInput}
+            className={`relative w-28 h-28 rounded-full border border-white/10 bg-gradient-to-tr from-[#0b0c14] via-indigo-600/10 to-cyan-500/10 shadow-[0_0_24px_rgba(6,182,212,0.15)] flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300 ${orbState === 'listening' ? 'shadow-[0_0_36px_rgba(239,68,68,0.3)] border-red-500/30' : orbState === 'speaking' ? 'shadow-[0_0_36px_rgba(139,92,246,0.3)] border-purple-500/30' : ''}`}
+          >
+            <div className="absolute inset-1.5 rounded-full border border-white/5 flex items-center justify-center overflow-hidden">
+              <svg viewBox="0 0 100 100" className="w-full h-full opacity-60">
+                <path 
+                  d="M0,50 Q25,30 50,50 T100,50" 
+                  fill="none" 
+                  stroke={orbState === 'listening' ? '#ef4444' : '#06b6d4'} 
+                  strokeWidth="2"
+                  className={`transform origin-center ${orbState === 'listening' ? 'animate-[spin_2s_linear_infinite]' : 'animate-[spin_8s_linear_infinite]'}`}
+                />
+                <path 
+                  d="M0,50 Q25,70 50,50 T100,50" 
+                  fill="none" 
+                  stroke={orbState === 'speaking' ? '#a855f7' : '#6366f1'} 
+                  strokeWidth="2"
+                  className={`transform origin-center ${orbState === 'speaking' ? 'animate-[spin_1.5s_linear_infinite_reverse]' : 'animate-[spin_12s_linear_infinite_reverse]'}`}
+                />
+              </svg>
             </div>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">
-              {orbState === 'listening' ? 'Listening' : orbState === 'speaking' ? 'Speaking' : 'System Ready'}
-            </span>
+            <Brain size={22} className={orbState === 'listening' ? 'text-red-500 animate-pulse z-10' : orbState === 'speaking' ? 'text-purple-400 z-10' : 'text-cyan-400 z-10'} />
           </div>
 
-          {/* Glowing Filter Overlay */}
-          <div className="absolute inset-0 bg-radial-gradient pointer-events-none opacity-40 mix-blend-color-dodge" />
+          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-4">
+            {orbState === 'listening' ? 'Listening...' : orbState === 'speaking' ? 'Synthesizing...' : 'AI Core Active'}
+          </span>
         </div>
 
-        {/* Waveform EQ Spectrum Visualizer beneath the Orb */}
-        <div className="flex items-center gap-1 h-6 mt-4 w-40 justify-center">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(bar => {
-            const h = orbState === 'speaking' ? [12, 22, 16, 26, 10, 20, 14, 18][bar - 1] : orbState === 'listening' ? [8, 14, 10, 18, 12, 16, 8, 10][bar - 1] : 4;
-            return (
-              <div 
-                key={bar} 
-                className={`w-0.5 rounded-full transition-all duration-300 ${orbState === 'listening' ? 'bg-red-400' : orbState === 'speaking' ? 'bg-purple-400' : 'bg-cyan-500'}`} 
-                style={{ height: `${h}px` }} 
-              />
-            );
-          })}
+        {/* Right Column: Family Health Metrics */}
+        <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col justify-between shadow-lg">
+          <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Health Metrics</div>
+          <div className="flex flex-col gap-2">
+            {[
+              { label: 'Safety Index', val: '98%', color: 'text-emerald-400' },
+              { label: 'Focus Score', val: '86%', color: 'text-cyan-400' },
+              { label: 'Screen Budget', val: 'Active', color: 'text-indigo-400' },
+              { label: 'Anomaly Alert', val: 'None', color: 'text-slate-400' }
+            ].map(m => (
+              <div key={m.label} className="flex items-center justify-between border-b border-white/[0.02] pb-1">
+                <span className="text-[10px] text-slate-400 font-semibold">{m.label}</span>
+                <span className={`text-[10px] font-black ${m.color}`}>{m.val}</span>
+              </div>
+            ))}
+          </div>
         </div>
+
       </div>
 
-      {/* Grid Row: Behavioral cards */}
+      {/* Screen Time & Safety Trends Charts */}
       <div className="grid grid-cols-2 gap-4">
         
-        {/* Card 1: Behavioral Insight */}
-        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col justify-between shadow-lg">
+        {/* Behavioral Insights Chart */}
+        <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col justify-between shadow-lg">
           <div>
-            <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider mb-1">Behavioral Insight</h4>
-            <p className="text-[9.5px] text-slate-400 leading-snug">
-              {childName}'s Screen Time: Unusual uptick in app usage after school (4:00-5:30 PM).
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Usage Load</h4>
+            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+              Downtime is active. Screen limit overrides enabled.
             </p>
           </div>
-          {/* Recharts Area Curve Preview */}
-          <div className="h-14 w-full mt-3">
+          <div className="h-16 w-full mt-3">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 0, bottom: 0, left: -10, right: 0 }}>
+              <AreaChart data={trendChartData} margin={{ top: 0, bottom: 0, left: -10, right: 0 }}>
                 <defs>
-                  <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
+                  <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <Area type="monotone" dataKey="usage" stroke="#06b6d4" strokeWidth={1.5} fillOpacity={1} fill="url(#cyanGrad)" />
+                <Area type="monotone" dataKey="load" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#purpleGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Card 2: Daily AI Report Card */}
-        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col shadow-lg text-xs justify-between">
+        {/* Risk Detection & Warnings */}
+        <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col justify-between shadow-lg">
           <div>
-            <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider mb-2">Daily AI Report Card</h4>
-            <div className="text-xl font-black text-white mb-2">{safetyScore}/100</div>
-            <div className="flex flex-col gap-1 text-[9.5px] text-slate-400 font-semibold">
-              <div className="flex items-center justify-between">
-                <span>Focus:</span>
-                <span className="text-cyan-400">Spanning</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Routine:</span>
-                <span className="text-indigo-400">Monanion</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Safety:</span>
-                <span className="text-emerald-400">Rerommendant</span>
-              </div>
-            </div>
+            <h4 className="text-[10px] font-black text-slate-500 tracking-widest uppercase mb-1">Risk Detection</h4>
+            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+              No anomalies found in local background telemetry scans.
+            </p>
           </div>
-        </div>
-
-        {/* Card 3: Parenting Recommendation */}
-        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col gap-1 shadow-lg text-xs col-span-1">
-          <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider">Parenting Recommendation</h4>
-          <p className="text-[9.5px] text-slate-300 leading-snug mt-1">
-            <span className="font-extrabold text-cyan-400">Recommended:</span> Organize a 'Family Board Game' hour for connection after dinner.
-          </p>
-        </div>
-
-        {/* Card 4: Smart Suggestion */}
-        <div className="glass-card p-4 border border-white/5 backdrop-blur-md flex flex-col gap-1 shadow-lg text-xs col-span-1 cursor-pointer hover:border-white/10">
-          <h4 className="text-[11px] font-extrabold text-cyan-400 uppercase tracking-wider">Smart Suggestion</h4>
-          <p className="text-[9.5px] text-slate-300 leading-snug mt-1">
-            Enable 'Homework Focus Mode' during specified hours. <span className="text-cyan-400 font-bold block mt-1">(Tap to schedule)</span>
-          </p>
+          <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mt-3">
+            <ShieldCheck size={14} className="text-emerald-400" />
+            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider">Device Secure</span>
+          </div>
         </div>
 
       </div>
 
-      {/* Floating HOLD TO SPEAK Microphone Button */}
-      <div className="mt-4 flex flex-col items-center z-[20]">
-        <button 
-          onMouseDown={toggleMicInput}
-          onTouchStart={toggleMicInput}
-          className={`px-8 py-3.5 bg-gradient-to-r from-cyan-600 via-blue-500 to-indigo-600 rounded-full text-white font-extrabold text-xs tracking-widest uppercase cursor-pointer shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all ${orbState === 'listening' ? 'from-red-600 to-rose-600 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : ''}`}
-        >
-          <Mic size={14} className={orbState === 'listening' ? 'animate-bounce' : ''} />
-          <span>{orbState === 'listening' ? 'Listening...' : 'Hold to Speak'}</span>
-        </button>
+      {/* Parenting Recommendations Deck */}
+      <div className="glass-card p-4.5 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col gap-1.5 shadow-lg">
+        <h4 className="text-[10px] font-black text-slate-500 tracking-widest uppercase">Parenting Recommendations</h4>
+        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs mt-1 leading-relaxed text-slate-300 font-semibold">
+          <span className="text-cyan-400 font-extrabold block mb-0.5">Focus Mode suggestion:</span>
+          Telemetry suggests setting a 45m bedtime lockout buffer to improve sleep latency indices.
+        </div>
+      </div>
+
+      {/* Chat Interface Console */}
+      <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex-1 flex flex-col min-h-[200px] max-h-[300px]">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-2 flex items-center justify-between">
+          <span>AI Chat Assistant</span>
+          <Activity size={12} className="text-cyan-400" />
+        </div>
+        
+        {/* Chat Logs */}
+        <div className="flex-1 overflow-y-auto flex flex-col gap-3.5 pr-1 mb-3 text-[11px] font-semibold leading-relaxed">
+          {chatLog.map((chat, idx) => (
+            <div key={idx} className={`flex flex-col ${chat.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className={`max-w-[85%] p-3 rounded-2xl ${
+                chat.role === 'user' 
+                  ? 'bg-gradient-to-tr from-indigo-600 to-blue-600 text-white rounded-tr-none' 
+                  : 'bg-white/5 border border-white/5 text-slate-200 rounded-tl-none'
+              }`}>
+                {chat.text}
+              </div>
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input Bar */}
+        <form onSubmit={handleChatSubmit} className="flex gap-2">
+          <div className="flex-1 relative bg-[#0b0c14] border border-white/5 rounded-xl px-3.5 py-2.5 flex items-center gap-2">
+            <input 
+              type="text"
+              value={queryInput}
+              onChange={e => setQueryInput(e.target.value)}
+              placeholder="Ask anything about safety limits..."
+              className="w-full bg-transparent border-none text-white text-xs outline-none font-semibold placeholder-slate-600"
+            />
+            <button 
+              type="button" 
+              onClick={toggleMicInput}
+              className={`text-slate-500 hover:text-white transition-colors cursor-pointer ${orbState === 'listening' ? 'text-red-500 animate-pulse' : ''}`}
+            >
+              <Mic size={14} />
+            </button>
+          </div>
+          <button 
+            type="submit"
+            className="p-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl shadow-lg active:scale-95 transition-transform cursor-pointer"
+          >
+            <Send size={14} />
+          </button>
+        </form>
       </div>
 
     </div>
