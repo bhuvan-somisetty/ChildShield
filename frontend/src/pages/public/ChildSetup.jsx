@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, User, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Smartphone, User, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ChildSetup = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const ChildSetup = () => {
 
   const handleNextStep = () => {
     if (!name.trim()) {
-      setError('Please enter your name.');
+      setError('Please enter your child\'s name.');
       return;
     }
     setError('');
@@ -47,93 +48,139 @@ const ChildSetup = () => {
   };
 
   return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', overflow: 'hidden', position: 'relative' }}>
+    <div className="relative min-h-screen w-full bg-[#07070c] overflow-hidden flex items-center justify-center px-4 py-8 font-sans">
+      
       {/* Background Ambience */}
-      <div style={{ position: 'absolute', top: '10%', left: '10%', width: '400px', height: '400px', background: 'var(--accent-primary)', filter: 'blur(150px)', opacity: 0.12, borderRadius: '50%', pointerEvents: 'none' }} />
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#020617] to-[#0f172a] pointer-events-none" />
+      <div className="absolute top-[15%] left-[10%] w-[380px] h-[380px] rounded-full bg-blue-600/10 filter blur-[110px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[15%] right-[10%] w-[380px] h-[380px] rounded-full bg-purple-600/10 filter blur-[110px] pointer-events-none animate-pulse" />
 
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '420px', padding: '40px', position: 'relative', zIndex: 1 }}>
-        
-        {step === 1 ? (
-          <div>
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(37,99,235, 0.1)', marginBottom: '16px', border: '1px solid rgba(37,99,235, 0.3)' }}>
-                <Smartphone size={32} color="#2563eb" />
+      <motion.div 
+        initial={{ y: 15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-[420px] px-6 py-10 bg-white/5 border border-white/5 rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl flex flex-col"
+      >
+        <AnimatePresence mode="wait">
+          {step === 1 ? (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/30 mb-4 shadow-[0_0_20px_rgba(59,130,246,0.15)] animate-bounce">
+                  <Smartphone size={30} className="text-blue-400" />
+                </div>
+                <h2 className="text-2xl font-black text-white tracking-wide">Child Setup</h2>
+                <p className="text-slate-400 text-xs mt-1 font-semibold">Who will be using this device?</p>
               </div>
-              <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>Child Setup</h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '14px' }}>Who will be using this device?</p>
-            </div>
 
-            {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px', textAlign: 'center' }}>{error}</div>}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 text-center font-semibold">
+                  {error}
+                </div>
+              )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ position: 'relative' }}>
-                <User size={18} color="var(--text-muted)" style={{ position: 'absolute', top: '14px', left: '16px' }} />
-                <input 
-                  type="text" required value={name} onChange={e => setName(e.target.value)} autoFocus
-                  onKeyDown={e => e.key === 'Enter' && handleNextStep()}
-                  style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 16px 14px 44px', borderRadius: '12px', color: '#fff', fontSize: '16px', outline: 'none' }} placeholder="Child's First Name" />
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">Child's First Name</label>
+                  <div className="relative">
+                    <User size={16} className="absolute top-3.5 left-4 text-slate-500" />
+                    <input 
+                      type="text" 
+                      required 
+                      value={name} 
+                      onChange={e => setName(e.target.value)} 
+                      autoFocus
+                      onKeyDown={e => e.key === 'Enter' && handleNextStep()}
+                      className="w-full pl-11 pr-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all font-semibold" 
+                      placeholder="e.g. Liam, Emma" 
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleNextStep}
+                  className="w-full mt-4 py-3.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl text-white font-extrabold text-xs tracking-wider uppercase cursor-pointer shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>Continue</span> 
+                  <ArrowRight size={14} />
+                </button>
+                
+                <button 
+                  onClick={() => navigate('/')} 
+                  className="text-center text-xs text-slate-400 hover:text-white font-bold transition-colors mt-2 cursor-pointer"
+                >
+                  Cancel Setup
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Back Button */}
+              <div className="flex items-center gap-3 mb-6">
+                <button 
+                  onClick={() => setStep(1)} 
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/2 hover:bg-white/5 border border-white/5 text-slate-400 hover:text-white cursor-pointer transition-all"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div>
+                  <h2 className="text-lg font-black text-white">Profile Gender</h2>
+                  <p className="text-slate-400 text-[10px] font-semibold">Select to personalize {name}'s experience.</p>
+                </div>
               </div>
 
-              <button 
-                onClick={handleNextStep}
-                style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '600', fontSize: '16px', marginTop: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(37,99,235, 0.3)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                Continue <ArrowRight size={18} />
-              </button>
-              
-              <button onClick={() => navigate('/')} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '14px', marginTop: '10px' }}>
-                Cancel Setup
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="animate-fade-in">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-              <button onClick={() => setStep(1)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: 0 }}>
-                <ArrowLeft size={24} color="#64748b" />
-              </button>
-              <div>
-                <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>Profile Gender</h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Let us personalize {name}'s experience.</p>
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 text-center font-semibold">
+                  {error}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <button 
+                  onClick={() => handleInitPairing('boy')} 
+                  disabled={loading}
+                  className="group relative flex flex-col items-center justify-center p-6 bg-sky-500/5 hover:bg-sky-500/10 border border-sky-500/20 hover:border-sky-500/40 rounded-2xl cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-200">👦</div>
+                  <div className="text-sky-400 font-extrabold text-xs tracking-wider uppercase">Boy</div>
+                </button>
+
+                <button 
+                  onClick={() => handleInitPairing('girl')} 
+                  disabled={loading}
+                  className="group relative flex flex-col items-center justify-center p-6 bg-pink-500/5 hover:bg-pink-500/10 border border-pink-500/20 hover:border-pink-500/40 rounded-2xl cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-200">👧</div>
+                  <div className="text-pink-400 font-extrabold text-xs tracking-wider uppercase">Girl</div>
+                </button>
               </div>
-            </div>
 
-            {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '12px', borderRadius: '8px', marginBottom: '24px', fontSize: '14px', textAlign: 'center' }}>{error}</div>}
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '30px' }}>
-              
-              <button 
-                onClick={() => handleInitPairing('boy')} disabled={loading}
-                style={{ background: 'rgba(56, 189, 248, 0.1)', border: '2px solid rgba(56, 189, 248, 0.3)', borderRadius: '16px', padding: '30px 10px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)'}
-                onMouseOut={e => e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)'}
-              >
-                <div style={{ fontSize: '48px' }}>&#128102;</div>
-                <div style={{ color: '#38bdf8', fontWeight: '700', fontSize: '18px' }}>BOY</div>
-              </button>
-
-              <button 
-                onClick={() => handleInitPairing('girl')} disabled={loading}
-                style={{ background: 'rgba(244, 114, 182, 0.1)', border: '2px solid rgba(244, 114, 182, 0.3)', borderRadius: '16px', padding: '30px 10px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
-                onMouseOver={e => e.currentTarget.style.background = 'rgba(244, 114, 182, 0.2)'}
-                onMouseOut={e => e.currentTarget.style.background = 'rgba(244, 114, 182, 0.1)'}
-              >
-                <div style={{ fontSize: '48px' }}>&#128103;</div>
-                <div style={{ color: '#f472b6', fontWeight: '700', fontSize: '18px' }}>GIRL</div>
-              </button>
-
-            </div>
-
-            {loading && (
-              <div style={{ textAlign: 'center', color: '#2563eb', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                <div style={{ width: '16px', height: '16px', border: '2px solid rgba(37,99,235,0.3)', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                Preparing profile and pairing code...
-              </div>
-            )}
-
-          </div>
-        )}
-      </div>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+              {loading && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center justify-center gap-2 text-xs font-semibold text-blue-400"
+                >
+                  <Loader2 size={16} className="animate-spin text-cyan-400" />
+                  <span>Preparing profile & pairing code...</span>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 };

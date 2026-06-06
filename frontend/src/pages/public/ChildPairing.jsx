@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Smartphone, Loader, RefreshCw, CheckCircle } from 'lucide-react';
+import { Smartphone, Loader, RefreshCw, CheckCircle, Loader2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { motion } from 'framer-motion';
 
 const ChildPairing = () => {
   const location = useLocation();
@@ -84,38 +85,49 @@ const ChildPairing = () => {
   if (!childId) return null; // redirecting
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', padding: '24px' }}>
+    <div className="relative min-h-screen w-full bg-[#07070c] overflow-hidden flex items-center justify-center px-4 py-8 font-sans">
+      
       {/* Background glow */}
-      <div style={{ position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '500px', height: '500px', background: 'rgba(37,99,235, 0.06)', filter: 'blur(120px)', borderRadius: '50%', pointerEvents: 'none' }} />
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#020617] to-[#0f172a] pointer-events-none" />
+      <div className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[480px] h-[480px] rounded-full bg-blue-600/5 filter blur-[120px] pointer-events-none animate-pulse" />
 
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '40px 32px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      <motion.div 
+        initial={{ y: 15, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-[440px] px-6 py-10 bg-white/5 border border-white/5 rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl flex flex-col items-center text-center"
+      >
         {/* Icon */}
-        <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(37,99,235, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', border: '1px solid rgba(37,99,235, 0.3)', boxShadow: '0 0 30px rgba(37,99,235,0.1)' }}>
-          <Smartphone color="#2563eb" size={38} />
+        <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mb-6 shadow-[0_0_25px_rgba(59,130,246,0.15)]">
+          <Smartphone className="text-blue-400" size={32} />
         </div>
 
-        <h2 style={{ color: '#fff', fontSize: '26px', fontWeight: '800', marginBottom: '8px' }}>Ready to Connect</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '28px', lineHeight: 1.6 }}>
-          Open the <strong style={{ color: '#2563eb' }}>Parent App → Controls</strong> and enter<br />the 6-digit sync code below.
+        <h2 className="text-2xl font-black text-white tracking-wide">Ready to Connect</h2>
+        <p className="text-slate-400 text-xs mt-2 mb-6 leading-relaxed max-w-[320px] font-semibold">
+          Open the <strong className="text-blue-400">Parent App → Controls</strong> and enter the 6-digit sync code below.
         </p>
 
         {/* Error message */}
         {error && (
-          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', padding: '10px 16px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px' }}>
+          <div className="w-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-4 font-semibold">
             {error}
           </div>
         )}
 
         {/* QR Code */}
-        <div style={{ backgroundColor: '#ffffff', padding: '20px', borderRadius: '16px', display: 'inline-block', border: '2px solid rgba(37,99,235,0.3)', marginBottom: '24px' }}>
-          <QRCodeSVG value={JSON.stringify({ code: livePairingCode })} size={170} fgColor="#000000" bgColor="#ffffff" />
+        <div className="bg-white p-5 rounded-2xl border-2 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.1)] mb-6 transform hover:scale-105 transition-transform duration-300">
+          <QRCodeSVG value={JSON.stringify({ code: livePairingCode })} size={160} fgColor="#000000" bgColor="#ffffff" />
         </div>
 
-        <p style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', letterSpacing: '2px', marginBottom: '16px' }}>— OR ENTER CODE —</p>
+        <div className="flex items-center gap-3 w-full my-4">
+          <div className="flex-1 h-[1px] bg-white/5" />
+          <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest">— OR ENTER CODE —</span>
+          <div className="flex-1 h-[1px] bg-white/5" />
+        </div>
 
         {/* Pairing code display */}
-        <div style={{ backgroundColor: 'rgba(37,99,235, 0.06)', padding: '16px 28px', borderRadius: '16px', border: '1px solid rgba(37,99,235, 0.25)', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, color: '#2563eb', fontSize: '40px', fontWeight: '900', letterSpacing: '10px', textShadow: '0 0 20px rgba(37,99,235, 0.5)', fontFamily: 'monospace' }}>
+        <div className="w-full bg-blue-950/20 border border-blue-500/20 py-4 px-6 rounded-2xl mb-6 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+          <h2 className="text-3xl font-black text-blue-400 tracking-[8px] font-mono leading-none select-all">
             {livePairingCode || '------'}
           </h2>
         </div>
@@ -125,36 +137,25 @@ const ChildPairing = () => {
           id="refresh-code-btn"
           onClick={handleRefreshCode}
           disabled={refreshing || pairingDetected}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-            width: '100%', padding: '12px 20px',
-            background: 'rgba(37,99,235,0.08)',
-            color: refreshing ? 'var(--text-muted)' : '#2563eb',
-            border: '1px solid rgba(37,99,235,0.3)',
-            borderRadius: '12px', fontWeight: '700', fontSize: '14px',
-            cursor: refreshing || pairingDetected ? 'not-allowed' : 'pointer',
-            marginBottom: '24px',
-            opacity: refreshing || pairingDetected ? 0.5 : 1,
-            transition: 'all 0.2s'
-          }}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-white/2 hover:bg-white/5 border border-white/5 rounded-xl text-blue-400 font-bold text-xs tracking-wide uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all mb-6 active:scale-95"
         >
-          <RefreshCw size={16} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
-          {refreshing ? 'Generating...' : 'Generate New Code'}
+          <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+          <span>{refreshing ? 'Generating...' : 'Generate New Code'}</span>
         </button>
 
         {/* Status line */}
         {pairingDetected ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', borderRadius: '20px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: 'var(--accent-green)', fontWeight: '700', fontSize: '14px' }}>
-            <CheckCircle size={18} />
-            Connected! Opening device view...
+          <div className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs uppercase tracking-wider animate-bounce">
+            <CheckCircle size={16} />
+            <span>Connected! Opening...</span>
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', borderRadius: '20px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <Loader size={16} color="#2563eb" style={{ animation: 'spin 2s linear infinite' }} />
-            <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Waiting for parent to approve...</span>
+          <div className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/2 border border-white/5 text-slate-400 font-semibold text-xs">
+            <Loader2 size={14} className="animate-spin text-blue-400" />
+            <span>Waiting for parent authorization...</span>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };
