@@ -24,7 +24,10 @@ const Welcome = () => {
       </div>
 
       {/* Main Content Column (Z-Index above video background) */}
-      <div className="relative z-20 w-full max-w-[480px] mx-auto flex flex-col justify-end items-center px-6 pb-14 pt-6 min-h-screen safe-area-bottom">
+      <div 
+        className="relative z-20 w-full max-w-[480px] mx-auto flex flex-col justify-end items-center px-6 pt-6 min-h-screen"
+        style={{ paddingBottom: 'calc(12vh + env(safe-area-inset-bottom, 24px))' }}
+      >
         
         {/* Top brand header absolute (clear of the shield animation) */}
         <div className="absolute top-8 left-0 right-0 flex justify-center z-30">
@@ -32,23 +35,23 @@ const Welcome = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 8.0, duration: 0.8 }}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-full backdrop-blur-md"
+            className="flex items-center gap-3 px-6 py-2.5 bg-white/5 border border-white/10 rounded-full backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
           >
             <Shield size={14} className="text-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.4)]" />
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">
-              AlphaGuard OS
+            <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">
+              AlphaGuard AI
             </span>
           </motion.div>
         </div>
 
-        {/* Large Spacer to force copy into the bottom 60% of the viewport, keeping the top-center shield visible */}
+        {/* Large Spacer to force copy into the bottom portion, keeping the top-center shield visible */}
         <div className="flex-1 min-h-[38vh]" />
 
         {/* Content Block (Centered hierarchy, breathing spacing) */}
-        <div className="w-full flex flex-col items-center text-center gap-12 z-20">
+        <div className="w-full flex flex-col items-center text-center gap-14 z-20">
           
           {/* Typography Copy Block */}
-          <div className="flex flex-col items-center gap-6 px-2">
+          <div className="flex flex-col items-center gap-8 px-2">
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -62,7 +65,7 @@ const Welcome = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 8.8, duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-              className="text-sm sm:text-base font-black bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-400 bg-clip-text text-transparent uppercase tracking-[0.25em] drop-shadow-sm mt-1"
+              className="text-sm sm:text-base font-black bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-400 bg-clip-text text-transparent uppercase tracking-[0.3em] drop-shadow-sm mt-3"
             >
               AI-Powered Family Safety
             </motion.div>
