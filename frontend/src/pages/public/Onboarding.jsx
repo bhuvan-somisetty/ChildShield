@@ -181,17 +181,17 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-center px-4 font-sans">
+    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
       
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
       <div 
-        className="absolute top-[20%] left-[10%] w-[320px] h-[320px] rounded-full filter blur-[100px] opacity-15 transition-all duration-700 pointer-events-none"
+        className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[320px] h-[320px] rounded-full filter blur-[100px] opacity-15 transition-all duration-700 pointer-events-none"
         style={{ backgroundColor: slide.color }}
       />
       
-      {/* Onboarding Glass Card */}
-      <div className="relative z-10 w-full max-w-[440px] px-6 py-8 bg-white/5 border border-white/5 rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col items-center">
+      {/* Full-bleed Content Column */}
+      <div className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col items-center justify-between">
         
         {/* Navigation skip */}
         <div className="w-full flex items-center justify-between mb-4">

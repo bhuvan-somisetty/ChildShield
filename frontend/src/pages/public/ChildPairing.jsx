@@ -81,17 +81,18 @@ const ChildPairing = () => {
   if (!childId) return null;
 
   return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex items-center justify-center px-4 py-8 font-sans">
+    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
       
       {/* Background glow */}
       <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
       <div className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[480px] h-[480px] rounded-full bg-indigo-600/5 filter blur-[120px] pointer-events-none animate-pulse" />
 
+      {/* Child Pairing Content */}
       <motion.div 
         initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[440px] px-6 py-10 bg-white/5 border border-white/5 rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col items-center text-center"
+        className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col justify-center items-center gap-4 text-center"
       >
         {/* Icon */}
         <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center mb-5">

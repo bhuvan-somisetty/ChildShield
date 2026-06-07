@@ -82,7 +82,7 @@ const InsightsHub = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in font-sans">
+    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 w-full max-w-[960px] mx-auto animate-fade-in font-sans">
       
       {/* Header bar */}
       <div className="flex items-center justify-between">
@@ -100,7 +100,7 @@ const InsightsHub = () => {
       </div>
 
       {/* Grid: 3 summary stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: 'Avg Screen Time', val: reportData.last30DaysSummary?.averageDailyFormatted || '0h 00m', desc: 'Past 30 days' },
           { label: 'Risk Index', val: `${reportData.riskScore || 0}/100`, desc: 'Live Telemetry' },

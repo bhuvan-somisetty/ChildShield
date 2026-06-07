@@ -124,7 +124,7 @@ const AIInsights = () => {
   const childName = activeChild?.name || 'Device';
 
   return (
-    <div className="flex flex-col gap-5 px-3 pb-28 pt-4 max-w-[640px] mx-auto animate-fade-in relative min-h-screen font-sans">
+    <div className="flex flex-col gap-5 px-3 pb-28 pt-4 w-full max-w-[960px] mx-auto animate-fade-in relative min-h-screen font-sans">
       
       {/* Header Title */}
       <div className="text-center mb-1">
@@ -136,7 +136,7 @@ const AIInsights = () => {
       </div>
 
       {/* Grid: Orb centerpiece & recommendations */}
-      <div className="grid grid-cols-[1.2fr_1fr] gap-4 items-stretch">
+      <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr] gap-4 items-stretch">
         
         {/* Left Column: Glassmorphic Orb centerpiece */}
         <div className="glass-card p-5 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
@@ -193,7 +193,7 @@ const AIInsights = () => {
       </div>
 
       {/* Screen Time & Safety Trends Charts */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         
         {/* Behavioral Insights Chart */}
         <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col justify-between shadow-lg">
