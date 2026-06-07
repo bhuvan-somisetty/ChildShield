@@ -12,7 +12,7 @@ const Welcome = () => {
       {/* Immersive Full-Screen Background Video */}
       <div className="absolute inset-0 w-full h-full z-0 overflow-hidden pointer-events-none">
         <video 
-          src="/Create_a_premium_cinematic_onb.mp4"
+          src="/WELCOME_VIDEO_REFINEMENT__The.mp4"
           autoPlay
           loop
           muted
