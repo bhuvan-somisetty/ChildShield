@@ -46,18 +46,19 @@ const ChildSetup = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex items-center justify-center px-4 py-8 font-sans">
+    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
       
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
       <div className="absolute top-[15%] left-[10%] w-[380px] h-[380px] rounded-full bg-indigo-600/10 filter blur-[110px] pointer-events-none animate-pulse" />
       <div className="absolute bottom-[15%] right-[10%] w-[380px] h-[380px] rounded-full bg-cyan-600/10 filter blur-[110px] pointer-events-none animate-pulse" />
 
+      {/* Child Setup Content */}
       <motion.div 
         initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[420px] px-6 py-10 bg-white/5 border border-white/5 rounded-3xl shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl flex flex-col"
+        className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col justify-center gap-4"
       >
         <AnimatePresence mode="wait">
           {step === 1 ? (

@@ -126,7 +126,7 @@ const EmergencyCenter = () => {
   const overallColor = overallState === 'EMERGENCY' ? 'from-red-600 to-rose-600 border-red-500/30 text-white' : overallState === 'WARNING' ? 'from-amber-600 to-yellow-600 border-amber-500/30 text-white' : 'from-emerald-600 to-teal-600 border-emerald-500/30 text-white';
 
   return (
-    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in font-sans">
+    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 w-full max-w-[960px] mx-auto animate-fade-in font-sans">
       
       {/* Header title */}
       <div className="text-center mb-1">

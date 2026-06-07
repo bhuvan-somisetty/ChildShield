@@ -166,7 +166,7 @@ const Dashboard = () => {
   const mapCenter = latestLocation ? [latestLocation.latitude, latestLocation.longitude] : [34.0522, -118.2437];
 
   return (
-    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in font-sans">
+    <div className="flex flex-col gap-5 px-3 pb-24 pt-4 w-full max-w-[960px] mx-auto animate-fade-in font-sans">
       
       {/* Sub-Header bar - Online heartbeats */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-white/5 border border-white/5 rounded-full backdrop-blur-md">
@@ -298,7 +298,7 @@ const Dashboard = () => {
       </div>
 
       {/* Insights & Activity Columns */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         
         {/* Left Column: Recommendations */}
         <div className="glass-card p-4 border border-white/5 backdrop-blur-xl rounded-[24px] bg-white/[0.02] flex flex-col">
@@ -358,7 +358,7 @@ const Dashboard = () => {
           <span className="text-slate-500 text-xs">···</span>
         </div>
 
-        <div className="grid grid-cols-[1.2fr_1fr] gap-4 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr] gap-4 items-center">
           {/* Bar chart */}
           <div className="h-32">
             <ResponsiveContainer width="100%" height="100%">

@@ -197,7 +197,7 @@ const Controls = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-4 px-3 pb-24 pt-4 max-w-[640px] mx-auto animate-fade-in">
+    <div className="flex flex-col gap-4 px-3 pb-24 pt-4 w-full max-w-[960px] mx-auto animate-fade-in">
       
       {/* 1. FAMILY PROTECTION STATUS HEADER (Image 5 top badge) */}
       <div className="glass-card p-4 border border-white/5 backdrop-blur-md shadow-lg flex flex-col items-center text-center">
