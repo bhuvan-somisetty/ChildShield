@@ -451,3 +451,103 @@ div[style*="position:relative"] > input {
   position: relative;
   contain: layout;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ALPHAGUARD AI — PREMIUM MOBILE DESIGN SYSTEM
+   Single source of truth for spacing, type, radius, shadow, motion, safe-areas.
+   Namespaced `ag-` / `--ag-` so it never collides with legacy classes.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Safe-area insets (resolve to 0 on devices without notches) */
+  --ag-safe-top: env(safe-area-inset-top, 0px);
+  --ag-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ag-safe-left: env(safe-area-inset-left, 0px);
+  --ag-safe-right: env(safe-area-inset-right, 0px);
+
+  /* Spacing scale (4pt grid) */
+  --ag-space-1: 4px;
+  --ag-space-2: 8px;
+  --ag-space-3: 12px;
+  --ag-space-4: 16px;
+  --ag-space-5: 20px;
+  --ag-space-6: 24px;
+  --ag-space-8: 32px;
+  --ag-space-10: 40px;
+  --ag-space-12: 48px;
+  --ag-space-16: 64px;
+
+  /* Radius scale */
+  --ag-radius-sm: 12px;
+  --ag-radius-md: 16px;
+  --ag-radius-lg: 22px;
+  --ag-radius-xl: 28px;
+  --ag-radius-2xl: 34px;
+  --ag-radius-pill: 999px;
+
+  /* Premium elevation shadows (soft, layered — Apple/Linear style) */
+  --ag-shadow-sm: 0 1px 2px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.12);
+  --ag-shadow-md: 0 4px 12px rgba(0,0,0,0.22), 0 12px 28px rgba(0,0,0,0.18);
+  --ag-shadow-lg: 0 8px 24px rgba(0,0,0,0.28), 0 24px 56px rgba(0,0,0,0.30);
+  --ag-shadow-brand: 0 12px 40px rgba(37,99,235,0.38);
+  --ag-shadow-brand-strong: 0 16px 48px rgba(6,182,212,0.55);
+
+  /* Brand color ramp */
+  --ag-brand-600: #2563eb;
+  --ag-brand-500: #3b82f6;
+  --ag-cyan-400: #22d3ee;
+  --ag-indigo-600: #4f46e5;
+  --ag-ink: #030307;
+  --ag-surface: #0b0c14;
+  --ag-surface-2: #12121c;
+  --ag-hairline: rgba(255,255,255,0.08);
+  --ag-hairline-strong: rgba(255,255,255,0.12);
+
+  /* Premium motion curves & durations */
+  --ag-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ag-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ag-dur-fast: 0.18s;
+  --ag-dur-base: 0.3s;
+  --ag-dur-slow: 0.5s;
+}
+
+/* ── Safe-area utility helpers ─────────────────────────────────────────────── */
+.ag-safe-top    { padding-top: var(--ag-safe-top); }
+.ag-safe-bottom { padding-bottom: var(--ag-safe-bottom); }
+.ag-safe-x      { padding-left: var(--ag-safe-left); padding-right: var(--ag-safe-right); }
+.ag-pt-safe     { padding-top: calc(var(--ag-space-4) + var(--ag-safe-top)); }
+.ag-pb-safe     { padding-bottom: calc(var(--ag-space-4) + var(--ag-safe-bottom)); }
+.ag-min-h-screen { min-height: 100vh; min-height: 100dvh; }
+
+/* ── Native-feel tap behavior on interactive primitives ────────────────────── */
+.ag-tap {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform var(--ag-dur-fast) var(--ag-ease-out),
+              box-shadow var(--ag-dur-base) var(--ag-ease-out),
+              background-color var(--ag-dur-base) var(--ag-ease-out),
+              opacity var(--ag-dur-base) var(--ag-ease-out);
+}
+.ag-tap:active { transform: scale(0.97); }
+
+/* Respect reduced-motion preference (accessibility / store requirement) */
+@media (prefers-reduced-motion: reduce) {
+  .ag-tap, .ag-tap:active { transition: none; transform: none; }
+  .animate-fade-in, .animate-slide-up { animation: none; }
+}
+
+/* ── Premium motion keyframes ──────────────────────────────────────────────── */
+@keyframes agRise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ag-rise { animation: agRise var(--ag-dur-slow) var(--ag-ease-out) both; }
+
+@keyframes agSheenSweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* ── Hide scrollbars where a native app would (carousels, sheets) ──────────── */
+.ag-no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.ag-no-scrollbar::-webkit-scrollbar { display: none; }

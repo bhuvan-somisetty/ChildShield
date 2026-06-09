@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, User, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { Smartphone, User, ArrowRight, Loader2, KeyRound, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Screen, Button, TextField, ScreenHeader } from '../../components/ui';
+
+const AVATARS = [
+  { id: 'boy', emoji: '👦', label: 'Profile A', accent: '#06b6d4' },
+  { id: 'girl', emoji: '👧', label: 'Profile B', accent: '#a855f7' },
+  { id: 'teen', emoji: '🧒', label: 'Profile C', accent: '#f59e0b' },
+  { id: 'kid', emoji: '🧑', label: 'Profile D', accent: '#10b981' },
+];
 
 const ChildSetup = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
+  const [picked, setPicked] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleNextStep = () => {
     if (!name.trim()) {
-      setError('Please enter device companion name.');
+      setError('Please enter a name for this device.');
       return;
     }
     setError('');
@@ -22,18 +31,16 @@ const ChildSetup = () => {
   const handleInitPairing = async (selectedGender) => {
     setLoading(true);
     setError('');
-
     try {
       const res = await fetch('/api/device/init-pairing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childName: name, gender: selectedGender })
+        body: JSON.stringify({ childName: name, gender: selectedGender }),
       });
       const data = await res.json();
-      
       if (res.ok && data.success) {
-        navigate('/child-pairing', { 
-          state: { childId: data.childId, pairingCode: data.pairingCode, childName: name, gender: selectedGender } 
+        navigate('/child-pairing', {
+          state: { childId: data.childId, pairingCode: data.pairingCode, childName: name, gender: selectedGender },
         });
       } else {
         setError(data.error || 'Failed to initialize device.');
@@ -45,142 +52,103 @@ const ChildSetup = () => {
     }
   };
 
+  const footer =
+    step === 1 ? (
+      <>
+        <Button onClick={handleNextStep} iconRight={ArrowRight}>Continue</Button>
+        <button
+          onClick={() => navigate('/child/setup')}
+          className="ag-tap w-full flex items-center justify-center gap-2 mt-3 text-slate-400 hover:text-white text-[13px] font-bold"
+        >
+          <KeyRound size={15} /> I already have a pairing code
+        </button>
+      </>
+    ) : (
+      <Button onClick={() => picked && handleInitPairing(picked)} loading={loading} disabled={!picked} iconRight={ArrowRight}>
+        Generate Pairing Code
+      </Button>
+    );
+
   return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
-      
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
-      <div className="absolute top-[15%] left-[10%] w-[380px] h-[380px] rounded-full bg-indigo-600/10 filter blur-[110px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[15%] right-[10%] w-[380px] h-[380px] rounded-full bg-cyan-600/10 filter blur-[110px] pointer-events-none animate-pulse" />
+    <Screen ambient="brand" align="between" footer={footer}>
+      <AnimatePresence mode="wait">
+        {step === 1 ? (
+          <motion.div key="s1" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.25 }} className="w-full">
+            <div className="flex flex-col items-center text-center mb-8">
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
+                className="w-16 h-16 rounded-3xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mb-5"
+              >
+                <Smartphone size={30} className="text-cyan-400" />
+              </motion.div>
+              <h1 className="text-[24px] font-black text-white tracking-tight leading-tight">Set up this device</h1>
+              <p className="text-slate-500 text-[13px] font-semibold mt-2 max-w-[300px]">
+                Give the child’s device a name so it’s easy to recognise on the parent dashboard.
+              </p>
+            </div>
 
-      {/* Child Setup Content */}
-      <motion.div 
-        initial={{ y: 15, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col justify-center gap-4"
-      >
-        <AnimatePresence mode="wait">
-          {step === 1 ? (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Header */}
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 mb-4 animate-bounce">
-                  <Smartphone size={30} className="text-cyan-400" />
-                </div>
-                <h2 className="text-2xl font-black text-white tracking-tight leading-none">Companion Setup</h2>
-                <p className="text-slate-500 text-xs mt-1.5 font-bold uppercase tracking-wider">Device user registration</p>
+            {error && (
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3.5 rounded-2xl mb-5 text-center font-semibold">
+                {error}
               </div>
+            )}
 
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 text-center font-bold">
-                  {error}
-                </div>
-              )}
+            <TextField
+              label="Device / Child Name"
+              icon={User}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleNextStep()}
+              placeholder="e.g. Emma’s Phone"
+              autoFocus
+            />
+          </motion.div>
+        ) : (
+          <motion.div key="s2" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.25 }} className="w-full">
+            <ScreenHeader title="Choose an avatar" subtitle="Pick a profile style" onBack={() => setStep(1)} className="mb-8" />
 
-              <div className="flex flex-col gap-4">
-                <div className="bg-[#0b0c14] border border-white/5 rounded-2xl p-4 shadow-inner flex flex-col gap-1 focus-within:bg-white/[0.01]">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Device User Name</label>
-                  <div className="flex items-center gap-2">
-                    <User size={14} className="text-slate-500" />
-                    <input 
-                      type="text" 
-                      required 
-                      value={name} 
-                      onChange={e => setName(e.target.value)} 
-                      autoFocus
-                      onKeyDown={e => e.key === 'Enter' && handleNextStep()}
-                      className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1" 
-                      placeholder="e.g. Device Companion" 
-                    />
-                  </div>
-                </div>
-
-                <button 
-                  onClick={handleNextStep}
-                  className="w-full mt-4 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full text-white font-black text-xs tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1.5 shadow-lg active:scale-[0.98] transition-all"
-                >
-                  <span>Continue</span> 
-                  <ArrowRight size={13} strokeWidth={3} />
-                </button>
-                
-                <button 
-                  onClick={() => navigate('/')} 
-                  className="text-center text-xs text-slate-500 hover:text-white font-bold transition-colors mt-2 cursor-pointer"
-                >
-                  Cancel Setup
-                </button>
+            {error && (
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3.5 rounded-2xl mb-5 text-center font-semibold">
+                {error}
               </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Back Button */}
-              <div className="flex items-center gap-3 mb-6">
-                <button 
-                  onClick={() => setStep(1)} 
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 hover:text-white cursor-pointer transition-all"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-                <div>
-                  <h2 className="text-lg font-black text-white leading-none">Avatar Profile</h2>
-                  <p className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mt-1">Select style profile</p>
-                </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              {AVATARS.map((a) => {
+                const active = picked === a.id;
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => setPicked(a.id)}
+                    disabled={loading}
+                    className={`ag-tap relative flex flex-col items-center justify-center py-7 rounded-3xl border transition-all ${
+                      active ? 'border-white/25 bg-white/[0.06]' : 'border-white/[0.07] bg-[#0b0c14]'
+                    }`}
+                    style={active ? { boxShadow: `0 14px 40px ${a.accent}33` } : undefined}
+                  >
+                    {active && (
+                      <span className="absolute top-3 right-3 flex items-center justify-center w-6 h-6 rounded-full" style={{ background: a.accent }}>
+                        <Check size={14} className="text-[#030307]" strokeWidth={3.5} />
+                      </span>
+                    )}
+                    <div className="text-5xl mb-3">{a.emoji}</div>
+                    <div className="text-[12px] font-black uppercase tracking-wider" style={{ color: a.accent }}>{a.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {loading && (
+              <div className="flex items-center justify-center gap-2 text-[13px] font-extrabold text-cyan-400 mt-6">
+                <Loader2 size={16} className="animate-spin" />
+                <span>Preparing secure pairing…</span>
               </div>
-
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3 rounded-xl mb-6 text-center font-bold">
-                  {error}
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <button 
-                  onClick={() => handleInitPairing('boy')} 
-                  disabled={loading}
-                  className="group relative flex flex-col items-center justify-center p-6 bg-cyan-500/5 hover:bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/40 rounded-2xl cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-200">👦</div>
-                  <div className="text-cyan-400 font-black text-xs tracking-wider uppercase">Profile A</div>
-                </button>
-
-                <button 
-                  onClick={() => handleInitPairing('girl')} 
-                  disabled={loading}
-                  className="group relative flex flex-col items-center justify-center p-6 bg-purple-500/5 hover:bg-purple-500/10 border border-purple-500/20 hover:border-purple-500/40 rounded-2xl cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-200">👧</div>
-                  <div className="text-purple-400 font-black text-xs tracking-wider uppercase">Profile B</div>
-                </button>
-              </div>
-
-              {loading && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex items-center justify-center gap-2 text-xs font-extrabold text-cyan-400 animate-pulse"
-                >
-                  <Loader2 size={15} className="animate-spin" />
-                  <span>PREPARING SYNC RADAR...</span>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Screen>
   );
 };
 

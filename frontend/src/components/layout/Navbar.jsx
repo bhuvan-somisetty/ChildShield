@@ -85,9 +85,13 @@ const Navbar = () => {
 
   return (
     <>
-      <header 
-        className="fixed top-0 left-0 right-0 z-[30] h-16 bg-[#0b0b14]/75 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4"
-        style={{ boxSizing: 'border-box' }}
+      <header
+        className="fixed top-0 left-0 right-0 z-[30] bg-[#0b0b14]/80 backdrop-blur-2xl border-b border-white/[0.06] flex items-center justify-between px-4"
+        style={{
+          boxSizing: 'border-box',
+          height: 'calc(60px + var(--ag-safe-top))',
+          paddingTop: 'var(--ag-safe-top)',
+        }}
       >
         {/* Left Side: Brand Logo and Pulsing protection active indicator */}
         <div className="flex items-center gap-3 min-w-0">

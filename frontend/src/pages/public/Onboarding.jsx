@@ -1,283 +1,249 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, MapPin, Camera, Mic, Lock, ChevronRight, ChevronLeft, Bell, AlertTriangle, Brain, Sparkles, Activity } from 'lucide-react';
+import {
+  MapPin, Clock, Bell, ShieldAlert, Lock,
+  ChevronRight, ChevronLeft, Navigation, Hourglass, Radio, Siren, FileCheck2,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Screen, Button, ProgressDots } from '../../components/ui';
 
-const slides = [
+/* ── Slide graphics (premium, lightweight, subtle motion) ──────────────────── */
+const FrameCard = ({ color, children }) => (
+  <div className="relative w-56 h-52 flex items-center justify-center">
+    <div
+      className="absolute inset-0 rounded-[28px] border border-white/10 overflow-hidden shadow-[0_24px_56px_rgba(0,0,0,0.5)]"
+      style={{ background: `linear-gradient(135deg, ${color}22, rgba(8,9,18,0.95))` }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{ background: `radial-gradient(circle at 50% 35%, ${color}1f 0%, transparent 65%)` }}
+      />
+    </div>
+    <div className="relative z-10 flex items-center justify-center w-full h-full">{children}</div>
+  </div>
+);
+
+const Pill = ({ color, icon: Icon, label, className = '', delay = 0.25 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 8, scale: 0.9 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ delay, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    className={`absolute flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black shadow-lg border border-white/10 ${className}`}
+    style={{ background: color, color: '#030307' }}
+  >
+    {Icon && <Icon size={11} />}
+    <span>{label}</span>
+  </motion.div>
+);
+
+const SLIDES = [
   {
     id: 'location',
-    icon: MapPin,
-    color: '#06b6d4', // Cyan
-    title: "Live Tracking & Safe Zones",
-    subtitle: "Monitor active real-time locations and define custom safe boundaries with automatic entry and exit alerts.",
-    graphic: (
-      <div className="relative w-48 h-36 flex items-center justify-center">
-        <div className="absolute w-full h-full rounded-3xl border border-white/10 bg-gradient-to-tr from-cyan-950/45 to-slate-900/90 flex items-center justify-center overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(6,182,212,0.1)_0%,transparent_60%)]" />
-          <div className="flex items-center gap-4 relative z-10">
-            <motion.div 
-              animate={{ scale: [1, 1.15, 1] }} 
-              transition={{ repeat: Infinity, duration: 2.5 }}
-              className="flex flex-col items-center"
-            >
-              <MapPin size={26} className="text-emerald-400" />
-              <span className="text-[8px] font-extrabold text-emerald-400 mt-1 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">Home</span>
-            </motion.div>
-            <div className="w-10 h-0.5 border-t border-dashed border-cyan-500/40" />
-            <div className="flex flex-col items-center">
-              <MapPin size={26} className="text-cyan-400" />
-              <span className="text-[8px] font-extrabold text-cyan-400 mt-1 bg-cyan-500/10 border border-cyan-500/20 px-1.5 py-0.5 rounded">Safe Area</span>
-            </div>
+    color: '#06b6d4',
+    eyebrow: 'Live Protection',
+    title: 'Real-Time Location Tracking',
+    body: 'See where your child is the moment it matters — precise, always-on location with a clean live map and battery-smart updates.',
+    graphic: (color) => (
+      <FrameCard color={color}>
+        <motion.div
+          animate={{ scale: [1, 1.12, 1] }}
+          transition={{ repeat: Infinity, duration: 2.6, ease: 'easeInOut' }}
+          className="flex flex-col items-center"
+        >
+          <div className="w-16 h-16 rounded-3xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center">
+            <Navigation size={30} className="text-cyan-300" fill="currentColor" />
           </div>
-        </div>
-        <motion.div 
-          initial={{ x: 20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="absolute top-[-12px] right-[-10px] bg-cyan-500 border border-white/10 px-2.5 py-1 rounded-xl text-[9.5px] font-black text-[#030307] flex items-center gap-1 shadow-lg shadow-cyan-500/15"
-        >
-          <Bell size={10} />
-          <span>Entered Safe Zone</span>
         </motion.div>
-      </div>
-    )
+        <Pill color="#22d3ee" icon={MapPin} label="Live now" className="top-3 right-3" />
+      </FrameCard>
+    ),
   },
   {
-    id: 'manage',
-    icon: Lock,
-    color: '#8b5cf6', // Purple
-    title: "Device Controls & Screen Time",
-    subtitle: "Configure screen limits, bedtime restrictions, and lock device usage instantly when bounds are exceeded.",
-    graphic: (
-      <div className="relative w-32 h-40 flex items-center justify-center">
-        <div className="absolute w-full h-full rounded-2xl border border-white/10 bg-gradient-to-tr from-indigo-950/45 to-slate-900/90 flex flex-col items-center justify-center gap-3 shadow-2xl">
-          <div className="w-10 h-1 bg-white/10 rounded-full absolute top-2" />
+    id: 'screentime',
+    color: '#8b5cf6',
+    eyebrow: 'Healthy Habits',
+    title: 'Smart Screen Time Control',
+    body: 'Set daily limits, schedule bedtime, and pause the device instantly. Balanced screen time without the daily arguments.',
+    graphic: (color) => (
+      <FrameCard color={color}>
+        <motion.div
+          animate={{ rotate: [0, 6, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+          className="w-16 h-16 rounded-3xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center"
+        >
+          <Hourglass size={28} className="text-purple-300" />
+        </motion.div>
+        <Pill color="#a78bfa" icon={Clock} label="2h daily limit" className="bottom-4 left-3" />
+      </FrameCard>
+    ),
+  },
+  {
+    id: 'safezones',
+    color: '#10b981',
+    eyebrow: 'Geofencing',
+    title: 'Safe Zones & Instant Alerts',
+    body: 'Draw safe areas like home and school. Get an instant alert the moment your child arrives or leaves — automatically.',
+    graphic: (color) => (
+      <FrameCard color={color}>
+        <div className="relative flex items-center justify-center">
           <motion.div
-            animate={{ scale: [1, 1.1, 1], rotate: [0, 4, -4, 0] }}
-            transition={{ repeat: Infinity, duration: 4 }}
-          >
-            <Lock size={32} className="text-purple-400" />
-          </motion.div>
-          <span className="text-[9px] font-extrabold text-red-500 bg-red-500/10 border border-red-500/25 px-2 py-0.5 rounded-full tracking-wider uppercase">
-            Device Paused
-          </span>
-        </div>
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="absolute bottom-4 right-[-32px] bg-purple-500 border border-white/10 px-2.5 py-1 rounded-xl text-[10px] font-bold text-white shadow-lg"
-        >
-          ⏳ Time Limit Reached
-        </motion.div>
-      </div>
-    )
-  },
-  {
-    id: 'surroundings',
-    icon: Camera,
-    color: '#3b82f6', // Blue
-    title: "Emergency Monitoring",
-    subtitle: "Remotely check camera feeds or stream ambient audio feeds during active SOS states to confirm child safety.",
-    graphic: (
-      <div className="relative w-40 h-36 flex items-center justify-center">
-        <div className="absolute w-full h-full rounded-3xl border border-white/10 bg-gradient-to-tr from-blue-950/45 to-slate-900/90 flex items-center justify-center gap-4 shadow-2xl">
-          <motion.div 
-            animate={{ y: [0, -5, 0] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-            className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center shadow-lg"
-          >
-            <Camera size={20} className="text-blue-400" />
-          </motion.div>
-          <motion.div 
-            animate={{ y: [0, 5, 0] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.5 }}
-            className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-lg"
-          >
-            <Mic size={20} className="text-amber-400" />
-          </motion.div>
-        </div>
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="absolute top-[-10px] bg-red-500 border border-white/10 px-2.5 py-1 rounded-xl text-[9.5px] font-black text-white flex items-center gap-1 shadow-lg"
-        >
-          <Activity size={10} className="animate-pulse" />
-          <span>Live Telemetry Stream</span>
-        </motion.div>
-      </div>
-    )
-  },
-  {
-    id: 'ai-insights',
-    icon: Brain,
-    color: '#10b981', // Green
-    title: "AI Parenting Insights",
-    subtitle: "Receive proactive advice, behavior diagnostics, screen-time trends, and automatic danger risk alerts.",
-    graphic: (
-      <div className="relative w-40 h-36 flex items-center justify-center">
-        <div className="absolute w-full h-full rounded-3xl border border-white/10 bg-gradient-to-tr from-emerald-950/45 to-slate-900/90 flex flex-col items-center justify-center p-4 shadow-2xl">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 20, ease: 'linear' }}
-            className="absolute inset-0 bg-[radial-gradient(circle,rgba(16,185,129,0.08)_0%,transparent_70%)]"
+            animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ repeat: Infinity, duration: 2.4, ease: 'easeOut' }}
+            className="absolute w-24 h-24 rounded-full border-2 border-emerald-400/40"
           />
-          <Brain size={36} className="text-emerald-400 mb-2 relative z-10" />
-          <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full z-10">
-            <Sparkles size={10} className="text-emerald-400" />
-            <span className="text-[8.5px] font-extrabold text-emerald-400 uppercase tracking-wider">Alpha AI Active</span>
+          <div className="w-16 h-16 rounded-3xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
+            <Radio size={28} className="text-emerald-300" />
           </div>
         </div>
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="absolute bottom-[-8px] bg-indigo-600 border border-white/10 px-2 py-0.5 rounded-lg text-[9px] font-extrabold text-white shadow-lg"
-        >
-          💡 Try App Blocker
-        </motion.div>
-      </div>
-    )
+        <Pill color="#34d399" icon={Bell} label="Entered school" className="top-3 left-3" />
+      </FrameCard>
+    ),
   },
   {
-    id: 'sos-protection',
-    icon: ShieldCheck,
-    color: '#fbbf24', // Gold
-    title: "SOS & Family Protection",
-    subtitle: "Instant emergency broadcasting, distress countdown triggers, and rapid security unlinking codes.",
-    termsText: "By clicking Agree, you ensure you have read and fully understood our Terms of Service and Privacy Policy. You authorize AlphaGuard OS to transmit location telemetry and execute parental overrides on this device in accordance with global safety compliance frameworks.",
-    graphic: (
-      <div className="relative w-36 h-36 flex items-center justify-center">
-        <div className="absolute w-full h-full rounded-3xl border border-white/5 bg-gradient-to-tr from-slate-900 to-slate-950 transform rotate-[-4deg] opacity-50" />
-        <div className="absolute w-full h-full rounded-3xl border border-amber-500/30 bg-gradient-to-tr from-[#12121c] to-slate-950 flex items-center justify-center shadow-2xl backdrop-blur-md">
-          <motion.div
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ repeat: Infinity, duration: 3 }}
-          >
-            <ShieldCheck size={48} className="text-amber-400" strokeWidth={1.5} />
-          </motion.div>
-        </div>
-      </div>
-    )
-  }
+    id: 'sos',
+    color: '#f59e0b',
+    eyebrow: 'Emergency Ready',
+    title: 'Emergency SOS Protection',
+    body: 'One tap broadcasts a distress alert with live location and audio. Help reaches your child faster when seconds count.',
+    graphic: (color) => (
+      <FrameCard color={color}>
+        <motion.div
+          animate={{ scale: [1, 1.08, 1] }}
+          transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
+          className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.35)]"
+        >
+          <Siren size={30} className="text-amber-300" />
+        </motion.div>
+        <Pill color="#fbbf24" icon={ShieldAlert} label="SOS broadcasting" className="bottom-4 right-3" />
+      </FrameCard>
+    ),
+  },
+  {
+    id: 'privacy',
+    color: '#3b82f6',
+    eyebrow: 'Trust & Transparency',
+    title: 'Privacy, Safety & Terms',
+    body: 'Your family’s data is encrypted and never sold. Monitoring is always visible to your child — safety with respect, by design.',
+    isConsent: true,
+    terms:
+      'By continuing you confirm you have read and agree to the AlphaGuard AI Terms of Service and Privacy Policy. You authorize AlphaGuard AI to process location, device, and safety telemetry to deliver parental-safety features in line with applicable privacy regulations.',
+    graphic: (color) => (
+      <FrameCard color={color}>
+        <motion.div
+          animate={{ y: [0, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+          className="w-16 h-16 rounded-3xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center"
+        >
+          <FileCheck2 size={28} className="text-blue-300" />
+        </motion.div>
+        <Pill color="#60a5fa" icon={Lock} label="End-to-end encrypted" className="top-3 right-3" />
+      </FrameCard>
+    ),
+  },
 ];
 
 const Onboarding = () => {
-  const [step, setStep] = useState(0);
   const navigate = useNavigate();
-  const slide = slides[step];
-  const isLast = step === slides.length - 1;
+  const [step, setStep] = useState(0);
+  const [dir, setDir] = useState(1);
+  const slide = SLIDES[step];
+  const isLast = step === SLIDES.length - 1;
 
-  const handleNext = () => {
-    if (isLast) {
-      navigate('/role-selection', { replace: true });
-    } else {
-      setStep(prev => prev + 1);
-    }
+  const go = (next) => {
+    if (next < 0 || next >= SLIDES.length) return;
+    setDir(next > step ? 1 : -1);
+    setStep(next);
   };
 
-  const handlePrev = () => {
-    if (step > 0) setStep(prev => prev - 1);
+  const handleNext = () => {
+    if (isLast) navigate('/role-selection', { replace: true });
+    else go(step + 1);
+  };
+
+  const onDragEnd = (_, info) => {
+    if (info.offset.x < -60 || info.velocity.x < -400) go(step + 1);
+    else if (info.offset.x > 60 || info.velocity.x > 400) go(step - 1);
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
-      
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
-      <div 
-        className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[320px] h-[320px] rounded-full filter blur-[100px] opacity-15 transition-all duration-700 pointer-events-none"
-        style={{ backgroundColor: slide.color }}
-      />
-      
-      {/* Full-bleed Content Column */}
-      <div className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col items-center justify-between">
-        
-        {/* Navigation skip */}
-        <div className="w-full flex items-center justify-between mb-4">
-          {step > 0 ? (
-            <button 
-              onClick={handlePrev}
-              className="text-slate-400 hover:text-white text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <ChevronLeft size={14} />
-              <span>Back</span>
-            </button>
-          ) : <div />}
-          {!isLast && (
-            <button 
-              onClick={() => setStep(slides.length - 1)}
-              className="text-slate-400 hover:text-white text-xs font-bold transition-colors cursor-pointer"
-            >
-              Skip
-            </button>
-          )}
-        </div>
-
-        {/* Carousel Content */}
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={slide.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.35 }}
-            className="w-full flex flex-col items-center"
+    <Screen
+      ambient="brand"
+      glowColor={`radial-gradient(circle, ${slide.color} 0%, transparent 60%)`}
+      align="between"
+      scroll={false}
+      footer={
+        <Button onClick={handleNext} iconRight={ChevronRight}>
+          {isLast ? 'Agree & Continue' : 'Continue'}
+        </Button>
+      }
+    >
+      {/* Top bar: back + skip */}
+      <div className="w-full flex items-center justify-between min-h-[28px]">
+        {step > 0 ? (
+          <button
+            onClick={() => go(step - 1)}
+            className="ag-tap flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold"
           >
-            {/* Vector Graphic Widget */}
-            <div className="h-40 flex items-center justify-center mb-6">
-              {slide.graphic}
-            </div>
+            <ChevronLeft size={15} /> Back
+          </button>
+        ) : (
+          <span />
+        )}
+        {!isLast && (
+          <button
+            onClick={() => go(SLIDES.length - 1)}
+            className="ag-tap text-slate-400 hover:text-white text-xs font-bold"
+          >
+            Skip
+          </button>
+        )}
+      </div>
 
-            {/* Text details */}
-            <div className="text-center min-h-[110px] flex flex-col items-center px-2">
-              <h3 className="text-lg font-black text-white tracking-wide mb-2.5">{slide.title}</h3>
-              <p className="text-slate-400 text-xs md:text-sm leading-relaxed max-w-[340px]">
-                {slide.subtitle}
-              </p>
-            </div>
-            
-            {/* Scrollable Terms for Consent Slide */}
-            {isLast && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-2 p-3.5 bg-black/40 border border-white/5 rounded-2xl text-[9.5px] text-slate-500 leading-normal text-left max-h-[90px] overflow-y-auto"
-              >
-                {slide.termsText}
-              </motion.div>
+      {/* Swipeable carousel */}
+      <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+        <AnimatePresence mode="wait" custom={dir}>
+          <motion.div
+            key={slide.id}
+            custom={dir}
+            initial={{ opacity: 0, x: dir * 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: dir * -40 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.18}
+            onDragEnd={onDragEnd}
+            className="w-full flex flex-col items-center text-center cursor-grab active:cursor-grabbing"
+          >
+            <div className="mb-9">{slide.graphic(slide.color)}</div>
+
+            <span
+              className="text-[11px] font-black uppercase tracking-[0.28em] mb-3"
+              style={{ color: slide.color }}
+            >
+              {slide.eyebrow}
+            </span>
+            <h2 className="text-[26px] font-black text-white tracking-tight leading-[1.15] mb-3 px-2">
+              {slide.title}
+            </h2>
+            <p className="text-slate-400 text-[14px] leading-relaxed max-w-[330px] px-2">
+              {slide.body}
+            </p>
+
+            {slide.isConsent && (
+              <div className="mt-5 mx-2 p-4 bg-black/40 border border-white/[0.06] rounded-2xl text-[11px] text-slate-500 leading-relaxed text-left max-h-[96px] overflow-y-auto ag-no-scrollbar">
+                {slide.terms}
+              </div>
             )}
           </motion.div>
         </AnimatePresence>
-
-        {/* Indicator Pills */}
-        <div className="flex items-center gap-1.5 my-6">
-          {slides.map((_, i) => (
-            <div 
-              key={i} 
-              className={`h-1 rounded-full transition-all duration-300 ${i === step ? 'w-5' : 'w-1'}`} 
-              style={{ backgroundColor: i === step ? slide.color : 'rgba(255,255,255,0.12)' }}
-            />
-          ))}
-        </div>
-
-        {/* Bottom Primary Button */}
-        <div className="w-full">
-          <button 
-            onClick={handleNext}
-            className="w-full py-3.5 rounded-2xl text-[#030307] font-black text-xs tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1 shadow-lg active:scale-[0.98] transition-all duration-300"
-            style={{ 
-              background: isLast ? 'linear-gradient(135deg, #fbbf24, #d97706)' : `linear-gradient(135deg, ${slide.color}, #3b82f6)`,
-            }}
-          >
-            <span>{isLast ? 'Agree & Enter' : 'Continue'}</span>
-            <ChevronRight size={13} strokeWidth={3} />
-          </button>
-        </div>
-
       </div>
 
-    </div>
+      {/* Step indicator */}
+      <div className="w-full flex justify-center py-5">
+        <ProgressDots count={SLIDES.length} active={step} color={slide.color} />
+      </div>
+    </Screen>
   );
 };
 

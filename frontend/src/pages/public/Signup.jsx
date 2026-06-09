@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
-import { Shield, User, Lock, Mail, Key, Eye, EyeOff, Loader2, AlertTriangle, ChevronRight, ChevronLeft } from 'lucide-react';
+import { User, Lock, Mail, Loader2, AlertCircle, ChevronRight, ChevronLeft, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Screen, Button, TextField, BrandMark, ProgressDots } from '../../components/ui';
 
-const BACKEND = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-  ? 'http://localhost:5000' 
+const BACKEND = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
   : 'https://childshield-1sd6.onrender.com';
+
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+);
 
 const Signup = () => {
   const { register, user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '', parentControlPassword: '' });
-  const [show, setShow] = useState({ pass: false, confirm: false, parent: false });
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [step, setStep] = useState(1); // 1 = identity, 2 = security
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isWakingServer, setIsWakingServer] = useState(false);
@@ -22,15 +30,13 @@ const Signup = () => {
 
   useEffect(() => {
     let timer;
-    if (isWakingServer) {
-      timer = setTimeout(() => setWakeTimeout(true), 30000);
-    } else {
-      setWakeTimeout(false);
-    }
+    if (isWakingServer) timer = setTimeout(() => setWakeTimeout(true), 30000);
+    else setWakeTimeout(false);
     return () => clearTimeout(timer);
   }, [isWakingServer]);
 
-  if (user) return <Navigate to="/controls" />;
+  // Already-authenticated users who have finished setup skip signup.
+  if (user && !user.needsPasswordSetup) return <Navigate to="/controls" />;
 
   const oauthRedirect = async (provider) => {
     setIsWakingServer(true);
@@ -40,401 +46,181 @@ const Signup = () => {
         const res = await fetch(`${BACKEND}/api/health`, { cache: 'no-store' });
         if (res.ok) break;
       } catch (err) {}
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 3000));
       attempts++;
     }
     setIsWakingServer(false);
     window.location.href = `${BACKEND}/auth/${provider}`;
   };
 
-  const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
-  const toggleShow   = k => setShow(s => ({ ...s, [k]: !s[k] }));
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  const handleNextStep = (e) => {
+  const handleIdentity = (e) => {
     e.preventDefault();
     setError('');
-    
-    if (step === 1) {
-      if (!formData.fullName.trim() || !formData.email.trim()) {
-        setError('Please fill in your name and email.');
-        return;
-      }
-      setStep(2);
-    } else if (step === 2) {
-      if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters.');
-        return;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match.');
-        return;
-      }
-      setStep(3);
-    }
-  };
-
-  const handleSignupSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.parentControlPassword.trim()) {
-      setError('Parent override password is required.');
+    if (!form.fullName.trim() || !form.email.trim()) {
+      setError('Please enter your name and email.');
       return;
     }
-    setError('');
-    setShowConfirmModal(true);
+    setStep(2);
   };
 
-  const confirmRegistration = async () => {
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
     setSubmitting(true);
-    try { 
-      await register(formData); 
-    }
-    catch (err) { 
-      setError(err.message || 'Registration failed.'); 
-      setShowConfirmModal(false); 
-    }
-    finally { 
-      setSubmitting(false); 
+    try {
+      // Override PIN is intentionally NOT collected here — it is set in SetupPassword.
+      const result = await register({
+        fullName: form.fullName,
+        email: form.email,
+        password: form.password,
+      });
+      const needsSetup = result && typeof result === 'object' ? result.needsPasswordSetup : true;
+      navigate(needsSetup ? '/setup-password' : '/controls', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Registration failed.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (isWakingServer) {
     return (
-      <div className="min-h-screen w-full bg-[#030307] flex flex-col items-center justify-center gap-6 px-4 font-sans">
-        <div className="relative w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.25)] animate-pulse">
-          <Loader2 size={36} className="text-cyan-400 animate-spin" />
-        </div>
-        <div className="text-center">
-          <p className="text-white font-extrabold text-base mb-1">
-            {wakeTimeout ? 'Server taking longer to load...' : 'Securing your session...'}
-          </p>
-          <p className="text-slate-400 text-xs">
-            {wakeTimeout ? 'Render free tier can take up to 90s to spin up.' : 'Waking AlphaGuard AI... please wait'}
-          </p>
+      <Screen ambient="brand" align="center" scroll={false}>
+        <div className="flex flex-col items-center text-center gap-6">
+          <div className="w-20 h-20 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.3)]">
+            <Loader2 size={34} className="text-cyan-400 animate-spin" />
+          </div>
+          <div>
+            <p className="text-white font-extrabold text-base mb-1.5">
+              {wakeTimeout ? 'Almost there…' : 'Connecting securely'}
+            </p>
+            <p className="text-slate-400 text-[13px] max-w-[280px]">
+              {wakeTimeout ? 'The secure server is waking up — up to 90 seconds on first connect.' : 'Reaching AlphaGuard AI…'}
+            </p>
+          </div>
           {wakeTimeout && (
-            <button
-              onClick={() => { setIsWakingServer(false); setWakeTimeout(false); }}
-              className="mt-4 px-5 py-2 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-full text-white font-bold text-xs cursor-pointer shadow-lg"
-            >
+            <Button variant="secondary" size="md" fullWidth={false} onClick={() => { setIsWakingServer(false); setWakeTimeout(false); }}>
               Cancel & Retry
-            </button>
+            </Button>
           )}
         </div>
-      </div>
+      </Screen>
     );
   }
 
+  const footer =
+    step === 1 ? (
+      <Button onClick={handleIdentity} iconRight={ChevronRight}>Continue</Button>
+    ) : (
+      <Button onClick={handleCreate} loading={submitting} iconRight={ChevronRight}>Create Account</Button>
+    );
+
   return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
-      
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
-      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] rounded-full bg-indigo-600/10 filter blur-[100px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[10%] right-[10%] w-[380px] h-[380px] rounded-full bg-cyan-600/10 filter blur-[100px] pointer-events-none animate-pulse" />
-      
-      {/* Confirmation Modal */}
-      <AnimatePresence>
-        {showConfirmModal && (
-          <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-[420px] p-6 bg-[#0b0c14] border border-white/10 rounded-[28px] shadow-2xl backdrop-blur-xl text-center flex flex-col"
-            >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 mx-auto mb-4">
-                <Shield size={24} className="text-cyan-400" />
-              </div>
-              <h3 className="text-lg font-black text-white tracking-wide mb-1">Confirm Registration</h3>
-              <p className="text-slate-500 text-xs mb-5 font-bold uppercase tracking-wider">Double-check your credentials</p>
-
-              <div className="bg-white/[0.02] p-4 rounded-2xl text-left border border-white/5 mb-5 flex flex-col gap-3.5">
-                <div>
-                  <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Full Name</span>
-                  <div className="text-white font-extrabold text-xs mt-0.5">{formData.fullName}</div>
-                </div>
-                <div className="border-t border-white/5 pt-2.5">
-                  <span className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Email Address</span>
-                  <div className="text-white font-extrabold text-xs mt-0.5">{formData.email}</div>
-                </div>
-                <div className="bg-amber-500/10 border-l-4 border-amber-500 p-3 rounded-r-xl">
-                  <span className="text-[10px] uppercase font-black text-amber-500 tracking-widest flex items-center gap-1.5">
-                    <AlertTriangle size={12} /> Override Warning:
-                  </span>
-                  <div className="text-slate-300 text-[10px] mt-1 leading-normal font-semibold">
-                    Ensure you memorize your Parent override password. It is required to approve device changes and bypass local child blocks.
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setShowConfirmModal(false)} 
-                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/5 text-white font-bold text-xs tracking-wider uppercase rounded-xl cursor-pointer"
-                >
-                  Review
-                </button>
-                <button 
-                  onClick={confirmRegistration} 
-                  disabled={submitting} 
-                  className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-black text-xs tracking-wider uppercase rounded-xl cursor-pointer shadow-lg disabled:opacity-75"
-                >
-                  {submitting ? 'Creating...' : 'Confirm'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Signup Page Content */}
-      <motion.div 
-        initial={{ y: 15, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col justify-center gap-4"
+    <Screen ambient="brand" align="between" footer={footer}>
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full flex flex-col"
       >
-        
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 mb-4">
-            <Shield size={26} className="text-cyan-400" />
+        <div className="flex flex-col items-center text-center mb-7">
+          <BrandMark variant="stacked" className="mb-6" />
+          <h1 className="text-[26px] font-black text-white tracking-tight leading-tight">Create your account</h1>
+          <div className="flex items-center gap-2.5 mt-3">
+            <ProgressDots count={2} active={step - 1} />
+            <span className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.12em]">
+              Step {step} of 2 · {step === 1 ? 'Your details' : 'Security'}
+            </span>
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight leading-none">Create Account</h2>
-          <p className="text-slate-500 text-xs mt-1.5 font-bold uppercase tracking-wider">
-            Step {step} of 3: {step === 1 ? 'Identity' : step === 2 ? 'Security' : 'Bypass PIN'}
-          </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3.5 rounded-xl mb-4 text-center font-bold">
-            {error}
+          <div className="flex items-start gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3.5 rounded-2xl mb-5 font-semibold">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
         <AnimatePresence mode="wait">
-          {step === 1 && (
-            <motion.form 
-              key="step1"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              onSubmit={handleNextStep}
+          {step === 1 ? (
+            <motion.form
+              key="s1"
+              initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }}
+              transition={{ duration: 0.25 }}
+              onSubmit={handleIdentity}
               className="flex flex-col gap-4"
             >
-              <div className="bg-[#0b0c14] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5 shadow-inner">
-                <div className="p-4 flex flex-col gap-1 focus-within:bg-white/[0.01]">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Full Name</label>
-                  <div className="flex items-center gap-2">
-                    <User size={14} className="text-slate-500" />
-                    <input 
-                      type="text" 
-                      name="fullName" 
-                      required 
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1"
-                      placeholder="Jane Doe" 
-                    />
-                  </div>
-                </div>
-
-                <div className="p-4 flex flex-col gap-1 focus-within:bg-white/[0.01]">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</label>
-                  <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-slate-500" />
-                    <input 
-                      type="email" 
-                      name="email" 
-                      required 
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1"
-                      placeholder="parent@domain.com" 
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <button 
-                type="submit"
-                className="w-full mt-4 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full text-white font-black text-xs tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1 shadow-lg"
-              >
-                <span>Continue</span>
-                <ChevronRight size={13} strokeWidth={3} />
-              </button>
+              <TextField label="Full Name" icon={User} value={form.fullName} onChange={set('fullName')} placeholder="Jane Doe" required autoFocus />
+              <TextField label="Email Address" icon={Mail} type="email" value={form.email} onChange={set('email')} placeholder="parent@domain.com" required />
             </motion.form>
-          )}
-
-          {step === 2 && (
-            <motion.form 
-              key="step2"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              onSubmit={handleNextStep}
+          ) : (
+            <motion.form
+              key="s2"
+              initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.25 }}
+              onSubmit={handleCreate}
               className="flex flex-col gap-4"
             >
-              <div className="bg-[#0b0c14] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5 shadow-inner">
-                <div className="p-4 flex flex-col gap-1 focus-within:bg-white/[0.01]">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Create Password</label>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1">
-                      <Lock size={14} className="text-slate-500" />
-                      <input 
-                        type={show.pass ? 'text' : 'password'} 
-                        name="password" 
-                        required 
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1"
-                        placeholder="••••••••••••" 
-                      />
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => toggleShow('pass')} 
-                      className="text-slate-500 hover:text-white cursor-pointer"
-                    >
-                      {show.pass ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
+              <TextField label="Create Password" icon={Lock} type="password" value={form.password} onChange={set('password')} placeholder="At least 6 characters" required autoFocus
+                hint={!form.password ? 'Use 6+ characters' : undefined}
+                success={form.password.length >= 6 ? 'Strong enough' : undefined} />
+              <TextField label="Confirm Password" icon={Lock} type="password" value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="Re-enter password" required
+                error={form.confirmPassword && form.confirmPassword !== form.password ? 'Passwords do not match' : undefined}
+                success={form.confirmPassword && form.confirmPassword === form.password ? 'Passwords match' : undefined} />
 
-                <div className="p-4 flex flex-col gap-1 focus-within:bg-white/[0.01]">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Confirm Password</label>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1">
-                      <Lock size={14} className="text-slate-500" />
-                      <input 
-                        type={show.confirm ? 'text' : 'password'} 
-                        name="confirmPassword" 
-                        required 
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1"
-                        placeholder="••••••••••••" 
-                      />
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => toggleShow('confirm')} 
-                      className="text-slate-500 hover:text-white cursor-pointer"
-                    >
-                      {show.confirm ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="px-4 py-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-300 font-bold text-xs cursor-pointer flex items-center justify-center hover:bg-white/10 active:scale-95"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full text-white font-black text-xs tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1 shadow-lg"
-                >
-                  <span>Continue</span>
-                  <ChevronRight size={13} strokeWidth={3} />
-                </button>
-              </div>
-            </motion.form>
-          )}
-
-          {step === 3 && (
-            <motion.form 
-              key="step3"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              onSubmit={handleSignupSubmit}
-              className="flex flex-col gap-4"
-            >
-              <div className="bg-indigo-950/15 border border-indigo-500/10 p-4 rounded-2xl mb-2 flex flex-col gap-1.5">
-                <span className="text-[10.5px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <Key size={13} /> Parent Control Password
-                </span>
-                <p className="text-[9.5px] text-slate-400 leading-normal font-semibold">
-                  This custom password is required to remotely approve device lock requests and modify child safe perimeters.
+              <div className="flex items-start gap-2.5 p-3.5 bg-blue-500/[0.06] border border-blue-500/15 rounded-2xl mt-1">
+                <ShieldCheck size={16} className="text-cyan-400 flex-shrink-0 mt-0.5" />
+                <p className="text-[11.5px] text-slate-400 leading-relaxed font-medium">
+                  Next, you’ll set a 4-digit <span className="text-slate-200 font-bold">Override PIN</span> to approve device changes and unlocks.
                 </p>
               </div>
 
-              <div className="bg-[#0b0c14] border border-white/5 rounded-2xl overflow-hidden shadow-inner p-4">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Override Password</label>
-                <div className="flex items-center justify-between mt-1">
-                  <div className="flex items-center gap-2 flex-1">
-                    <Key size={14} className="text-slate-500" />
-                    <input 
-                      type={show.parent ? 'text' : 'password'} 
-                      name="parentControlPassword" 
-                      required 
-                      value={formData.parentControlPassword}
-                      onChange={handleChange}
-                      className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1"
-                      placeholder="Secure override code" 
-                    />
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={() => toggleShow('parent')} 
-                    className="text-slate-500 hover:text-white cursor-pointer"
-                  >
-                    {show.parent ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button 
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="px-4 py-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-300 font-bold text-xs cursor-pointer flex items-center justify-center hover:bg-white/10 active:scale-95"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-indigo-500 rounded-full text-white font-black text-xs tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1 shadow-lg"
-                >
-                  <span>Create Account</span>
-                  <ChevronRight size={13} strokeWidth={3} />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => { setStep(1); setError(''); }}
+                className="ag-tap self-start flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold mt-1"
+              >
+                <ChevronLeft size={15} /> Back to details
+              </button>
             </motion.form>
           )}
         </AnimatePresence>
 
-        {/* Alternate login path */}
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-[1px] bg-white/5" />
-          <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-widest">or register via</span>
-          <div className="flex-1 h-[1px] bg-white/5" />
-        </div>
+        {/* OAuth — only on first step to keep the security step focused */}
+        {step === 1 && (
+          <>
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-white/[0.07]" />
+              <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or sign up with</span>
+              <div className="flex-1 h-px bg-white/[0.07]" />
+            </div>
+            <button
+              onClick={() => oauthRedirect('google')}
+              className="ag-tap w-full flex items-center justify-center gap-3 min-h-[52px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold"
+            >
+              <GoogleIcon />
+              <span>Continue with Google</span>
+            </button>
+          </>
+        )}
 
-        <button 
-          onClick={() => oauthRedirect('google')}
-          className="w-full flex items-center justify-center gap-3 py-3 bg-[#0b0c14] hover:bg-white/5 border border-white/5 rounded-2xl text-white text-xs font-black cursor-pointer transition-all duration-200"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          <span>Continue with Google</span>
-        </button>
-
-        <p className="text-center text-xs text-slate-400 mt-6 font-semibold">
+        <p className="text-center text-[13px] text-slate-400 mt-7 font-semibold">
           Already registered?{' '}
-          <Link to="/login" className="text-indigo-400 font-extrabold hover:underline">Sign In here</Link>
+          <Link to="/login" className="text-indigo-400 font-extrabold hover:underline">Sign in</Link>
         </p>
-
       </motion.div>
-    </div>
+    </Screen>
   );
 };
 

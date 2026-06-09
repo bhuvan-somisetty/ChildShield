@@ -100,7 +100,15 @@ const AppLayout = () => {
       <Sidebar isMobile={isMobile} isOpenMobile={isMobileSidebarOpen} onCloseMobile={() => setIsMobileSidebarOpen(false)} />
       <div className="main-content">
         <Navbar />
-        <main className="page-content" style={isMobile ? { paddingBottom: '80px' } : undefined}>
+        <main
+          className="page-content"
+          style={{
+            paddingTop: 'calc(60px + var(--ag-safe-top) + 14px)',
+            paddingBottom: isMobile
+              ? 'calc(64px + var(--ag-safe-bottom) + 18px)'
+              : undefined,
+          }}
+        >
           <React.Suspense fallback={<div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>}>
             <Routes location={location} key={location.pathname}>
               <Route path="/dashboard" element={<Dashboard />} />

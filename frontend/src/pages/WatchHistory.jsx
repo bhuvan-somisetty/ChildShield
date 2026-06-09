@@ -1,108 +1,86 @@
 import React, { useState } from 'react';
 import { PlayCircle, AlertCircle, Clock, Search, Gamepad2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLivePolling } from '../hooks/useLivePolling';
+import { Card } from '../components/ui';
+
+const RISK = { high: '#f43f5e', medium: '#f59e0b', low: '#06b6d4' };
 
 const WatchHistory = () => {
   const history = useLivePolling('/api/history') || [];
-  const [expandedGroups, setExpandedGroups] = useState({ 'Today': true, 'Yesterday': false });
+  const [expandedGroups, setExpandedGroups] = useState({ Today: true, Yesterday: false });
 
-  const getRiskColor = (risk) => {
-    switch(risk) {
-      case 'high': return 'var(--accent-red)';
-      case 'medium': return 'var(--accent-yellow)';
-      default: return 'var(--accent-cyan)';
-    }
+  const getRiskColor = (risk) => RISK[risk] || RISK.low;
+  const getIcon = (category, color) => {
+    const p = { size: 22, color };
+    if (category === 'Gaming') return <Gamepad2 {...p} />;
+    if (category === 'Search') return <Search {...p} />;
+    return <PlayCircle {...p} />;
   };
+  const toggleGroup = (g) => setExpandedGroups((p) => ({ ...p, [g]: !p[g] }));
 
-  const getIcon = (category) => {
-    if(category === 'Gaming') return <Gamepad2 size={24} />;
-    if(category === 'Search') return <Search size={24} />;
-    return <PlayCircle size={24} />;
-  };
-
-  const toggleGroup = (group) => {
-    setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
-  };
-
-  // Live Simulation grouping mock
   const groupedHistory = {
-    'Today': history,
-    'Yesterday': [
+    Today: history,
+    Yesterday: [
       { id: 'y1', app: 'Netflix', title: 'Stranger Things S4E1', category: 'Entertainment', startTime: '8:00 PM', duration: '1h 15m', risk: 'low', alerts: [] },
-      { id: 'y2', app: 'Google', title: 'Search: How to bypass safe search', category: 'Search', startTime: '4:30 PM', duration: '5m', risk: 'high', alerts: ['Restricted Search Attempt'] }
-    ]
+      { id: 'y2', app: 'Google', title: 'Search: How to bypass safe search', category: 'Search', startTime: '4:30 PM', duration: '5m', risk: 'high', alerts: ['Restricted Search Attempt'] },
+    ],
   };
 
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '20px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <h2 className="section-title">Activity Feed</h2>
-        <p className="section-sub">Live timeline of device application and content requests.</p>
+    <div className="flex flex-col gap-5 w-full max-w-[640px] mx-auto ag-rise">
+      <div className="px-1">
+        <h1 className="text-[20px] font-black text-white tracking-tight leading-none">Activity Feed</h1>
+        <p className="text-[12px] text-slate-500 font-semibold mt-1.5">Live timeline of app & content activity</p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="flex flex-col gap-4">
         {Object.entries(groupedHistory).map(([groupName, items]) => (
-          <div key={groupName} className="glass-card" style={{ padding: '4px 0', borderTop: groupName==='Today' ? '2px solid var(--accent-purple)' : '1px solid rgba(255,255,255,0.05)' }}>
-            
-            <div 
-              onClick={() => toggleGroup(groupName)}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', cursor: 'pointer' }}
-            >
-              <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: groupName === 'Today' ? 'var(--accent-purple)' : 'var(--text-secondary)' }}>{groupName}</h3>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-secondary)' }}>{items.length} events</span>
-                {expandedGroups[groupName] ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+          <Card key={groupName} padded={false} className="overflow-hidden">
+            <button onClick={() => toggleGroup(groupName)} className="ag-tap w-full flex items-center justify-between px-4 py-4">
+              <h3 className={`text-[14px] font-black ${groupName === 'Today' ? 'text-cyan-400' : 'text-slate-300'}`}>{groupName}</h3>
+              <div className="flex items-center gap-2.5">
+                <span className="text-[11px] font-bold text-slate-400 bg-white/[0.06] px-2.5 py-1 rounded-full">{items.length} events</span>
+                {expandedGroups[groupName] ? <ChevronUp size={17} className="text-slate-400" /> : <ChevronDown size={17} className="text-slate-400" />}
               </div>
-            </div>
+            </button>
 
             {expandedGroups[groupName] && (
-              <div style={{ display: 'flex', flexDirection: 'column', padding: '0 12px 12px' }}>
-                {items.length === 0 ? <div style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center' }}>No activity logged.</div> : items.map((entry, index) => (
-                  <div 
-                    key={entry.id} 
-                    className="animate-fade-in"
-                    style={{ 
-                      display: 'flex', padding: '16px', margin: '6px 0', borderRadius: '12px',
-                      background: index === 0 && groupName === 'Today' ? 'rgba(0, 229, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)',
-                      borderLeft: `3px solid ${getRiskColor(entry.risk)}`,
-                      transition: 'background 0.3s'
-                    }}
-                  >
-                    <div style={{ display: 'flex', width: '100%', gap: '16px' }}>
-                      <div style={{ position: 'relative', marginTop: '2px' }}>
-                         {React.cloneElement(getIcon(entry.category), { color: getRiskColor(entry.risk) })}
-                         {index === 0 && groupName === 'Today' && <div style={{ position: 'absolute', top: -2, right: -4, width: 8, height: 8, background: 'var(--accent-cyan)', borderRadius: '50%', animation: 'pulse 1s infinite' }}/>}
+              <div className="flex flex-col gap-2.5 px-3 pb-3">
+                {items.length === 0 ? (
+                  <div className="py-5 text-center text-[12.5px] text-slate-500">No activity logged.</div>
+                ) : items.map((entry, index) => {
+                  const color = getRiskColor(entry.risk);
+                  const isLatest = index === 0 && groupName === 'Today';
+                  return (
+                    <div key={entry.id} className="flex gap-3.5 p-3.5 rounded-2xl border-l-[3px] bg-white/[0.02]"
+                      style={{ borderLeftColor: color, background: isLatest ? 'rgba(6,182,212,0.05)' : 'rgba(255,255,255,0.02)' }}>
+                      <div className="relative mt-0.5 flex-shrink-0">
+                        {getIcon(entry.category, color)}
+                        {isLatest && <span className="absolute -top-0.5 -right-1 w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />}
                       </div>
-                      
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '14px', fontWeight: '600', color: index === 0 && groupName === 'Today' ? '#fff' : 'var(--text-primary)', marginBottom: '4px', lineHeight: 1.3 }}>{entry.title}</h4>
-                        
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', alignItems: 'center' }}>
-                          <span style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>{entry.app}</span>
-                          <span>•</span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12}/> {entry.startTime} ({entry.duration})</span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-[14px] font-bold text-white leading-snug mb-1">{entry.title}</h4>
+                        <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-500 mb-1.5">
+                          <span className="font-semibold text-slate-400">{entry.app}</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1"><Clock size={12} /> {entry.startTime} ({entry.duration})</span>
                         </div>
-
                         {entry.alerts && entry.alerts.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          <div className="flex flex-wrap gap-1.5">
                             {entry.alerts.map((alert, i) => (
-                              <div key={i} style={{ 
-                                display: 'flex', alignItems: 'center', gap: '4px', 
-                                background: 'rgba(239, 68, 68, 0.15)', color: 'var(--accent-red)', 
-                                padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '600'
-                              }}>
+                              <span key={i} className="flex items-center gap-1 bg-rose-500/15 text-rose-400 px-2.5 py-1 rounded-lg text-[11px] font-bold">
                                 <AlertCircle size={12} /> {alert}
-                              </div>
+                              </span>
                             ))}
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-          </div>
+          </Card>
         ))}
       </div>
     </div>

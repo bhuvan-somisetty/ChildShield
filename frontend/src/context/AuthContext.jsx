@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         setAccounts(prev => [...prev.filter(a => a.user.email !== data.user.email), { token: data.token, user: data.user }]);
       }
-      return true;
+      return data.user || true;
     }
     throw new Error(data.error || 'Registration failed');
   };
