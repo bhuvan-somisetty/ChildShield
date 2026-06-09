@@ -1,32 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Shield, Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Screen, Button, TextField, BrandMark } from '../../components/ui';
 
 const BACKEND = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
   : 'https://childshield-1sd6.onrender.com';
 
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+);
+
+const WakingServer = ({ timedOut, onCancel }) => (
+  <Screen ambient="brand" align="center" scroll={false}>
+    <div className="flex flex-col items-center text-center gap-6">
+      <div className="relative w-20 h-20 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.3)]">
+        <Loader2 size={34} className="text-cyan-400 animate-spin" />
+      </div>
+      <div>
+        <p className="text-white font-extrabold text-base mb-1.5">
+          {timedOut ? 'Almost there…' : 'Securing your session'}
+        </p>
+        <p className="text-slate-400 text-[13px] max-w-[280px]">
+          {timedOut
+            ? 'The secure server is waking up — this can take up to 90 seconds on first connect.'
+            : 'Connecting to AlphaGuard AI…'}
+        </p>
+      </div>
+      {timedOut && (
+        <Button variant="secondary" size="md" fullWidth={false} onClick={onCancel}>
+          Cancel & Retry
+        </Button>
+      )}
+    </div>
+  </Screen>
+);
+
 const Login = () => {
   const { login } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPass, setShowPass] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isWakingServer, setIsWakingServer] = useState(false);
   const [wakeTimeout, setWakeTimeout] = useState(false);
 
   useEffect(() => {
     let timer;
-    if (isWakingServer) {
-      timer = setTimeout(() => setWakeTimeout(true), 30000);
-    } else {
-      setWakeTimeout(false);
-    }
+    if (isWakingServer) timer = setTimeout(() => setWakeTimeout(true), 30000);
+    else setWakeTimeout(false);
     return () => clearTimeout(timer);
   }, [isWakingServer]);
 
@@ -38,7 +69,7 @@ const Login = () => {
         const res = await fetch(`${BACKEND}/api/health`, { cache: 'no-store' });
         if (res.ok) break;
       } catch (err) {}
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 3000));
       attempts++;
     }
     setIsWakingServer(false);
@@ -47,21 +78,21 @@ const Login = () => {
 
   const oauthErrorMap = {
     facebook_not_configured: 'Facebook login needs setup - add your FACEBOOK_APP_ID to backend/.env',
-    twitter_not_configured:  'X (Twitter) login needs setup - add your TWITTER_CONSUMER_KEY to backend/.env',
-    google_not_configured:   'Google login needs setup - add your GOOGLE_CLIENT_ID to backend/.env',
+    twitter_not_configured: 'X (Twitter) login needs setup - add your TWITTER_CONSUMER_KEY to backend/.env',
+    google_not_configured: 'Google login needs setup - add your GOOGLE_CLIENT_ID to backend/.env',
     facebook_failed: 'Facebook login failed. Check your App ID & redirect URI in Facebook Developers.',
-    twitter_failed:  'X (Twitter) login failed. Check your API Key & callback URL in Twitter Developer Portal.',
-    google_failed:   'Google login failed. Check your Client ID & redirect URI in Google Cloud Console.',
-    oauth_failed:    'Social login failed. Please try again or use email login.',
+    twitter_failed: 'X (Twitter) login failed. Check your API Key & callback URL in Twitter Developer Portal.',
+    google_failed: 'Google login failed. Check your Client ID & redirect URI in Google Cloud Console.',
+    oauth_failed: 'Social login failed. Please try again or use email login.',
   };
-  
+
   const urlError = searchParams.get('error');
   const initialErr = urlError ? (oauthErrorMap[urlError] || `Login error: ${urlError}`) : '';
   const [error, setError] = useState(initialErr);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true); 
+    setSubmitting(true);
     setError('');
     try {
       localStorage.removeItem('child_session');
@@ -76,59 +107,28 @@ const Login = () => {
   };
 
   if (isWakingServer) {
-    return (
-      <div className="min-h-screen w-full bg-[#030307] flex flex-col items-center justify-center gap-6 px-4 font-sans">
-        <div className="relative w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.25)]">
-          <Loader2 size={36} className="text-cyan-400 animate-spin" />
-        </div>
-        <div className="text-center">
-          <p className="text-white font-extrabold text-base mb-1">
-            {wakeTimeout ? 'Server taking longer to load...' : 'Securing your session...'}
-          </p>
-          <p className="text-slate-400 text-xs">
-            {wakeTimeout ? 'Render free tier can take up to 90s to spin up.' : 'Waking AlphaGuard AI... please wait'}
-          </p>
-          {wakeTimeout && (
-            <button
-              onClick={() => { setIsWakingServer(false); setWakeTimeout(false); }}
-              className="mt-4 px-5 py-2 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-full text-white font-bold text-xs cursor-pointer shadow-lg"
-            >
-              Cancel & Retry
-            </button>
-          )}
-        </div>
-      </div>
-    );
+    return <WakingServer timedOut={wakeTimeout} onCancel={() => { setIsWakingServer(false); setWakeTimeout(false); }} />;
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
-      
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
-      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] rounded-full bg-indigo-600/10 filter blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[10%] w-[380px] h-[380px] rounded-full bg-cyan-600/10 filter blur-[100px] pointer-events-none" />
-
-      {/* Login Page Content */}
-      <motion.div 
-        initial={{ y: 15, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col justify-center gap-4"
+    <Screen ambient="brand" align="center">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full flex flex-col"
       >
-        
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 mb-4">
-            <Shield size={26} className="text-cyan-400" />
-          </div>
-          <h2 className="text-2xl font-black text-white tracking-tight leading-none">Vault Entrance</h2>
-          <p className="text-slate-500 text-xs mt-1.5 font-bold uppercase tracking-wider">Log in to parent dashboard</p>
+        <div className="flex flex-col items-center text-center mb-9">
+          <BrandMark variant="stacked" className="mb-6" />
+          <h1 className="text-[26px] font-black text-white tracking-tight leading-tight">Welcome back</h1>
+          <p className="text-slate-500 text-[13px] font-semibold mt-1.5">Log in to your parent dashboard</p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs p-3.5 rounded-xl mb-6 text-center font-bold">
-            {error}
+          <div className="flex items-start gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3.5 rounded-2xl mb-5 font-semibold">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -136,91 +136,53 @@ const Login = () => {
           <input type="text" style={{ display: 'none' }} autoComplete="username" tabIndex="-1" readOnly />
           <input type="password" style={{ display: 'none' }} autoComplete="current-password" tabIndex="-1" readOnly />
 
-          {/* Combined Vault Input Box */}
-          <div className="bg-[#0b0c14] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5 shadow-inner">
-            
-            {/* Email field */}
-            <div className="relative p-4 flex flex-col gap-1 focus-within:bg-white/[0.01] transition-all">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Address</label>
-              <div className="flex items-center gap-2">
-                <Mail size={14} className="text-slate-500" />
-                <input 
-                  type="email" 
-                  required 
-                  value={email} 
-                  onChange={e => setEmail(e.target.value)}
-                  autoComplete="off"
-                  className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1"
-                  placeholder="parent@domain.com" 
-                />
-              </div>
-            </div>
+          <TextField
+            label="Email Address"
+            icon={Mail}
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="parent@domain.com"
+            autoComplete="off"
+          />
+          <TextField
+            label="Password"
+            icon={Lock}
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••••••"
+            autoComplete="new-password"
+          />
 
-            {/* Password field */}
-            <div className="relative p-4 flex flex-col gap-1 focus-within:bg-white/[0.01] transition-all">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1">
-                  <Lock size={14} className="text-slate-500" />
-                  <input 
-                    type={showPass ? 'text' : 'password'} 
-                    required 
-                    value={password} 
-                    onChange={e => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    className="w-full bg-transparent border-none text-white text-xs outline-none placeholder-slate-600 font-semibold py-1"
-                    placeholder="••••••••••••" 
-                  />
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setShowPass(!showPass)} 
-                  className="text-slate-500 hover:text-white transition-colors cursor-pointer"
-                >
-                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={submitting}
-            className="w-full mt-4 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full text-white font-black text-xs tracking-wider uppercase cursor-pointer shadow-lg active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {submitting ? 'Signing in...' : 'Sign In'}
-          </button>
+          <Button type="submit" loading={submitting} className="mt-2">
+            Sign In
+          </Button>
         </form>
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-[1px] bg-white/5" />
-          <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-widest">or continue with</span>
-          <div className="flex-1 h-[1px] bg-white/5" />
+          <div className="flex-1 h-px bg-white/[0.07]" />
+          <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or continue with</span>
+          <div className="flex-1 h-px bg-white/[0.07]" />
         </div>
 
-        {/* Google OAuth Button */}
-        <button 
+        <button
           onClick={() => oauthRedirect('google')}
-          className="w-full flex items-center justify-center gap-3 py-3.5 bg-[#0b0c14] hover:bg-white/5 border border-white/5 rounded-2xl text-white text-xs font-black cursor-pointer transition-all duration-200"
+          className="ag-tap w-full flex items-center justify-center gap-3 min-h-[52px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
+          <GoogleIcon />
           <span>Continue with Google</span>
         </button>
 
-        <p className="text-center text-xs text-slate-400 mt-6 font-semibold">
-          Don't have an account?{' '}
+        <p className="text-center text-[13px] text-slate-400 mt-7 font-semibold">
+          Don&apos;t have an account?{' '}
           <Link to="/signup" className="text-cyan-400 font-extrabold hover:underline">Create one</Link>
         </p>
-
       </motion.div>
-    </div>
+    </Screen>
   );
 };
 

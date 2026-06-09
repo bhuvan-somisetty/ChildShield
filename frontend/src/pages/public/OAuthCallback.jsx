@@ -1,12 +1,13 @@
 /**
  * OAuthCallback.jsx
  * ALWAYS routes: Google Login → Password Setup → Controls
- * Never goes to dashboard directly.
+ * Never goes to dashboard directly (unless PIN already set).
  */
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Shield } from 'lucide-react';
+import { Shield, AlertCircle, Loader2 } from 'lucide-react';
+import { Screen } from '../../components/ui';
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -28,20 +29,11 @@ const OAuthCallback = () => {
     if (token && userRaw) {
       try {
         const user = JSON.parse(decodeURIComponent(userRaw));
-
-        // Always wipe old session state on every new OAuth login
         localStorage.removeItem('child_session');
         localStorage.removeItem('cs_active_child');
-
         loginWithToken(token, user);
-
-        // FLOW: Always go to password setup first. Setup page redirects to /controls.
-        if (user.needsPasswordSetup) {
-          navigate('/setup-password', { replace: true });
-        } else {
-          // Returning user with password already set
-          navigate('/controls', { replace: true });
-        }
+        if (user.needsPasswordSetup) navigate('/setup-password', { replace: true });
+        else navigate('/controls', { replace: true });
       } catch {
         setError('Invalid login response. Please try again.');
         setTimeout(() => navigate('/login'), 3000);
@@ -50,43 +42,32 @@ const OAuthCallback = () => {
       setError('No token received. Please try again.');
       setTimeout(() => navigate('/login'), 3000);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div style={{
-      height: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-primary)', gap: '20px'
-    }}>
-      {error ? (
-        <>
-          <div style={{ color: 'var(--accent-red)', fontSize: '16px', textAlign: 'center', maxWidth: '360px' }}>
-            ⚠️ {error}
-          </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Redirecting to login…</div>
-        </>
-      ) : (
-        <>
-          <div style={{
-            width: '64px', height: '64px', borderRadius: '18px',
-            background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'pulse 1.2s ease-in-out infinite'
-          }}>
-            <Shield size={32} color="#fff" />
-          </div>
-          <div style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}>Signing you in…</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Please wait</div>
-        </>
-      )}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.1); opacity: 0.85; }
-        }
-      `}</style>
-    </div>
+    <Screen ambient="brand" align="center" scroll={false}>
+      <div className="flex flex-col items-center text-center gap-5">
+        {error ? (
+          <>
+            <div className="w-16 h-16 rounded-3xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center">
+              <AlertCircle size={30} className="text-rose-400" />
+            </div>
+            <div className="text-rose-300 text-[15px] font-bold max-w-[320px]">{error}</div>
+            <div className="text-slate-500 text-[13px]">Redirecting to login…</div>
+          </>
+        ) : (
+          <>
+            <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-600/20 to-cyan-500/10 border border-blue-500/30 flex items-center justify-center shadow-[0_0_40px_rgba(37,99,235,0.3)]">
+              <Shield size={34} className="text-cyan-400" />
+              <Loader2 size={84} className="absolute text-blue-500/30 animate-spin" />
+            </div>
+            <div className="text-white text-[17px] font-extrabold">Signing you in…</div>
+            <div className="text-slate-500 text-[13px]">Securing your AlphaGuard session</div>
+          </>
+        )}
+      </div>
+    </Screen>
   );
 };
 

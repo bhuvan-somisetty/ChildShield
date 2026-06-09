@@ -21,8 +21,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_demo';
 router.post('/register', async (req, res) => {
   try {
     const { fullName, email, password, phone, parentControlPassword } = req.body;
-    
-    if (!fullName || !email || !password || !parentControlPassword) {
+
+    if (!fullName || !email || !password) {
       return res.status(400).json({ error: 'All required fields must be provided.' });
     }
 
@@ -31,15 +31,21 @@ router.post('/register', async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-    const parentControlPasswordHash = await bcrypt.hash(parentControlPassword, salt);
+
+    // The parent control (override) PIN is set in a dedicated SetupPassword step.
+    // If the client provides one here (legacy flow), honor it; otherwise create a
+    // random placeholder and flag the account so SetupPassword is required next.
+    const needsPasswordSetup = !parentControlPassword;
+    const controlSecret = parentControlPassword || require('crypto').randomBytes(8).toString('hex');
+    const parentControlPasswordHash = await bcrypt.hash(controlSecret, salt);
 
     const parent = await Parent.create({
-      fullName, email, phone, passwordHash, parentControlPasswordHash
+      fullName, email, phone, passwordHash, parentControlPasswordHash, needsPasswordSetup
     });
 
     const token = jwt.sign({ id: parent.id }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ token, user: { id: parent.id, fullName: parent.fullName, email: parent.email, subscriptionPlan: parent.subscriptionPlan || 'free' } });
+    res.json({ token, user: { id: parent.id, fullName: parent.fullName, email: parent.email, needsPasswordSetup, subscriptionPlan: parent.subscriptionPlan || 'free' } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

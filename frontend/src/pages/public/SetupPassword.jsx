@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Delete, ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Screen } from '../../components/ui';
 
 const SetupPassword = () => {
   const navigate = useNavigate();
   const { user, token, updateUser } = useAuth();
-  
+
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [stage, setStage] = useState(1); // 1 = Enter PIN, 2 = Confirm PIN
@@ -30,10 +31,7 @@ const SetupPassword = () => {
       const newVal = target + num;
       if (stage === 1) {
         setPin(newVal);
-        if (newVal.length === 4) {
-          // Auto-advance to confirm stage after slight delay
-          setTimeout(() => setStage(2), 300);
-        }
+        if (newVal.length === 4) setTimeout(() => setStage(2), 300);
       } else {
         setConfirmPin(newVal);
       }
@@ -41,11 +39,8 @@ const SetupPassword = () => {
   };
 
   const handleBackspace = () => {
-    if (stage === 1) {
-      setPin(prev => prev.slice(0, -1));
-    } else {
-      setConfirmPin(prev => prev.slice(0, -1));
-    }
+    if (stage === 1) setPin((p) => p.slice(0, -1));
+    else setConfirmPin((p) => p.slice(0, -1));
   };
 
   const resetFlow = () => {
@@ -67,8 +62,8 @@ const SetupPassword = () => {
       const jwt = token || localStorage.getItem('cs_token');
       const res = await fetch('/api/auth/set-control-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
-        body: JSON.stringify({ parentControlPassword: pin })
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+        body: JSON.stringify({ parentControlPassword: pin }),
       });
       const data = await res.json();
       if (data.success) {
@@ -86,118 +81,92 @@ const SetupPassword = () => {
   };
 
   useEffect(() => {
-    if (stage === 2 && confirmPin.length === 4) {
-      handleSubmit();
-    }
+    if (stage === 2 && confirmPin.length === 4) handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmPin, stage]);
 
   const activeVal = stage === 1 ? pin : confirmPin;
 
-  return (
-    <div className="relative min-h-screen w-full bg-[#030307] overflow-hidden flex flex-col items-center justify-between px-6 py-10 font-sans">
-      
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#020308] to-[#0b0c14] pointer-events-none" />
-      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] rounded-full bg-indigo-600/10 filter blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[10%] w-[380px] h-[380px] rounded-full bg-cyan-600/10 filter blur-[100px] pointer-events-none" />
+  const Key = ({ children, onClick, disabled, muted }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={`ag-tap w-[72px] h-[72px] rounded-full flex items-center justify-center mx-auto text-[22px] font-black
+        ${muted ? 'text-slate-400' : 'text-white bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.08]'}`}
+    >
+      {children}
+    </button>
+  );
 
-      {/* Setup Password Content */}
-      <motion.div 
-        initial={{ y: 15, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[420px] flex-1 flex flex-col justify-center items-center gap-4"
+  return (
+    <Screen ambient="brand" align="center" scroll={false}>
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full flex flex-col items-center"
       >
-        
         {/* Header */}
-        <div className="text-center mb-6 flex flex-col items-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/30 mb-4 animate-pulse">
-            <ShieldCheck size={26} className="text-cyan-400" />
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="w-16 h-16 rounded-3xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mb-5 shadow-[0_0_30px_rgba(37,99,235,0.25)]">
+            <ShieldCheck size={30} className="text-cyan-400" />
           </div>
-          <h1 className="text-xl font-black text-white tracking-tight leading-none">
-            {stage === 1 ? 'Set Override PIN' : 'Confirm Override PIN'}
+          <h1 className="text-[24px] font-black text-white tracking-tight leading-tight">
+            {stage === 1 ? 'Set your Override PIN' : 'Confirm your PIN'}
           </h1>
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1.5">
-            {stage === 1 ? 'Choose 4-Digit Parent Code' : 'Verify chosen parent code'}
+          <p className="text-slate-500 text-[12px] font-bold uppercase tracking-[0.12em] mt-2">
+            {stage === 1 ? 'Choose a 4-digit parent code' : 'Re-enter to confirm'}
           </p>
         </div>
 
-        {/* Warning Alert */}
-        <div className="flex items-start gap-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-2xl mb-6 max-w-[340px]">
-          <AlertTriangle size={15} className="text-amber-500 mt-0.5 flex-shrink-0" />
-          <span className="text-[10px] text-amber-500/90 leading-normal font-bold">
-            Do not forget this PIN! Children cannot log out without it and override features require it.
+        {/* Warning */}
+        <div className="flex items-start gap-2.5 p-3.5 bg-amber-500/[0.06] border border-amber-500/20 rounded-2xl mb-7 max-w-[330px]">
+          <AlertTriangle size={15} className="text-amber-400 mt-0.5 flex-shrink-0" />
+          <span className="text-[11.5px] text-amber-300/90 leading-relaxed font-semibold">
+            Don’t forget this PIN. Children can’t sign out without it, and overrides require it.
           </span>
         </div>
 
-        {/* Dots Indicator */}
-        <div className="flex items-center gap-4 my-4">
-          {[0, 1, 2, 3].map(i => (
-            <div 
+        {/* Dots */}
+        <div className="flex items-center gap-4 mb-6">
+          {[0, 1, 2, 3].map((i) => (
+            <div
               key={i}
-              className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 ${
-                i < activeVal.length 
-                  ? 'bg-cyan-400 border-cyan-400 scale-110 shadow-[0_0_8px_rgba(34,211,238,0.4)]' 
+              className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
+                i < activeVal.length
+                  ? 'bg-cyan-400 border-cyan-400 scale-110 shadow-[0_0_10px_rgba(34,211,238,0.5)]'
                   : 'bg-transparent border-slate-700'
               }`}
             />
           ))}
         </div>
 
-        {/* Error alert */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs py-2 px-4 rounded-xl mb-4 text-center font-bold">
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] py-2.5 px-4 rounded-2xl mb-5 text-center font-semibold max-w-[330px]">
             {error}
           </div>
         )}
 
-        {/* Custom Keypad dialpad grid */}
-        <div className="grid grid-cols-3 gap-y-4 gap-x-8 w-full max-w-[280px] my-6">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-            <button
-              key={num}
-              onClick={() => handleKeyPress(num.toString())}
-              disabled={loading}
-              className="w-16 h-16 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center text-white text-lg font-black hover:bg-white/10 active:scale-95 transition-all cursor-pointer mx-auto"
-            >
-              {num}
-            </button>
+        {/* Keypad */}
+        <div className="grid grid-cols-3 gap-y-3.5 gap-x-6 w-full max-w-[300px]">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+            <Key key={n} onClick={() => handleKeyPress(String(n))}>{n}</Key>
           ))}
-          {/* Back/Reset Option */}
-          <button
-            onClick={stage === 2 && confirmPin.length === 0 ? () => setStage(1) : resetFlow}
-            disabled={loading}
-            className="w-16 h-16 rounded-full flex items-center justify-center text-slate-500 hover:text-white text-xs font-bold transition-all cursor-pointer mx-auto"
-          >
-            {stage === 2 && confirmPin.length === 0 ? <ArrowLeft size={18} /> : 'Reset'}
-          </button>
-          {/* 0 Key */}
-          <button
-            onClick={() => handleKeyPress('0')}
-            disabled={loading}
-            className="w-16 h-16 rounded-full bg-white/[0.02] border border-white/5 flex items-center justify-center text-white text-lg font-black hover:bg-white/10 active:scale-95 transition-all cursor-pointer mx-auto"
-          >
-            0
-          </button>
-          {/* Backspace Key */}
-          <button
-            onClick={handleBackspace}
-            disabled={loading}
-            className="w-16 h-16 rounded-full flex items-center justify-center text-slate-500 hover:text-white transition-all cursor-pointer mx-auto"
-          >
-            <Delete size={18} />
-          </button>
+          <Key muted onClick={stage === 2 && confirmPin.length === 0 ? () => setStage(1) : resetFlow}>
+            {stage === 2 && confirmPin.length === 0 ? <ArrowLeft size={20} /> : <span className="text-[13px] font-bold">Reset</span>}
+          </Key>
+          <Key onClick={() => handleKeyPress('0')}>0</Key>
+          <Key muted onClick={handleBackspace}><Delete size={20} /></Key>
         </div>
 
         {loading && (
-          <div className="flex items-center gap-2 text-xs text-cyan-400 font-extrabold mt-2 animate-pulse">
-            <RefreshCw size={14} className="animate-spin" />
-            <span>COMMITTING PIN...</span>
+          <div className="flex items-center gap-2 text-[13px] text-cyan-400 font-extrabold mt-6">
+            <RefreshCw size={15} className="animate-spin" />
+            <span>Securing your PIN…</span>
           </div>
         )}
-
       </motion.div>
-    </div>
+    </Screen>
   );
 };
 

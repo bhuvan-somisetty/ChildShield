@@ -1,44 +1,41 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, CameraOff, SwitchCamera, Flashlight, Download, Wifi, WifiOff, Loader, Mic, MicOff } from 'lucide-react';
+import { Camera, CameraOff, SwitchCamera, Flashlight, Download, Wifi, WifiOff, Loader2, Mic, MicOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useWebRTC } from '../hooks/useWebRTC';
+import { Card } from '../components/ui';
 
-// Custom Animated Toggle matching Controls page
-const Toggle = ({ active, onChange, disabled }) => {
-  return (
-    <div 
-      onClick={() => { if (!disabled) onChange(!active); }}
-      style={{
-        width: '56px', height: '32px', borderRadius: '16px',
-        backgroundColor: active ? 'rgba(37,99,235, 0.4)' : 'rgba(255, 255, 255, 0.1)',
-        position: 'relative', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.3s',
-        border: `1px solid ${active ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}`,
-        boxShadow: active && !disabled ? `0 0 10px rgba(37,99,235, 0.3)` : 'none',
-        opacity: disabled ? 0.5 : 1
-      }}
-    >
-      <div style={{
-        position: 'absolute', top: '2px', left: active ? '26px' : '2px',
-        width: '26px', height: '26px', borderRadius: '50%',
-        backgroundColor: '#fff', transition: 'left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        boxShadow: active && !disabled ? `0 0 10px var(--accent-cyan)` : '0 2px 5px rgba(0,0,0,0.2)'
-      }}></div>
-    </div>
-  );
-};
+const Toggle = ({ active, onChange, disabled, color = '#06b6d4' }) => (
+  <button
+    onClick={() => { if (!disabled) onChange(!active); }}
+    disabled={disabled}
+    className="ag-tap relative w-[52px] h-[30px] rounded-full p-[3px] flex-shrink-0 border transition-colors duration-200 disabled:opacity-40"
+    style={{ background: active ? color : 'rgba(255,255,255,0.07)', borderColor: active ? color : 'rgba(255,255,255,0.1)', boxShadow: active && !disabled ? `0 0 14px ${color}55` : 'none' }}
+  >
+    <span className="block w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-200" style={{ transform: active ? 'translateX(22px)' : 'translateX(0)' }} />
+  </button>
+);
 
 const ControlRow = ({ icon: Icon, title, description, control }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-      <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(37,99,235, 0.1)', border: '1px solid rgba(37,99,235,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon size={22} color="var(--accent-cyan)" />
+  <Card className="p-4 flex items-center justify-between">
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center flex-shrink-0">
+        <Icon size={20} className="text-cyan-400" />
       </div>
-      <div>
-        <div style={{ fontWeight: '700', color: '#fff', fontSize: '15px', marginBottom: '2px' }}>{title}</div>
-        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{description}</div>
+      <div className="min-w-0">
+        <div className="text-[14px] font-bold text-white">{title}</div>
+        <div className="text-[12px] text-slate-500 truncate">{description}</div>
       </div>
     </div>
-    <div>{control}</div>
+    {control}
+  </Card>
+);
+
+const StatusBar = ({ active, label, color }) => (
+  <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border mb-5"
+    style={{ background: active ? `${color}10` : 'rgba(255,255,255,0.03)', borderColor: active ? `${color}33` : 'rgba(255,255,255,0.06)' }}>
+    {active ? <Wifi size={18} style={{ color }} /> : <WifiOff size={18} className="text-slate-500" />}
+    <span className="text-[14px] font-bold" style={{ color: active ? color : '#64748b' }}>{label}</span>
+    <span className="ml-auto w-2.5 h-2.5 rounded-full" style={{ background: active ? color : '#334155', boxShadow: active ? `0 0 10px ${color}` : 'none' }} />
   </div>
 );
 
@@ -54,62 +51,24 @@ const CameraView = () => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(false);
 
-  // Attach remote stream to video
   useEffect(() => {
-    if (videoRef.current && remoteStream) {
-      videoRef.current.srcObject = remoteStream;
-      setStreaming(true);
-    }
+    if (videoRef.current && remoteStream) { videoRef.current.srcObject = remoteStream; setStreaming(true); }
   }, [remoteStream]);
 
   const handleStart = useCallback(async () => {
-    if (!childId) {
-      alert('No child device paired. Please pair a device from Controls first.');
-      return;
-    }
+    if (!childId) { alert('No child device paired. Please pair a device from Controls first.'); return; }
     connectSocket();
-    setFacingMode('user');
-    setAudioEnabled(false);
-    setFlashEnabled(false);
-    
-    // Wait for socket connection then peer connection before sending offer
+    setFacingMode('user'); setAudioEnabled(false); setFlashEnabled(false);
     const checkConnection = setInterval(() => {
-      if (connected && peerConnected) {
-        clearInterval(checkConnection);
-        sendOffer('camera');
-      }
+      if (connected && peerConnected) { clearInterval(checkConnection); sendOffer('camera'); }
     }, 500);
-    
-    // Fallback: send offer after 5 seconds anyway
-    setTimeout(() => {
-      clearInterval(checkConnection);
-      if (!streaming) {
-        sendOffer('camera');
-      }
-    }, 5000);
+    setTimeout(() => { clearInterval(checkConnection); if (!streaming) sendOffer('camera'); }, 5000);
   }, [connectSocket, sendOffer, childId, connected, peerConnected, streaming]);
 
-  const handleStop = useCallback(() => {
-    setStreaming(false);
-    disconnect();
-  }, [disconnect]);
-
-  const handleToggleCamera = (useBack) => {
-    const next = useBack ? 'environment' : 'user';
-    setFacingMode(next);
-    sendCommand('switch-camera', { facingMode: next });
-  };
-
-  const handleToggleAudio = (enabled) => {
-    setAudioEnabled(enabled);
-    sendCommand('toggle-audio', { enabled });
-  };
-
-  const handleToggleFlash = (enabled) => {
-    setFlashEnabled(enabled);
-    sendCommand('toggle-flash', { enabled });
-  };
-
+  const handleStop = useCallback(() => { setStreaming(false); disconnect(); }, [disconnect]);
+  const handleToggleCamera = (useBack) => { const next = useBack ? 'environment' : 'user'; setFacingMode(next); sendCommand('switch-camera', { facingMode: next }); };
+  const handleToggleAudio = (enabled) => { setAudioEnabled(enabled); sendCommand('toggle-audio', { enabled }); };
+  const handleToggleFlash = (enabled) => { setFlashEnabled(enabled); sendCommand('toggle-flash', { enabled }); };
   const handleScreenshot = () => {
     if (!videoRef.current) return;
     const canvas = canvasRef.current;
@@ -117,102 +76,68 @@ const CameraView = () => {
     canvas.height = videoRef.current.videoHeight || 480;
     canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
     const link = document.createElement('a');
-    link.download = `childshield-camera-${Date.now()}.png`;
+    link.download = `alphaguard-camera-${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
 
   if (!childId) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#475569' }}>
-      <p>No child device selected. Go to Controls to pair a device first.</p>
+    <div className="flex items-center justify-center h-[60vh] text-slate-500 text-[14px] text-center px-6">
+      No child device selected. Pair a device from Controls first.
     </div>
   );
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '60px', padding: '0 16px' }}>
-      <style>{`
-        @media (max-width: 768px) {
-          .camera-controls { flex-direction: column !important; }
-          .camera-video { border-radius: 12px !important; }
-        }
-      `}</style>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Camera size={28} color="var(--accent-cyan)" /> Remote Camera
+    <div className="w-full max-w-[640px] mx-auto ag-rise">
+      <div className="mb-5 px-1">
+        <h1 className="text-[22px] font-black text-white tracking-tight flex items-center gap-2.5">
+          <Camera size={24} className="text-cyan-400" /> Remote Camera
         </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View live camera feed from {activeChild?.name}'s device</p>
+        <p className="text-[13px] text-slate-500 font-semibold mt-1">Live camera feed from {activeChild?.name}’s device</p>
       </div>
 
-      {/* Status card */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', background: streaming ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)', border: `1px solid ${streaming ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '14px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        {streaming ? <Wifi size={18} color="#10b981" /> : <WifiOff size={18} color="#475569" />}
-        <span style={{ fontSize: '14px', fontWeight: '600', color: streaming ? '#10b981' : '#475569' }}>
-          {streaming ? 'Camera Active "” Live Feed' : peerConnected ? 'Connecting stream...' : connected ? 'Waiting for child device...' : 'Camera Inactive'}
-        </span>
-        <div style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: streaming ? '#10b981' : '#334155', boxShadow: streaming ? '0 0 8px #10b981' : 'none', animation: streaming ? 'pulse-dot 2s infinite' : 'none' }} />
-      </div>
+      <StatusBar active={streaming} color="#10b981"
+        label={streaming ? 'Camera active — live feed' : peerConnected ? 'Connecting stream…' : connected ? 'Waiting for child device…' : 'Camera inactive'} />
 
-      {/* Video display */}
-      <div style={{ position: 'relative', background: '#000', borderRadius: '20px', overflow: 'hidden', aspectRatio: '16/9', marginBottom: '32px', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="relative bg-black rounded-[22px] overflow-hidden aspect-video mb-6 border border-white/[0.06]">
         {streaming ? (
-          <video ref={videoRef} autoPlay playsInline muted={false} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <video ref={videoRef} autoPlay playsInline muted={false} className="w-full h-full object-contain" />
         ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', minHeight: '300px' }}>
-            <Camera size={48} color="#334155" />
-            <span style={{ color: '#475569', fontSize: '14px' }}>Camera feed will appear here</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[280px]">
+            <Camera size={44} className="text-slate-700" />
+            <span className="text-slate-500 text-[13px]">Camera feed will appear here</span>
           </div>
         )}
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
+        <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {/* Controls Container */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-          {!streaming ? (
-            <button onClick={handleStart} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '16px 32px', background: '#10b981', border: 'none', borderRadius: '16px', color: '#fff', fontWeight: '700', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 20px rgba(16,185,129,0.3)' }}>
-              {connected ? <Loader size={20} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={20} />}
-              {connected ? 'Connecting...' : 'Start Camera Stream'}
-            </button>
-          ) : (
-            <button onClick={handleStop} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '14px 40px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '14px', color: '#ef4444', fontWeight: '700', fontSize: '15px', cursor: 'pointer' }}>
-              <CameraOff size={18} /> Stop Viewing
-            </button>
-          )}
-        </div>
+      <div className="flex justify-center mb-4">
+        {!streaming ? (
+          <button onClick={handleStart} className="ag-tap flex items-center gap-2 px-8 min-h-[54px] bg-emerald-500 rounded-full text-white font-black text-[15px] shadow-[0_8px_30px_rgba(16,185,129,0.3)]">
+            {connected ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
+            {connected ? 'Connecting…' : 'Start Camera Stream'}
+          </button>
+        ) : (
+          <button onClick={handleStop} className="ag-tap flex items-center gap-2 px-10 min-h-[54px] bg-rose-500/15 border border-rose-500/30 rounded-full text-rose-400 font-black text-[15px]">
+            <CameraOff size={18} /> Stop Viewing
+          </button>
+        )}
+      </div>
 
-        <ControlRow 
-          icon={SwitchCamera} 
-          title="Camera Direction" 
-          description={facingMode === 'user' ? "Front Camera Selected" : "Back Camera Selected"} 
-          control={<Toggle active={facingMode === 'environment'} disabled={!streaming} onChange={(v) => handleToggleCamera(v)} />} 
-        />
-
-        <ControlRow 
-          icon={audioEnabled ? Mic : MicOff} 
-          title="Microphone Monitoring" 
-          description={audioEnabled ? "Listening to child's audio" : "Audio muted"} 
-          control={<Toggle active={audioEnabled} disabled={!streaming} onChange={handleToggleAudio} />} 
-        />
-
-        <ControlRow 
-          icon={Flashlight} 
-          title="Device Flashlight" 
-          description={flashEnabled ? "Flashlight is ON" : "Flashlight is OFF"} 
-          control={<Toggle active={flashEnabled} disabled={!streaming} onChange={handleToggleFlash} />} 
-        />
-
-        <ControlRow 
-          icon={Camera} 
-          title="Screen Capture" 
-          description="Take a snapshot of current feed" 
+      <div className="flex flex-col gap-3">
+        <ControlRow icon={SwitchCamera} title="Camera Direction" description={facingMode === 'user' ? 'Front camera' : 'Back camera'}
+          control={<Toggle active={facingMode === 'environment'} disabled={!streaming} onChange={handleToggleCamera} />} />
+        <ControlRow icon={audioEnabled ? Mic : MicOff} title="Microphone" description={audioEnabled ? 'Listening to audio' : 'Audio muted'}
+          control={<Toggle active={audioEnabled} disabled={!streaming} onChange={handleToggleAudio} color="#f59e0b" />} />
+        <ControlRow icon={Flashlight} title="Flashlight" description={flashEnabled ? 'Flashlight on' : 'Flashlight off'}
+          control={<Toggle active={flashEnabled} disabled={!streaming} onChange={handleToggleFlash} color="#f59e0b" />} />
+        <ControlRow icon={Camera} title="Screen Capture" description="Snapshot the current feed"
           control={
-            <button disabled={!streaming} onClick={handleScreenshot} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '10px', color: '#8b5cf6', fontWeight: '700', fontSize: '13px', cursor: streaming ? 'pointer' : 'not-allowed', opacity: streaming ? 1 : 0.5 }}>
-              <Download size={16} /> Capture
+            <button disabled={!streaming} onClick={handleScreenshot}
+              className="ag-tap flex items-center gap-2 py-2.5 px-4 bg-purple-500/15 border border-purple-500/30 rounded-xl text-purple-400 font-bold text-[12.5px] disabled:opacity-40">
+              <Download size={15} /> Capture
             </button>
-          } 
-        />
-
+          } />
       </div>
     </div>
   );

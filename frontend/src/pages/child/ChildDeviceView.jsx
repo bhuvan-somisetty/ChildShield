@@ -464,11 +464,11 @@ const ChildDeviceView = () => {
       }} />
 
       {/* ── Top bar ──────────────────────────────────────────────────────────── */}
-      <div style={{ position: 'relative', zIndex: 10, padding: '14px 20px', background: 'rgba(255,255,255,0.015)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ position: 'relative', zIndex: 10, padding: 'calc(14px + var(--ag-safe-top)) 20px 14px', background: 'rgba(255,255,255,0.015)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ShieldCheck size={18} color="var(--accent-cyan)" />
           <span style={{ fontWeight: '800', color: '#fff', fontSize: '15px', letterSpacing: '-0.3px' }}>
-            Child<span style={{ color: 'var(--accent-cyan)' }}>Shield</span>
+            Alpha<span style={{ color: 'var(--accent-cyan)' }}>Guard</span>
           </span>
           <span style={{ fontSize: '10px', background: 'rgba(37,99,235,0.1)', color: 'var(--accent-cyan)', padding: '2px 8px', borderRadius: '20px', fontWeight: '700', letterSpacing: '0.05em' }}>CHILD MODE</span>
           {activeStreams.camera && <span style={{ fontSize: '10px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: '20px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}><Camera size={10} /> CAM</span>}
@@ -591,7 +591,7 @@ const ChildDeviceView = () => {
       )}
 
       {/* ── Scrollable body ──────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px 48px', maxWidth: '480px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px calc(48px + var(--ag-safe-bottom))', maxWidth: '480px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
 
         {/* ── Greeting ───────────────────────────────────────────────────────── */}
         <div style={{ marginBottom: '22px' }}>
@@ -1075,8 +1075,8 @@ const ChildDeviceView = () => {
                 </button>
                 {sosResult.reason === 'denied_instructions' && (
                   <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '10px', fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 }}>
-                    ðŸ“‹ <strong style={{ color: '#fff' }}>To allow location:</strong><br />
-                    Tap the ðŸ”’ lock icon in browser → Site settings → Location → Allow → then come back and press SOS again.
+                    📋 <strong style={{ color: '#fff' }}>To allow location:</strong><br />
+                    Tap the 🔒 lock icon in browser → Site settings → Location → Allow → then come back and press SOS again.
                   </div>
                 )}
               </div>

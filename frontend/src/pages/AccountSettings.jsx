@@ -1240,10 +1240,10 @@ const AccountSettings = () => {
     privacy:     <PrivacyView                                onBack={() => setView('main')} />,
   };
 
-  if (view !== 'main') return <div style={{ padding: '32px' }}>{views[view]}</div>;
+  if (view !== 'main') return <div style={{ width: '100%', maxWidth: '680px', margin: '0 auto', paddingBottom: 'var(--ag-safe-bottom)' }}>{views[view]}</div>;
 
   return (
-    <div style={{ padding: '32px', maxWidth: '680px' }}>
+    <div style={{ width: '100%', maxWidth: '680px', margin: '0 auto', paddingBottom: 'calc(16px + var(--ag-safe-bottom))' }}>
       {resetSuccess && <Alert type="success" msg={resetSuccess} />}
       {/* Profile hero card */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '36px', padding: '24px', background: 'linear-gradient(135deg, rgba(5,38,89,0.6), rgba(30,64,175,0.3))', borderRadius: '20px', border: '1px solid rgba(37,99,235,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
