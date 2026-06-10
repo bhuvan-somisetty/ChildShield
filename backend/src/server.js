@@ -16,6 +16,7 @@ const apiRoutes      = require('./routes/api');
 const deviceRoutes   = require('./routes/device');
 const activityRoutes = require('./routes/activity');
 const aiRoutes       = require('./routes/ai');
+const safetyRoutes   = require('./routes/safety');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -156,6 +157,7 @@ app.use('/api/children', childRoutes);
 app.use('/api/device',   deviceRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/ai',       aiRoutes);
+app.use('/api/safety',   safetyRoutes);
 app.use('/api',          apiRoutes);
 
 // ── Global Error Handler ──────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ const { Sequelize } = require('sequelize');
 const path = require('path');
 
 let sequelize;
-let Parent, Child, Activity, FaceEvent, Location, SafeZone;
+let Parent, Child, Activity, FaceEvent, Location, SafeZone, UrlEvent;
 
 // Auto-fix if the user accidentally pasted "MONGODB_URI=" inside the value field
 let uri = process.env.MONGODB_URI;
@@ -130,6 +130,7 @@ if (isMongo) {
   const MongoFaceEvent = require('./models/mongo/FaceEvent');
   const MongoLocation = require('./models/mongo/Location');
   const MongoSafeZone = require('./models/mongo/SafeZone');
+  const MongoUrlEvent = require('./models/mongo/UrlEvent');
 
   const wrapModel = (Model) => {
     const wrapper = Model;
@@ -181,6 +182,7 @@ if (isMongo) {
   FaceEvent = wrapModel(MongoFaceEvent);
   Location  = wrapModel(MongoLocation);
   SafeZone  = wrapModel(MongoSafeZone);
+  UrlEvent  = wrapModel(MongoUrlEvent);
 } else {
   // Legacy SQL
   if (process.env.DATABASE_URL) {
@@ -203,6 +205,7 @@ if (isMongo) {
   const createFaceEventModel = require('./models/FaceEvent');
   const createLocationModel  = require('./models/Location');
   const createSafeZoneModel  = require('./models/SafeZone');
+  const createUrlEventModel  = require('./models/UrlEvent');
 
   Parent    = createParentModel(sequelize);
   Child     = createChildModel(sequelize);
@@ -210,6 +213,7 @@ if (isMongo) {
   FaceEvent = createFaceEventModel(sequelize);
   Location  = createLocationModel(sequelize);
   SafeZone  = createSafeZoneModel(sequelize);
+  UrlEvent  = createUrlEventModel(sequelize);
 
   Parent.hasMany(Child,    { foreignKey: 'parentId' });
   Child.belongsTo(Parent,  { foreignKey: 'parentId' });
@@ -221,10 +225,12 @@ if (isMongo) {
   Location.belongsTo(Child,{ foreignKey: 'childId' });
   Child.hasMany(SafeZone,  { foreignKey: 'childId' });
   SafeZone.belongsTo(Child,{ foreignKey: 'childId' });
+  Child.hasMany(UrlEvent,  { foreignKey: 'childId' });
+  UrlEvent.belongsTo(Child,{ foreignKey: 'childId' });
 }
 
 module.exports = {
   sequelize, mongoose, isMongo,
   connectDB, getDBStatus,
-  Parent, Child, Activity, FaceEvent, Location, SafeZone,
+  Parent, Child, Activity, FaceEvent, Location, SafeZone, UrlEvent,
 };
