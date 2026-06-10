@@ -38,7 +38,7 @@ const TextField = ({
         </label>
       )}
       <div
-        className={`flex items-center gap-2.5 px-4 min-h-[52px] rounded-2xl bg-[#0b0c14] border transition-colors duration-200 ${borderColor}`}
+        className={`flex items-center gap-2.5 px-4 min-h-[56px] rounded-2xl bg-[#0b0c14] border transition-colors duration-200 ${borderColor}`}
       >
         {Icon && <Icon size={18} className="text-slate-500 flex-shrink-0" />}
         <input

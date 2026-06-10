@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Smartphone, RefreshCw, CheckCircle, Loader2, KeyRound } from 'lucide-react';
+import { RefreshCw, CheckCircle, Loader2, KeyRound } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion } from 'framer-motion';
 import { Screen } from '../../components/ui';
@@ -81,61 +81,62 @@ const ChildPairing = () => {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="w-full flex flex-col items-center text-center"
       >
-        <div className="w-16 h-16 rounded-3xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mb-5">
-          <Smartphone className="text-cyan-400" size={28} />
-        </div>
-
-        <h1 className="text-[24px] font-black text-white tracking-tight leading-tight">Ready to connect</h1>
-        <p className="text-slate-500 text-[13px] mt-2 mb-7 max-w-[300px] font-semibold leading-relaxed">
-          On the parent device, open AlphaGuard AI and scan this QR — or enter the code below.
+        {/* Title */}
+        <h1 className="text-[27px] font-black text-white tracking-tight leading-tight">Connect this device</h1>
+        <p className="text-slate-500 text-[14px] mt-3 mb-10 max-w-[300px] font-semibold leading-relaxed">
+          Pair with the parent’s AlphaGuard AI app in one of two ways.
         </p>
 
         {error && (
-          <div className="w-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3 rounded-2xl mb-5 font-semibold">
+          <div className="w-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3.5 rounded-2xl mb-8 font-semibold">
             {error}
           </div>
         )}
 
-        {/* QR with radar pulse */}
-        <div className="relative p-6 mb-6">
-          <div className="absolute inset-0 rounded-full border border-cyan-500/15 animate-ping opacity-60 pointer-events-none" />
-          <div className="absolute -inset-4 rounded-full border border-blue-500/10 animate-ping opacity-30 pointer-events-none" style={{ animationDelay: '0.8s' }} />
-          <div className="relative z-10 bg-white p-4 rounded-3xl border border-cyan-500/30 shadow-[0_0_36px_rgba(6,182,212,0.18)]">
-            <QRCodeSVG value={JSON.stringify({ code: livePairingCode })} size={150} fgColor="#030307" bgColor="#ffffff" />
+        {/* ── 1 · Scan QR (primary) ───────────────────────────────── */}
+        <div className="flex items-center gap-2 mb-5">
+          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-cyan-500/15 text-cyan-400 text-[11px] font-black">1</span>
+          <span className="text-[12px] text-slate-400 font-bold uppercase tracking-[0.14em]">Scan the QR code</span>
+        </div>
+
+        <div className="relative mb-3">
+          <div className="absolute inset-0 rounded-[36px] border border-cyan-500/15 animate-ping opacity-50 pointer-events-none" />
+          <div className="relative z-10 bg-white p-5 rounded-[32px] border border-cyan-500/30 shadow-[0_0_48px_rgba(6,182,212,0.22)]">
+            <QRCodeSVG value={JSON.stringify({ code: livePairingCode })} size={196} fgColor="#030307" bgColor="#ffffff" />
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full my-2">
-          <div className="flex-1 h-px bg-white/[0.07]" />
-          <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or use code</span>
-          <div className="flex-1 h-px bg-white/[0.07]" />
+        {!pairingDetected && (
+          <button
+            onClick={handleRefreshCode}
+            disabled={refreshing}
+            className="ag-tap inline-flex items-center gap-1.5 text-slate-500 hover:text-cyan-400 text-[12px] font-bold mt-1 mb-9 disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+            <span>{refreshing ? 'Refreshing…' : 'Refresh code'}</span>
+          </button>
+        )}
+
+        {/* ── 2 · Or enter code (secondary) ───────────────────────── */}
+        <div className="flex items-center gap-2 mb-4">
+          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/[0.06] text-slate-400 text-[11px] font-black">2</span>
+          <span className="text-[12px] text-slate-500 font-bold uppercase tracking-[0.14em]">Or enter this code</span>
         </div>
 
-        {/* Code */}
-        <div className="w-full bg-[#0b0c14] border border-white/[0.07] py-4 px-6 rounded-2xl my-5">
-          <h2 className="text-[34px] font-black text-cyan-400 tracking-[10px] font-mono leading-none select-all ml-2.5">
+        <div className="w-full bg-[#0b0c14] border border-white/[0.07] py-5 px-6 rounded-3xl">
+          <span className="text-[40px] font-black text-cyan-400 tracking-[12px] font-mono leading-none select-all ml-3">
             {livePairingCode || '------'}
-          </h2>
+          </span>
         </div>
 
-        <button
-          id="refresh-code-btn"
-          onClick={handleRefreshCode}
-          disabled={refreshing || pairingDetected}
-          className="ag-tap w-full flex items-center justify-center gap-2 min-h-[48px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] rounded-2xl text-cyan-400 font-bold text-[13px] uppercase tracking-wide disabled:opacity-50 mb-5"
-        >
-          <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-          <span>{refreshing ? 'Generating…' : 'Refresh code'}</span>
-        </button>
-
-        {/* Status */}
+        {/* Status — subtle */}
         {pairingDetected ? (
-          <div className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-[13px] uppercase tracking-wide">
-            <CheckCircle size={16} />
-            <span>Paired successfully!</span>
+          <div className="flex items-center justify-center gap-2 mt-8 text-emerald-400 font-bold text-[13.5px]">
+            <CheckCircle size={17} />
+            <span>Paired successfully — opening…</span>
           </div>
         ) : (
-          <div className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-white/[0.04] border border-white/[0.07] text-slate-400 font-semibold text-[13px]">
+          <div className="flex items-center justify-center gap-2 mt-8 text-slate-500 font-semibold text-[13px]">
             <Loader2 size={14} className="animate-spin text-cyan-400" />
             <span>Waiting for parent to connect…</span>
           </div>
@@ -143,9 +144,9 @@ const ChildPairing = () => {
 
         <button
           onClick={() => navigate('/child/setup')}
-          className="ag-tap flex items-center justify-center gap-2 mt-5 text-slate-400 hover:text-white text-[13px] font-bold"
+          className="ag-tap flex items-center justify-center gap-2 mt-8 text-slate-500 hover:text-white text-[13px] font-bold"
         >
-          <KeyRound size={15} /> Enter a code instead
+          <KeyRound size={15} /> Enter a code on this device instead
         </button>
       </motion.div>
     </Screen>

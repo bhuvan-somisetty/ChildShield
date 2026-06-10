@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
-import { User, Lock, Mail, Loader2, AlertCircle, ChevronRight, ChevronLeft, ShieldCheck } from 'lucide-react';
+import { User, Lock, Mail, Loader2, AlertCircle, ChevronRight, ChevronLeft, ShieldCheck, Baby, Cake } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Screen, Button, TextField, BrandMark, ProgressDots } from '../../components/ui';
 
 const BACKEND = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
   : 'https://childshield-1sd6.onrender.com';
+
+const STEP_LABELS = ['Parent details', 'Security', 'Family setup'];
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -21,8 +23,8 @@ const GoogleIcon = () => (
 const Signup = () => {
   const { register, user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1 = identity, 2 = security
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
+  const [step, setStep] = useState(1); // 1 = parent details, 2 = security, 3 = family setup
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '', childName: '', childAge: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isWakingServer, setIsWakingServer] = useState(false);
@@ -55,8 +57,9 @@ const Signup = () => {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  // Step 1 → 2
   const handleIdentity = (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setError('');
     if (!form.fullName.trim() || !form.email.trim()) {
       setError('Please enter your name and email.');
@@ -65,8 +68,9 @@ const Signup = () => {
     setStep(2);
   };
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
+  // Step 2 → 3
+  const handleSecurity = (e) => {
+    e?.preventDefault();
     setError('');
     if (form.password.length < 6) {
       setError('Password must be at least 6 characters.');
@@ -76,9 +80,22 @@ const Signup = () => {
       setError('Passwords do not match.');
       return;
     }
+    setStep(3);
+  };
+
+  // Step 3 → create account.
+  // Backend register accepts only { fullName, email, password } — child details are
+  // persisted locally to pre-fill the family/pairing flow and never touch the auth API.
+  const handleCreate = async ({ withChild = true } = {}) => {
+    setError('');
     setSubmitting(true);
     try {
-      // Override PIN is intentionally NOT collected here — it is set in SetupPassword.
+      if (withChild && form.childName.trim()) {
+        localStorage.setItem('ag_onboarding_child', JSON.stringify({
+          name: form.childName.trim(),
+          age: form.childAge ? Number(form.childAge) : null,
+        }));
+      }
       const result = await register({
         fullName: form.fullName,
         email: form.email,
@@ -121,8 +138,10 @@ const Signup = () => {
   const footer =
     step === 1 ? (
       <Button onClick={handleIdentity} iconRight={ChevronRight}>Continue</Button>
+    ) : step === 2 ? (
+      <Button onClick={handleSecurity} iconRight={ChevronRight}>Continue</Button>
     ) : (
-      <Button onClick={handleCreate} loading={submitting} iconRight={ChevronRight}>Create Account</Button>
+      <Button onClick={() => handleCreate({ withChild: true })} loading={submitting} iconRight={ChevronRight}>Create Account</Button>
     );
 
   return (
@@ -134,19 +153,19 @@ const Signup = () => {
         className="w-full flex flex-col"
       >
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-7">
-          <BrandMark variant="stacked" className="mb-6" />
-          <h1 className="text-[26px] font-black text-white tracking-tight leading-tight">Create your account</h1>
-          <div className="flex items-center gap-2.5 mt-3">
-            <ProgressDots count={2} active={step - 1} />
+        <div className="flex flex-col items-center text-center mb-9">
+          <BrandMark variant="stacked" className="mb-7" />
+          <h1 className="text-[28px] font-black text-white tracking-tight leading-tight">Create your account</h1>
+          <div className="flex flex-col items-center gap-2.5 mt-4">
+            <ProgressDots count={3} active={step - 1} />
             <span className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.12em]">
-              Step {step} of 2 · {step === 1 ? 'Your details' : 'Security'}
+              Step {step} of 3 · {STEP_LABELS[step - 1]}
             </span>
           </div>
         </div>
 
         {error && (
-          <div className="flex items-start gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3.5 rounded-2xl mb-5 font-semibold">
+          <div className="flex items-start gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] p-3.5 rounded-2xl mb-6 font-semibold">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -159,18 +178,18 @@ const Signup = () => {
               initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }}
               transition={{ duration: 0.25 }}
               onSubmit={handleIdentity}
-              className="flex flex-col gap-4"
+              className="flex flex-col gap-5"
             >
               <TextField label="Full Name" icon={User} value={form.fullName} onChange={set('fullName')} placeholder="Jane Doe" required autoFocus />
               <TextField label="Email Address" icon={Mail} type="email" value={form.email} onChange={set('email')} placeholder="parent@domain.com" required />
             </motion.form>
-          ) : (
+          ) : step === 2 ? (
             <motion.form
               key="s2"
               initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.25 }}
-              onSubmit={handleCreate}
-              className="flex flex-col gap-4"
+              onSubmit={handleSecurity}
+              className="flex flex-col gap-5"
             >
               <TextField label="Create Password" icon={Lock} type="password" value={form.password} onChange={set('password')} placeholder="At least 6 characters" required autoFocus
                 hint={!form.password ? 'Use 6+ characters' : undefined}
@@ -179,10 +198,10 @@ const Signup = () => {
                 error={form.confirmPassword && form.confirmPassword !== form.password ? 'Passwords do not match' : undefined}
                 success={form.confirmPassword && form.confirmPassword === form.password ? 'Passwords match' : undefined} />
 
-              <div className="flex items-start gap-2.5 p-3.5 bg-blue-500/[0.06] border border-blue-500/15 rounded-2xl mt-1">
+              <div className="flex items-start gap-2.5 p-4 bg-blue-500/[0.06] border border-blue-500/15 rounded-2xl mt-1">
                 <ShieldCheck size={16} className="text-cyan-400 flex-shrink-0 mt-0.5" />
-                <p className="text-[11.5px] text-slate-400 leading-relaxed font-medium">
-                  Next, you’ll set a 4-digit <span className="text-slate-200 font-bold">Override PIN</span> to approve device changes and unlocks.
+                <p className="text-[12px] text-slate-400 leading-relaxed font-medium">
+                  After signup, you’ll set a 4-digit <span className="text-slate-200 font-bold">Override PIN</span> to approve device changes and unlocks.
                 </p>
               </div>
 
@@ -194,20 +213,55 @@ const Signup = () => {
                 <ChevronLeft size={15} /> Back to details
               </button>
             </motion.form>
+          ) : (
+            <motion.form
+              key="s3"
+              initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.25 }}
+              onSubmit={(e) => { e.preventDefault(); handleCreate({ withChild: true }); }}
+              className="flex flex-col gap-5"
+            >
+              <div className="flex items-start gap-2.5 p-4 bg-cyan-500/[0.06] border border-cyan-500/15 rounded-2xl">
+                <Baby size={16} className="text-cyan-400 flex-shrink-0 mt-0.5" />
+                <p className="text-[12px] text-slate-400 leading-relaxed font-medium">
+                  Tell us about your child so we can personalise their protection. You can add more children anytime.
+                </p>
+              </div>
+
+              <TextField label="Child's Name" icon={User} value={form.childName} onChange={set('childName')} placeholder="e.g. Emma" autoFocus />
+              <TextField label="Child's Age" icon={Cake} type="number" inputMode="numeric" min="1" max="18" value={form.childAge} onChange={set('childAge')} placeholder="e.g. 10" />
+
+              <button
+                type="button"
+                onClick={() => { setStep(2); setError(''); }}
+                className="ag-tap self-start flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold mt-1"
+              >
+                <ChevronLeft size={15} /> Back to security
+              </button>
+
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => handleCreate({ withChild: false })}
+                className="ag-tap self-center text-slate-500 hover:text-slate-300 text-[12.5px] font-bold mt-1"
+              >
+                I’ll add my child later
+              </button>
+            </motion.form>
           )}
         </AnimatePresence>
 
-        {/* OAuth — only on first step to keep the security step focused */}
+        {/* OAuth — only on first step to keep later steps focused */}
         {step === 1 && (
           <>
-            <div className="flex items-center gap-3 my-6">
+            <div className="flex items-center gap-3 my-8">
               <div className="flex-1 h-px bg-white/[0.07]" />
               <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or sign up with</span>
               <div className="flex-1 h-px bg-white/[0.07]" />
             </div>
             <button
               onClick={() => oauthRedirect('google')}
-              className="ag-tap w-full flex items-center justify-center gap-3 min-h-[52px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold"
+              className="ag-tap w-full flex items-center justify-center gap-3 min-h-[56px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold"
             >
               <GoogleIcon />
               <span>Continue with Google</span>
@@ -215,7 +269,7 @@ const Signup = () => {
           </>
         )}
 
-        <p className="text-center text-[13px] text-slate-400 mt-7 font-semibold">
+        <p className="text-center text-[13px] text-slate-400 mt-9 font-semibold">
           Already registered?{' '}
           <Link to="/login" className="text-indigo-400 font-extrabold hover:underline">Sign in</Link>
         </p>
