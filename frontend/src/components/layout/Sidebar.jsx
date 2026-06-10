@@ -29,7 +29,7 @@ const Sidebar = ({ isOpenMobile, onCloseMobile, isMobile }) => {
         display: 'flex', alignItems: 'center', padding: '12px 16px', borderRadius: 'var(--radius-md)',
         textDecoration: 'none', color: isActive ? (item.gold ? '#2563eb' : '#fff') : 'var(--text-secondary)',
         background: isActive ? (item.gold ? 'rgba(37,99,235,0.1)' : 'rgba(37,99,235, 0.08)') : 'transparent',
-        borderLeft: isActive ? `3px solid ${item.gold ? '#2563eb' : 'var(--accent-cyan)'}` : '3px solid transparent',
+        borderLeft: isActive ? `3px solid ${item.gold ? '#2563eb' : '#22d3ee'}` : '3px solid transparent',
         transition: 'all 0.2s', fontWeight: isActive ? '700' : '500',
         boxShadow: isActive && item.gold ? 'inset 20px 0 20px -20px rgba(37,99,235,0.2)' : 'none'
       })}
@@ -147,7 +147,7 @@ const Sidebar = ({ isOpenMobile, onCloseMobile, isMobile }) => {
         </div>
         
         {/* Mini Status Card */}
-        <div className="glass-card" style={{ padding: '14px 16px' }}>
+        <div style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#2563eb', boxShadow: '0 0 8px #2563eb' }}></div>
             <span style={{ fontSize: '13px', color: '#fff', fontWeight: '700' }}>AlphaGuard Active</span>

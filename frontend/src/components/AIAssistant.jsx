@@ -252,7 +252,7 @@ const AIAssistant = () => {
     <span key={i}>
       {line.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
         part.startsWith('**') && part.endsWith('**')
-          ? <strong key={j} style={{ color: 'var(--accent-cyan)' }}>{part.slice(2, -2)}</strong>
+          ? <strong key={j} style={{ color: '#22d3ee' }}>{part.slice(2, -2)}</strong>
           : part
       )}
       {i < text.split('\n').length - 1 && <br />}
@@ -265,7 +265,7 @@ const AIAssistant = () => {
 
   let orbColor = 'var(--accent-primary)'; // idle
   if (isListening) orbColor = 'var(--accent-red)';
-  if (isThinking) orbColor = 'var(--accent-cyan)';
+  if (isThinking) orbColor = '#22d3ee';
   if (isSpeaking) orbColor = '#8b5cf6';
 
   return (
@@ -394,7 +394,7 @@ const AIAssistant = () => {
 
                 {isThinking && (
                   <>
-                    <div style={{ position: 'absolute', inset: -15, borderRadius: '50%', border: '2px dashed var(--accent-cyan)', animation: 'rotate-ring 3s linear infinite', opacity: 0.7, pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', inset: -15, borderRadius: '50%', border: '2px dashed #22d3ee', animation: 'rotate-ring 3s linear infinite', opacity: 0.7, pointerEvents: 'none' }} />
                     <div style={{ position: 'absolute', inset: -25, borderRadius: '50%', border: '2px dotted #8b5cf6', animation: 'rotate-ring-reverse 5s linear infinite', opacity: 0.5, pointerEvents: 'none' }} />
                   </>
                 )}
@@ -498,7 +498,7 @@ const AIAssistant = () => {
               {messages.length < 3 && (
                 <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 20px 16px', scrollbarWidth: 'none' }}>
                   {QUICK_REPLIES.map(q => (
-                    <button key={q} onClick={() => handleSend(q)} style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', color: 'var(--accent-cyan)', padding: '8px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                    <button key={q} onClick={() => handleSend(q)} style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)', color: '#22d3ee', padding: '8px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', cursor: 'pointer' }}>
                       {q}
                     </button>
                   ))}

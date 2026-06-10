@@ -54,14 +54,14 @@ const FaceRegistration = () => {
   return (
     <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginTop: '24px' }}>
       <h3 style={{ fontSize: '18px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Camera size={20} color="var(--accent-cyan)" /> Facial Biometric Enrollment
+        <Camera size={20} color="#22d3ee" /> Facial Biometric Enrollment
       </h3>
       <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
         Register up to four authorized faces for {activeChild.name}. These will be used for AI Face Presence Verification.
       </p>
 
       {activeSlot !== null ? (
-        <div className="glass-panel animate-fade-in" style={{ textAlign: 'center', background: '#000', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
+        <div className="animate-fade-in" style={{ textAlign: 'center', background: '#000', borderRadius: '16px', overflow: 'hidden', position: 'relative', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 12px 48px rgba(0,0,0,0.4)' }}>
           <Webcam
             audio={false}
             ref={webcamRef}
@@ -72,7 +72,7 @@ const FaceRegistration = () => {
           />
           <div style={{ position: 'absolute', bottom: '24px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '16px' }}>
             <button onClick={() => setActiveSlot(null)} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>Cancel</button>
-            <button onClick={() => capture(activeSlot)} style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', background: 'var(--accent-cyan)', color: '#000', fontWeight: '600', cursor: 'pointer', boxShadow: 'var(--shadow-neon-cyan)' }}>Capture Face {activeSlot + 1}</button>
+            <button onClick={() => capture(activeSlot)} style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', background: '#22d3ee', color: '#000', fontWeight: '600', cursor: 'pointer', boxShadow: 'var(--shadow-neon-cyan)' }}>Capture Face {activeSlot + 1}</button>
           </div>
         </div>
       ) : (
@@ -84,7 +84,7 @@ const FaceRegistration = () => {
               <div key={slotIndex} style={{ border: '1px dashed rgba(255,255,255,0.2)', padding: '16px', borderRadius: '12px', textAlign: 'center', background: hasFace ? 'rgba(37,99,235,0.05)' : 'transparent' }}>
                 {hasFace ? (
                   <>
-                    <img src={faceImg} alt={`Face ${slotIndex + 1}`} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', marginBottom: '12px', border: '2px solid var(--accent-cyan)' }} />
+                    <img src={faceImg} alt={`Face ${slotIndex + 1}`} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', marginBottom: '12px', border: '2px solid #22d3ee' }} />
                     <div style={{ color: 'var(--accent-green)', fontWeight: '600', fontSize: '12px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><CheckCircle size={14} /> Enrolled</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center' }}>
                       <button onClick={() => setActiveSlot(slotIndex)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '6px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px' }}><RefreshCw size={12}/> Retake</button>
@@ -101,7 +101,7 @@ const FaceRegistration = () => {
                     <button 
                       disabled={loading || (slotIndex > 0 && !validFaces[slotIndex - 1])} 
                       onClick={() => setActiveSlot(slotIndex)} 
-                      style={{ background: (slotIndex > 0 && !validFaces[slotIndex - 1]) ? 'rgba(255,255,255,0.05)' : 'var(--accent-cyan)', border: 'none', color: '#000', padding: '8px', width: '100%', borderRadius: '6px', cursor: (slotIndex > 0 && !validFaces[slotIndex - 1]) ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '11px' }}
+                      style={{ background: (slotIndex > 0 && !validFaces[slotIndex - 1]) ? 'rgba(255,255,255,0.05)' : '#22d3ee', border: 'none', color: '#000', padding: '8px', width: '100%', borderRadius: '6px', cursor: (slotIndex > 0 && !validFaces[slotIndex - 1]) ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '11px' }}
                     >
                       {loading ? '...' : '+ Add'}
                     </button>

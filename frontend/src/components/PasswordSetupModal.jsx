@@ -46,7 +46,7 @@ const PasswordSetupModal = ({ onComplete }) => {
     }}>
       <div style={{ position: 'fixed', top: '15%', left: '20%', width: '400px', height: '400px', background: '#2563eb', filter: 'blur(160px)', opacity: 0.08, borderRadius: '50%' }} />
       
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '40px 32px', position: 'relative', zIndex: 1 }}>
+      <div className="animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '40px 32px', position: 'relative', zIndex: 1, background: '#12121c', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '28px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 12px 48px rgba(0,0,0,0.4)' }}>
         {/* Icon */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
           <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid rgba(37,99,235,0.3)' }}>
