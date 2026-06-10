@@ -4,91 +4,98 @@ import {
   HelpCircle, MessageCircle, Palette, LogOut, ChevronRight,
   ShieldCheck, ArrowLeft, Smartphone, CheckCircle, AlertCircle,
   Info, ExternalLink, Mail, Save, Moon, Sun, Monitor, ToggleLeft, ToggleRight,
-  BookOpen, Video, Wifi, MapPin, Clock, Zap, Star, Send, Phone, ChevronDown, Trash2, Edit2
+  BookOpen, Video, Wifi, MapPin, Clock, Zap, Star, Send, Phone, ChevronDown, Trash2, Edit2,
+  Bug, Code2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ConfirmationModal from '../components/layout/ConfirmationModal';
 
-// ─── Shared helpers ──────────────────────────────────────────────────────────
+// ─── Design-system aligned palette ────────────────────────────────────────────
+const C = {
+  cyan: '#22d3ee',
+  blue: '#2563eb',
+  green: '#10b981',
+  red: '#ef4444',
+  amber: '#f59e0b',
+  muted: '#64748b',
+};
+
+// ─── Shared helpers (design-system aligned) ──────────────────────────────────
 const Row = ({ icon: Icon, iconColor, iconBg, label, desc, right, onClick, danger, badge }) => (
-  <button onClick={onClick} style={{
-    display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px',
-    background: 'transparent', border: 'none', width: '100%', textAlign: 'left',
-    borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: onClick ? 'pointer' : 'default',
-    transition: 'background 0.2s'
-  }}
-    onMouseEnter={e => { if (onClick) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+  <button onClick={onClick}
+    className={`ag-tap flex items-center gap-4 w-full text-left px-5 py-4 border-b border-white/[0.05] last:border-b-0 ${onClick ? 'cursor-pointer hover:bg-white/[0.03]' : 'cursor-default'}`}
+    style={{ background: 'transparent', transition: 'background 0.2s' }}
   >
-    <div style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0, background: danger ? 'rgba(239,68,68,0.1)' : (iconBg || 'rgba(255,255,255,0.06)'), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Icon size={18} color={danger ? '#ef4444' : (iconColor || '#64748b')} />
+    <div className="w-11 h-11 rounded-[14px] flex-shrink-0 flex items-center justify-center"
+      style={{ background: danger ? 'rgba(239,68,68,0.1)' : (iconBg || 'rgba(255,255,255,0.06)') }}>
+      <Icon size={18} color={danger ? C.red : (iconColor || C.muted)} />
     </div>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: '15px', fontWeight: '600', color: danger ? '#ef4444' : '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="flex-1 min-w-0">
+      <div className="text-[15px] font-semibold flex items-center gap-2" style={{ color: danger ? C.red : '#fff' }}>
         {label}
-        {badge && <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '10px', background: 'rgba(37,99,235,0.15)', color: '#2563eb', border: '1px solid rgba(37,99,235,0.2)' }}>{badge}</span>}
+        {badge && <span className="text-[10px] font-bold px-2 py-0.5 rounded-[10px]" style={{ background: 'rgba(37,99,235,0.15)', color: C.blue, border: '1px solid rgba(37,99,235,0.2)' }}>{badge}</span>}
       </div>
-      {desc && <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{desc}</div>}
+      {desc && <div className="text-[13px] mt-0.5" style={{ color: C.muted }}>{desc}</div>}
     </div>
-    {right && <span style={{ fontSize: '13px', color: '#475569', fontWeight: '500' }}>{right}</span>}
-    {onClick && !right && <ChevronRight size={16} color={danger ? '#ef4444' : '#334155'} />}
+    {right && <span className="text-[13px] font-medium flex-shrink-0" style={{ color: '#475569' }}>{right}</span>}
+    {onClick && !right && <ChevronRight size={16} color={danger ? C.red : '#334155'} className="flex-shrink-0" />}
   </button>
 );
 
 const Card = ({ title, children }) => (
-  <div style={{ marginBottom: '28px' }}>
-    {title && <div style={{ fontSize: '11px', fontWeight: '700', color: '#475569', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '10px', paddingLeft: '2px' }}>{title}</div>}
-    <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>{children}</div>
+  <div className="mb-7">
+    {title && <div className="text-[11px] font-bold uppercase tracking-[0.12em] mb-2.5 pl-0.5" style={{ color: '#475569' }}>{title}</div>}
+    <div className="rounded-[22px] overflow-hidden bg-[#0b0c14] border border-white/[0.06]">{children}</div>
   </div>
 );
 
 const SubHeader = ({ title, desc, onBack }) => (
-  <div style={{ marginBottom: '32px' }}>
-    <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '13px', marginBottom: '20px', padding: 0, transition: 'color 0.2s' }}
-      onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
-      onMouseLeave={e => e.currentTarget.style.color = '#64748b'}
-    >
+  <div className="mb-8">
+    <button onClick={onBack}
+      className="ag-tap inline-flex items-center gap-1.5 mb-5 px-3 py-2 rounded-full bg-white/[0.04] border border-white/[0.08] text-[13px] font-semibold text-slate-400 hover:text-white">
       <ArrowLeft size={15} /> Back to Settings
     </button>
-    <h2 style={{ fontSize: '26px', fontWeight: '900', color: '#fff', marginBottom: '6px', letterSpacing: '-0.5px' }}>{title}</h2>
-    {desc && <p style={{ color: '#64748b', fontSize: '14px', lineHeight: 1.6 }}>{desc}</p>}
-    <div style={{ height: '1px', background: 'linear-gradient(90deg, rgba(37,99,235,0.3), transparent)', marginTop: '20px' }} />
+    <h2 className="text-[26px] font-black text-white mb-1.5 tracking-tight">{title}</h2>
+    {desc && <p className="text-[14px] leading-relaxed" style={{ color: C.muted }}>{desc}</p>}
+    <div className="h-px mt-5" style={{ background: 'linear-gradient(90deg, rgba(37,99,235,0.3), transparent)' }} />
   </div>
 );
 
 const Alert = ({ type, msg }) => {
   if (!msg) return null;
   const cfg = {
-    error:   { bg: 'rgba(239,68,68,0.08)',   color: '#ef4444', border: 'rgba(239,68,68,0.2)',   Icon: AlertCircle },
-    success: { bg: 'rgba(16,185,129,0.08)',  color: '#10b981', border: 'rgba(16,185,129,0.2)', Icon: CheckCircle },
-    info:    { bg: 'rgba(37,99,235,0.08)',   color: '#2563eb', border: 'rgba(37,99,235,0.2)',   Icon: Info },
+    error:   { bg: 'rgba(239,68,68,0.08)',   color: C.red,   border: 'rgba(239,68,68,0.2)',   Icon: AlertCircle },
+    success: { bg: 'rgba(16,185,129,0.08)',  color: C.green, border: 'rgba(16,185,129,0.2)',  Icon: CheckCircle },
+    info:    { bg: 'rgba(37,99,235,0.08)',   color: C.blue,  border: 'rgba(37,99,235,0.2)',   Icon: Info },
   }[type] || {};
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', borderRadius: '12px', fontSize: '14px', marginBottom: '20px', background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
-      <cfg.Icon size={16} /> {msg}
+    <div className="flex items-center gap-2.5 px-4 py-3.5 rounded-[14px] text-[14px] mb-5"
+      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+      <cfg.Icon size={16} className="flex-shrink-0" /> {msg}
     </div>
   );
 };
 
 const PremiumInput = ({ label, icon: Icon, iconColor, type = 'text', placeholder, value, onChange, right, hint }) => (
   <div>
-    {label && <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#94a3b8', marginBottom: '8px', letterSpacing: '0.03em' }}>{label}</label>}
-    <div style={{ position: 'relative' }}>
+    {label && <label className="block text-[11px] font-bold uppercase tracking-[0.12em] mb-2 px-1" style={{ color: '#94a3b8' }}>{label}</label>}
+    <div className="relative">
       <Icon size={17} color={iconColor || '#475569'} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
       <input type={type} placeholder={placeholder} value={value} onChange={onChange} autoComplete="new-password"
-        style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '14px 48px 14px 46px', borderRadius: '12px', color: '#fff', fontSize: '15px', outline: 'none', transition: 'all 0.2s', letterSpacing: type === 'password' ? '3px' : 'normal' }}
-        onFocus={e => { e.target.style.borderColor = 'rgba(37,99,235,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.08)'; }}
-        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
+        className="w-full box-border rounded-2xl text-white text-[16px] outline-none transition-colors duration-200"
+        style={{ background: '#05060d', border: '1px solid rgba(255,255,255,0.08)', padding: '15px 48px 15px 46px', letterSpacing: type === 'password' ? '3px' : 'normal' }}
+        onFocus={e => { e.target.style.borderColor = 'rgba(37,99,235,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.1)'; }}
+        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
       />
       {right && <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)' }}>{right}</div>}
     </div>
-    {hint && <p style={{ fontSize: '12px', color: '#475569', marginTop: '5px' }}>{hint}</p>}
+    {hint && <p className="text-[12px] mt-1.5 px-1" style={{ color: '#475569' }}>{hint}</p>}
   </div>
 );
 
 const EyeBtn = ({ show, toggle }) => (
-  <button onClick={toggle} style={{ background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', padding: 0, display: 'flex' }}
+  <button type="button" onClick={toggle} className="ag-tap flex p-1 -mr-1" style={{ background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer' }}
     onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
     onMouseLeave={e => e.currentTarget.style.color = '#475569'}
   >
@@ -97,15 +104,17 @@ const EyeBtn = ({ show, toggle }) => (
 );
 
 const PrimaryBtn = ({ label, loading, onClick, disabled, color = '#2563eb' }) => (
-  <button onClick={onClick} disabled={loading || disabled} style={{
-    background: color === '#2563eb' ? 'linear-gradient(135deg, #2563eb, #0099cc)' : `linear-gradient(135deg, ${color}, ${color}aa)`,
-    color: color === '#2563eb' ? '#000' : '#fff',
-    border: 'none', padding: '14px 32px', borderRadius: '12px',
-    fontWeight: '700', fontSize: '15px', cursor: loading ? 'default' : 'pointer',
-    opacity: loading ? 0.7 : 1, transition: 'all 0.2s',
-    boxShadow: `0 4px 20px ${color}33`
-  }}>
-    {loading ? 'Saving...' : label}
+  <button onClick={onClick} disabled={loading || disabled}
+    className="ag-tap inline-flex items-center justify-center rounded-full font-extrabold text-[15px] min-h-[52px] px-8 tracking-wide"
+    style={{
+      background: color === '#2563eb' ? 'linear-gradient(135deg, #4f46e5, #2563eb, #06b6d4)' : `linear-gradient(135deg, ${color}, ${color}cc)`,
+      color: color === '#2563eb' ? '#030307' : '#fff',
+      border: '1px solid rgba(255,255,255,0.1)',
+      cursor: (loading || disabled) ? 'not-allowed' : 'pointer',
+      opacity: (loading || disabled) ? 0.6 : 1,
+      boxShadow: `0 12px 40px ${color}33`,
+    }}>
+    {loading ? 'Saving…' : label}
   </button>
 );
 
@@ -648,11 +657,11 @@ const LanguageView = ({ onBack, currentLang, onLangChange }) => {
 
 // ─── APPEARANCE VIEW ─────────────────────────────────────────────────────────
 const AppearanceView = ({ onBack }) => {
-  const [theme, setTheme] = useState(() => localStorage.getItem('cs_theme') || 'dark');
+  const [theme, setTheme] = useState(() => localStorage.getItem('ag_theme') || 'dark');
 
   const applyTheme = (id) => {
     setTheme(id);
-    localStorage.setItem('cs_theme', id);
+    localStorage.setItem('ag_theme', id);
     document.documentElement.setAttribute('data-theme', id);
   };
 
@@ -775,9 +784,9 @@ const DevicesView = ({ onBack }) => {
                           onChange={e => setEditName(e.target.value)}
                           onKeyDown={e => { if(e.key === 'Enter') handleRename(child.id); }}
                           autoFocus
-                          style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--accent-cyan)', color: '#fff', padding: '6px 10px', borderRadius: '6px', fontSize: '14px', outline: 'none' }}
+                          style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid #22d3ee', color: '#fff', padding: '6px 10px', borderRadius: '6px', fontSize: '14px', outline: 'none' }}
                         />
-                        <button onClick={() => handleRename(child.id)} style={{ background: 'var(--accent-cyan)', color: '#0f172a', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Save</button>
+                        <button onClick={() => handleRename(child.id)} style={{ background: '#22d3ee', color: '#0f172a', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Save</button>
                       </div>
                     ) : (
                       <>
@@ -812,10 +821,10 @@ const DevicesView = ({ onBack }) => {
       {/* Unpair Modal */}
       {removeId && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '380px', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
+          <div className="animate-fade-in rounded-[22px]" style={{ padding: '32px', width: '100%', maxWidth: '380px', textAlign: 'center', background: '#12121c', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
             <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
             <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>Remove Device</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>Enter Parent Control Password to disconnect this device.</p>
+            <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '24px' }}>Enter Parent Control Password to disconnect this device.</p>
             
             <input 
               type="password" 
@@ -923,7 +932,7 @@ const HelpView = ({ onBack }) => {
           {filtered.length === 0 && <div style={{ padding: '24px', color: '#64748b', textAlign: 'center' }}>No articles found. Try different keywords.</div>}
           {filtered.map((f) => (
             <div key={f.id} style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontWeight: '700', marginBottom: '6px', letterSpacing: '0.06em' }}>{f.cat.toUpperCase()}</div>
+              <div style={{ fontSize: '11px', color: '#22d3ee', fontWeight: '700', marginBottom: '6px', letterSpacing: '0.06em' }}>{f.cat.toUpperCase()}</div>
               <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '6px' }}>{f.q}</div>
               <div style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6 }}>{f.a}</div>
             </div>
@@ -986,7 +995,7 @@ const HelpView = ({ onBack }) => {
 
           {/* App version */}
           <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '14px', marginTop: '8px' }}>
-            <ShieldCheck size={20} color="var(--accent-cyan)" />
+            <ShieldCheck size={20} color="#22d3ee" />
             <div>
               <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>AlphaGuard AI · v1.0.0</div>
               <div style={{ fontSize: '12px', color: '#475569' }}>Family Safety Platform · Free & Open Source</div>
@@ -1023,7 +1032,7 @@ const ContactView = ({ onBack }) => {
         {[
           { icon: Mail, label: 'Email Support', value: 'support@childshield.ai', color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', href: 'mailto:support@childshield.ai', desc: 'Reply within 24 hours' },
           { icon: MessageCircle, label: 'Live Chat', value: 'Chat with us online', color: '#10b981', bg: 'rgba(16,185,129,0.08)', href: '#', desc: 'Available 9AM — 9PM IST' },
-          { icon: Github, label: 'Report a Bug', value: 'GitHub Issues', color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', href: '#', desc: 'Open source project' },
+          { icon: Bug, label: 'Report a Bug', value: 'GitHub Issues', color: '#94a3b8', bg: 'rgba(148,163,184,0.08)', href: '#', desc: 'Open source project' },
         ].map(({ icon: Icon, label, value, color, bg, href, desc }) => (
           <a key={label} href={href} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '18px 20px', background: bg, border: `1px solid ${color}30`, borderRadius: '16px', textDecoration: 'none', color: '#fff', transition: 'all 0.2s' }}
             onMouseOver={e => e.currentTarget.style.background = bg.replace('0.08', '0.14')}
@@ -1054,14 +1063,14 @@ const ContactView = ({ onBack }) => {
         <form onSubmit={handleSend}>
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Send size={16} color="var(--accent-cyan)" /> Send a Message
+              <Send size={16} color="#22d3ee" /> Send a Message
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#475569', fontWeight: '700', letterSpacing: '0.06em', marginBottom: '8px', display: 'block' }}>TOPIC</label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {[['general','General'],['bug','Bug Report'],['feature','Feature Request'],['billing','Billing'],['privacy','Privacy']].map(([c, label]) => (
                   <button key={c} type="button" onClick={() => setCategory(c)}
-                    style={{ padding: '6px 14px', borderRadius: '20px', border: `1px solid ${category===c ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.08)'}`, background: category===c ? 'rgba(37,99,235,0.12)' : 'transparent', color: category===c ? 'var(--accent-cyan)' : '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
+                    style={{ padding: '6px 14px', borderRadius: '20px', border: `1px solid ${category===c ? '#22d3ee' : 'rgba(255,255,255,0.08)'}`, background: category===c ? 'rgba(37,99,235,0.12)' : 'transparent', color: category===c ? '#22d3ee' : '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
                     {label}
                   </button>
                 ))}
@@ -1078,7 +1087,7 @@ const ContactView = ({ onBack }) => {
                 style={{ width: '100%', boxSizing: 'border-box', padding: '12px 16px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#fff', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} />
             </div>
             <button type="submit" disabled={sending || !subject.trim() || !message.trim()}
-              style={{ padding: '14px', background: sending || !subject.trim() || !message.trim() ? 'rgba(37,99,235,0.2)' : 'var(--accent-cyan)', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+              style={{ padding: '14px', background: sending || !subject.trim() || !message.trim() ? 'rgba(37,99,235,0.2)' : '#22d3ee', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
               <Send size={16} />{sending ? 'Sending...' : 'Send Message'}
             </button>
           </div>
@@ -1089,7 +1098,7 @@ const ContactView = ({ onBack }) => {
       <div style={{ marginTop: '20px', padding: '16px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px' }}>
         <div style={{ fontSize: '12px', color: '#475569', fontWeight: '700', letterSpacing: '0.06em', marginBottom: '12px' }}>COMMUNITY</div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          {[['Twitter / X', Twitter, '#1d9bf0'],['GitHub', Github, '#94a3b8'],['Rate the App', Star, '#f59e0b']].map(([label, Icon, color]) => (
+          {[['Twitter / X', Send, '#1d9bf0'],['GitHub', Code2, '#94a3b8'],['Rate the App', Star, '#f59e0b']].map(([label, Icon, color]) => (
             <button key={label} style={{ flex: 1, padding: '10px 8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', color, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '600', transition: 'all 0.2s' }}
               onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
               onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
@@ -1134,7 +1143,6 @@ const AccountSettings = () => {
   const handleResetSettings = async () => {
     try {
       // 1. Reset theme to dark
-      localStorage.setItem('cs_theme', 'dark');
       localStorage.setItem('ag_theme', 'dark');
       document.documentElement.setAttribute('data-theme', 'dark');
 
@@ -1269,7 +1277,7 @@ const AccountSettings = () => {
       </Card>
 
       <Card title="Preferences">
-        <Row icon={Palette}    iconColor="#8b5cf6" iconBg="rgba(139,92,246,0.1)"  label="Theme / Appearance"  right={(localStorage.getItem('cs_theme')||'dark').charAt(0).toUpperCase()+(localStorage.getItem('cs_theme')||'dark').slice(1)}  onClick={() => setView('appearance')} />
+        <Row icon={Palette}    iconColor="#8b5cf6" iconBg="rgba(139,92,246,0.1)"  label="Theme / Appearance"  right={(localStorage.getItem('ag_theme')||'dark').charAt(0).toUpperCase()+(localStorage.getItem('ag_theme')||'dark').slice(1)}  onClick={() => setView('appearance')} />
         <Row icon={Smartphone} iconColor="#10b981" iconBg="rgba(16,185,129,0.1)"  label="Connected Devices"   desc="Manage paired child devices" onClick={() => setView('devices')} />
         <Row icon={Shield}     iconColor="#2563eb" iconBg="rgba(37,99,235,0.08)"  label="Privacy Policy"                                 onClick={() => setView('privacy')} />
       </Card>
@@ -1325,7 +1333,7 @@ const AccountSettings = () => {
       {/* ── Danger Action Modal (Logout & Delete) ─────────────────────────── */}
       {dangerAction && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
+          <div className="animate-fade-in rounded-[22px]" style={{ padding: '32px', width: '100%', maxWidth: '440px', textAlign: 'center', background: '#12121c', border: '1px solid rgba(239,68,68,0.3)', boxShadow: '0 0 40px rgba(239,68,68,0.2)' }}>
             <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
             <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#fff', marginBottom: '8px' }}>
               {dangerAction === 'delete' && 'Delete Account Permanently'}
@@ -1333,7 +1341,7 @@ const AccountSettings = () => {
             
             {dangerStep === 'password' && (
               <>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
+                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '24px' }}>
                   Please enter your Parent Control Password to authorize this action.
                 </p>
                 <input 
@@ -1356,12 +1364,12 @@ const AccountSettings = () => {
 
             {dangerStep === 'report' && (
               <>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
+                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
                   WARNING: Deleting your account will wipe all child data, logs, and settings permanently. This cannot be undone. Would you like to download a summary report before proceeding?
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <button onClick={() => { handleDownloadReport(); executeDangerAction(); }} style={{ padding: '14px', background: 'var(--accent-cyan)', border: 'none', color: '#0f172a', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <button onClick={() => { handleDownloadReport(); executeDangerAction(); }} style={{ padding: '14px', background: '#22d3ee', border: 'none', color: '#0f172a', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                     <Save size={18} /> Download Report & Delete
                   </button>
                   

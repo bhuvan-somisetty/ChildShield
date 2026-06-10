@@ -102,7 +102,7 @@ const LogoutApprovalListener = () => {
                 a.click();
                 respond(true);
               }} disabled={responding}
-                style={{ width: '100%', padding: '14px', background: 'var(--accent-cyan)', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '800', fontSize: '14px', cursor: responding ? 'not-allowed' : 'pointer', opacity: responding ? 0.7 : 1 }}>
+                style={{ width: '100%', padding: '14px', background: '#22d3ee', border: 'none', borderRadius: '12px', color: '#0f172a', fontWeight: '800', fontSize: '14px', cursor: responding ? 'not-allowed' : 'pointer', opacity: responding ? 0.7 : 1 }}>
                 Download Report & Delete
               </button>
               <button onClick={() => respond(true)} disabled={responding}

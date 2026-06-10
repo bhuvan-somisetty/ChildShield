@@ -17,7 +17,6 @@
   /* Neon Accents -> Modern Blue Theme */
   --accent-primary: #2563eb; /* Tailwind Blue-600 */
   --accent-secondary: #3b82f6; /* Tailwind Blue-500 */
-  --accent-cyan: #3b82f6; /* mapped to blue for consistency */
   --accent-purple: #2563eb; /* mapped to blue for consistency */
   --accent-blue: #2563eb;
   --accent-green: #10b981;
@@ -51,7 +50,6 @@
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-muted: #64748b;
-  --accent-cyan: #0284c7;
   --accent-purple: #7c3aed;
   --accent-blue: #2563eb;
   --accent-green: #059669;
@@ -72,7 +70,6 @@
     --text-primary: #0f172a;
     --text-secondary: #334155;
     --text-muted: #64748b;
-    --accent-cyan: #0284c7;
     --accent-purple: #7c3aed;
     --accent-blue: #2563eb;
     --accent-green: #059669;
@@ -115,48 +112,6 @@ body {
 
 #root {
   height: 100%;
-}
-
-/* ─── Glassmorphism ─────────────────────────────────────────────────────────── */
-.glass-card {
-  background: rgba(30, 30, 45, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-md);
-  transition: all 0.3s ease;
-}
-
-[data-theme="light"] .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(0, 0, 0, 0.07);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-.glass-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: var(--shadow-neon-cyan);
-}
-
-[data-theme="light"] .glass-card:hover {
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.glass-panel {
-  background: rgba(22, 22, 38, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="light"] .glass-panel {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(0, 0, 0, 0.07);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 /* ─── Typography ────────────────────────────────────────────────────────────── */
@@ -328,16 +283,6 @@ div[style*="position:relative"] > input {
   h2 { font-size: 18px !important; }
   h3 { font-size: 16px !important; }
 
-  .glass-card, .glass-panel {
-    border-radius: 16px;
-  }
-
-  /* Prevent cards from overflowing */
-  .glass-card, .glass-panel {
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
   /* Fix icon-text overlap on inputs */
   input, select, textarea {
     font-size: 16px !important; /* Prevents iOS auto-zoom */
@@ -350,10 +295,6 @@ div[style*="position:relative"] > input {
 
   h1 { font-size: 20px !important; }
   h2 { font-size: 16px !important; }
-
-  .glass-card, .glass-panel {
-    border-radius: 14px;
-  }
 
   .responsive-grid { grid-template-columns: 1fr; }
 
