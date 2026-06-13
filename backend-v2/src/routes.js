@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import { Repo, id, now } from './db.js';
 import { hashPassword, comparePassword, sign, requireAuth, requireParent, requireChild } from './auth.js';
+import { googleEnabled, googleClientId, verifyGoogleCode } from './google.js';
 import * as svc from './services.js';
 
 const parents = Repo('parents');
@@ -46,8 +47,31 @@ export default function buildRoutes(io) {
   r.post('/auth/parent/login', async (req, res) => {
     const { email, password } = req.body || {};
     const p = parents.find((x) => x.email === (email || '').toLowerCase());
-    if (!p || !(await comparePassword(password || '', p.passwordHash))) return res.status(401).json({ error: 'Invalid credentials' });
+    // Google-only accounts have no passwordHash → password login must be rejected.
+    if (!p || !p.passwordHash || !(await comparePassword(password || '', p.passwordHash))) return res.status(401).json({ error: 'Invalid credentials' });
     res.json({ token: sign({ sub: p.id, role: 'parent', parentId: p.id }), parent: publicParent(p) });
+  });
+
+  /* ── Auth: Google (authorization-code popup flow) ─────────────────────── */
+  // Public: lets the frontend learn the client id + whether Google is enabled.
+  r.get('/auth/google/config', (_req, res) => res.json({ enabled: googleEnabled(), clientId: googleClientId() }));
+
+  // Verifies the Google identity server-side (code → tokens → verified id_token),
+  // then finds or creates the parent account. The client never asserts identity.
+  r.post('/auth/google', async (req, res) => {
+    if (!googleEnabled()) return res.status(503).json({ error: 'Google sign-in is not configured' });
+    let identity;
+    try { identity = await verifyGoogleCode((req.body || {}).code); }
+    catch (e) { return res.status(401).json({ error: e.message || 'Google verification failed' }); }
+    let p = parents.find((x) => x.googleId === identity.sub) || parents.find((x) => x.email === identity.email);
+    let created = false;
+    if (!p) {
+      p = parents.insert({ email: identity.email, name: identity.name, googleId: identity.sub, passwordHash: null, pinHash: null });
+      created = true;
+    } else if (!p.googleId) {
+      parents.update(p.id, { googleId: identity.sub }); // link Google to an existing email account
+    }
+    res.json({ token: sign({ sub: p.id, role: 'parent', parentId: p.id }), parent: publicParent(p), needsPin: !p.pinHash, created });
   });
 
   // Verify the 6-digit Security PIN before allowing sensitive parental actions.
@@ -55,6 +79,17 @@ export default function buildRoutes(io) {
     const p = parents.byId(req.auth.parentId);
     const ok = !!(p && p.pinHash) && await comparePassword(String((req.body || {}).pin || ''), p.pinHash);
     res.json({ ok });
+  });
+
+  // Set/replace the Security PIN for the authenticated parent (used by the Google
+  // signup flow, where the account exists before the PIN is chosen).
+  r.post('/auth/parent/set-pin', requireParent, async (req, res) => {
+    const pin = String((req.body || {}).pin || '');
+    if (!/^\d{6}$/.test(pin)) return res.status(400).json({ error: 'PIN must be 6 digits' });
+    const p = parents.byId(req.auth.parentId);
+    if (!p) return res.status(404).json({ error: 'Parent not found' });
+    parents.update(p.id, { pinHash: await hashPassword(pin) });
+    res.json({ ok: true });
   });
 
   r.get('/me', requireAuth, (req, res) => {

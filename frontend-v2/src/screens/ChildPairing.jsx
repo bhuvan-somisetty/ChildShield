@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Hash, ArrowRight } from 'lucide-react';
+import { Hash, ArrowRight, ChevronLeft } from 'lucide-react';
 import { Screen, Button } from '../components/ui';
 import { api, setToken } from '../lib/agClient';
 
@@ -40,6 +40,9 @@ const ChildPairing = () => {
     <Screen align="between" glow="#06b6d4"
       footer={<Button iconRight={ArrowRight} loading={busy} disabled={code.length !== 6} onClick={connect}>Connect to Parent</Button>}>
       <div className="w-full flex flex-col items-center text-center pt-2">
+        <button onClick={() => navigate('/child-setup')} aria-label="Go back" className="ag-tap self-start mb-4 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white">
+          <ChevronLeft size={20} />
+        </button>
         <h1 className="text-[27px] font-bold text-white leading-[1.32] max-w-[320px]">
           Connect to Parent<br />Account
         </h1>

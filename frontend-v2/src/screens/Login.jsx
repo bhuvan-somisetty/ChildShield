@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, ChevronRight } from 'lucide-react';
+import { Mail, Lock, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { Screen, Button, Input, Brand } from '../components/ui';
 import { api, setToken } from '../lib/agClient';
+import { signInWithGoogle } from '../lib/google';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -18,6 +19,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState('');
 
   // Real sign-in — authenticates against the backend, persists the JWT, then
@@ -38,9 +40,29 @@ const Login = () => {
     }
   };
 
+  // Real Google login — opens the account-selection popup; the backend verifies
+  // the identity and returns the app token for the matching parent account.
+  const google = async () => {
+    setError('');
+    setGoogleBusy(true);
+    try {
+      await signInWithGoogle();
+      navigate('/setup');
+    } catch (err) {
+      if (err.message === 'popup_closed' || err.message === 'access_denied') { /* user cancelled */ }
+      else if (err.message === 'google_not_configured') setError('Google sign-in is unavailable right now.');
+      else setError('Google sign-in failed. Please try again.');
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+
   return (
     <Screen align="center" glow="#2563eb">
       <div className="w-full flex flex-col">
+        <button onClick={() => navigate('/role')} aria-label="Go back" className="ag-tap self-start -mt-1 mb-3 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white">
+          <ChevronLeft size={20} />
+        </button>
         <div className="flex flex-col items-center text-center mb-8">
           <Brand variant="stacked" className="mb-6" />
           <h1 className="text-[26px] font-black text-white tracking-tight leading-tight">Welcome back</h1>
@@ -63,8 +85,9 @@ const Login = () => {
           <div className="flex-1 h-px bg-white/[0.07]" />
         </div>
 
-        <button className="ag-tap w-full flex items-center justify-center gap-3 min-h-[56px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold">
-          <GoogleIcon /> <span>Sign in with Google</span>
+        <button onClick={google} disabled={googleBusy} className="ag-tap w-full flex items-center justify-center gap-3 min-h-[56px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold disabled:opacity-60">
+          {googleBusy ? <Loader2 size={18} className="animate-spin" /> : <GoogleIcon />}
+          <span>{googleBusy ? 'Connecting…' : 'Sign in with Google'}</span>
         </button>
 
         <p className="text-center text-[13px] text-slate-400 mt-7 font-semibold">
