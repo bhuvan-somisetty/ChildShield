@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Device Admin policies. WATCH_LOGIN + DISABLE_KEYGUARD_FEATURES are used so
+     AlphaGuard can detect/limit tampering; the active admin cannot be uninstalled
+     until it is first deactivated, which we gate behind the parent PIN. -->
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+        <force-lock />
+        <watch-login />
+        <disable-keyguard-features />
+        <limit-password />
+    </uses-policies>
+</device-admin>
