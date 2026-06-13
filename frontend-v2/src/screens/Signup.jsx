@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Lock, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { Screen, Button, Input, Brand, Progress, Modal } from '../components/ui';
+import { api, setToken } from '../lib/agClient';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -54,23 +55,18 @@ const PinField = ({ value, onChange, reveal }) => {
 
 const Signup = () => {
   const navigate = useNavigate();
-  const params = new URLSearchParams(useLocation().search); // review-only presets
-  const demo = params.get('demo') === '1';
 
-  const [step, setStep] = useState(parseInt(params.get('step') || '1', 10) || 1);
-  const [googleAuth, setGoogleAuth] = useState(params.get('google') === '1');
-  const [modalOpen, setModalOpen] = useState(params.get('modal') === '1');
-  const [done, setDone] = useState(params.get('done') === '1');
+  const [step, setStep] = useState(1);
+  const [googleAuth, setGoogleAuth] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [done, setDone] = useState(false);
   const [revealPin, setRevealPin] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const [f, setF] = useState(
-    demo
-      ? { name: 'Jane Doe', email: 'jane@family.com', pass: 'FamilySafe1', confirm: 'FamilySafe1' }
-      : { name: '', email: '', pass: '', confirm: '' }
-  );
-  const [pin, setPin] = useState(demo ? '482913' : '');
-  const [pin2, setPin2] = useState(demo ? '482913' : '');
+  const [f, setF] = useState({ name: '', email: '', pass: '', confirm: '' });
+  const [pin, setPin] = useState('');
+  const [pin2, setPin2] = useState('');
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
   const step1Valid = f.name.trim() && /.+@.+\..+/.test(f.email);
@@ -81,10 +77,25 @@ const Signup = () => {
   const pinMismatch = pin2.length === 6 && pin !== pin2;
 
   const continueWithGoogle = () => { setGoogleAuth(true); setStep(3); };
-  const confirmPin = () => {
+
+  // Real account creation — registers the parent (with hashed password + Security
+  // PIN) against the backend. Only advances to the success screen on a 201/200.
+  const confirmPin = async () => {
     setModalOpen(false);
+    setError('');
+    if (!step1Valid || !passValid || !passMatch || !pinValid) { setError('Please complete all fields correctly.'); return; }
     setSubmitting(true);
-    setTimeout(() => { setSubmitting(false); setDone(true); }, 1100);
+    try {
+      const { token } = await api.registerParent(f.email.trim().toLowerCase(), f.pass, f.name.trim(), pin);
+      setToken(token);
+      setDone(true);
+    } catch (err) {
+      setError(err.message === 'Email already registered'
+        ? 'An account with this email already exists.'
+        : (err.message || 'Could not create your account. Please try again.'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /* ── Success ──────────────────────────────────────────────────────────── */
@@ -210,6 +221,7 @@ const Signup = () => {
                   Keep this PIN private. It’s separate from your account password and authorizes sensitive parental controls.
                 </p>
               </div>
+              {error && <p className="text-rose-400 text-[12.5px] font-semibold text-center px-1">{error}</p>}
             </motion.div>
           )}
         </AnimatePresence>

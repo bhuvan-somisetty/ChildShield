@@ -28,10 +28,18 @@ export default function buildRoutes(io) {
 
   /* ── Auth: parent accounts ───────────────────────────────────────────── */
   r.post('/auth/parent/register', async (req, res) => {
-    const { email, password, name } = req.body || {};
+    const { email, password, name, pin } = req.body || {};
     if (!email || !password) return res.status(400).json({ error: 'email & password required' });
+    if (!/.+@.+\..+/.test(email)) return res.status(400).json({ error: 'Invalid email address' });
+    if (String(password).length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    if (pin != null && pin !== '' && !/^\d{6}$/.test(String(pin))) return res.status(400).json({ error: 'PIN must be 6 digits' });
     if (parents.find((p) => p.email === email.toLowerCase())) return res.status(409).json({ error: 'Email already registered' });
-    const p = parents.insert({ email: email.toLowerCase(), passwordHash: await hashPassword(password), name: name || 'Parent' });
+    const p = parents.insert({
+      email: email.toLowerCase(),
+      passwordHash: await hashPassword(password),
+      pinHash: pin ? await hashPassword(String(pin)) : null,
+      name: name || 'Parent',
+    });
     res.json({ token: sign({ sub: p.id, role: 'parent', parentId: p.id }), parent: publicParent(p) });
   });
 
@@ -40,6 +48,13 @@ export default function buildRoutes(io) {
     const p = parents.find((x) => x.email === (email || '').toLowerCase());
     if (!p || !(await comparePassword(password || '', p.passwordHash))) return res.status(401).json({ error: 'Invalid credentials' });
     res.json({ token: sign({ sub: p.id, role: 'parent', parentId: p.id }), parent: publicParent(p) });
+  });
+
+  // Verify the 6-digit Security PIN before allowing sensitive parental actions.
+  r.post('/auth/parent/verify-pin', requireParent, async (req, res) => {
+    const p = parents.byId(req.auth.parentId);
+    const ok = !!(p && p.pinHash) && await comparePassword(String((req.body || {}).pin || ''), p.pinHash);
+    res.json({ ok });
   });
 
   r.get('/me', requireAuth, (req, res) => {

@@ -9,6 +9,7 @@
 // Everything throws on failure; callers fall back to local/demo behaviour so the
 // apps still work with the backend offline.
 import { io } from 'socket.io-client';
+import { getToken } from './agClient';
 
 const BASE = import.meta.env.VITE_AG_API || 'http://localhost:4000';
 const LS_CREDS = 'ag_parent_creds';
@@ -36,6 +37,11 @@ const ready = (socket) => new Promise((resolve, reject) => {
 });
 
 async function parentToken() {
+  // Prefer the real account token persisted by the Login/Signup flow, so the
+  // dashboard's realtime data belongs to the signed-in parent — not a throwaway.
+  const real = getToken();
+  if (real) return real;
+  // Fallback (offline / same-origin demo with no login): anonymous demo account.
   let creds = jget(LS_CREDS);
   if (!creds) { creds = { email: `parent.${Math.random().toString(36).slice(2, 9)}@ag.local`, password: `pw_${Math.random().toString(36).slice(2)}` }; jset(LS_CREDS, creds); }
   try { return (await http('/auth/parent/login', creds)).token; }
