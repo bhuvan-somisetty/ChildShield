@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ensureSession } from '../../lib/session';
+import { logout } from '../../lib/auth';
 import { createViewer } from '../../lib/webrtc';
 import { motion } from 'framer-motion';
 import {
@@ -541,7 +542,7 @@ export const SettingsHub = () => {
       </Card>
       <Card className="divide-y divide-white/[0.05]">
         <button className="ag-tap w-full flex items-center gap-3.5 p-3.5"><div className="w-9 h-9 rounded-xl bg-slate-500/15 flex items-center justify-center"><RotateCcw size={17} className="text-slate-300" /></div><span className="flex-1 text-left text-white font-bold text-[14px]">Reset Settings</span></button>
-        <button onClick={() => navigate('/welcome')} className="ag-tap w-full flex items-center gap-3.5 p-3.5"><div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center"><LogOut size={17} className="text-amber-400" /></div><span className="flex-1 text-left text-amber-400 font-bold text-[14px]">Sign Out</span></button>
+        <button onClick={() => { logout(); navigate('/welcome'); }} className="ag-tap w-full flex items-center gap-3.5 p-3.5"><div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center"><LogOut size={17} className="text-amber-400" /></div><span className="flex-1 text-left text-amber-400 font-bold text-[14px]">Sign Out</span></button>
         <button onClick={() => navigate('/app/settings/delete')} className="ag-tap w-full flex items-center gap-3.5 p-3.5"><div className="w-9 h-9 rounded-xl bg-rose-500/15 flex items-center justify-center"><Trash2 size={17} className="text-rose-400" /></div><span className="flex-1 text-left text-rose-400 font-bold text-[14px]">Delete Account</span></button>
       </Card>
     </Page>

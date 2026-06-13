@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShieldCheck, MapPin, Bell, Phone, KeyRound, Check, ChevronRight, ChevronLeft,
-  Fingerprint, Plus, Trash2, Navigation, Building2, Users, Loader2, PartyPopper,
+  ShieldCheck, MapPin, Bell, Phone, Check, ChevronRight, ChevronLeft,
+  Plus, Trash2, Navigation, Users, PartyPopper,
 } from 'lucide-react';
 import { Screen, Button } from '../../components/ui';
 import {
@@ -11,7 +11,7 @@ import {
   getContacts, setContacts, markSetupDone, isSetupDone,
 } from '../../lib/permissions';
 
-const TOTAL = 6;
+const TOTAL = 5;
 
 const Bullet = ({ children }) => (
   <li className="flex items-start gap-2.5"><Check size={15} className="text-cyan-400 flex-shrink-0 mt-0.5" /><span className="text-slate-300 text-[13.5px] font-medium leading-relaxed">{children}</span></li>
@@ -38,12 +38,6 @@ const ParentSetup = () => {
   };
   const removeContact = (id) => { const next = contacts.filter((c) => c.id !== id); setC(next); setContacts(next); };
 
-  // Security PIN
-  const [pin, setPin] = useState('');
-  const [pin2, setPin2] = useState('');
-  const [bio, setBio] = useState(true);
-  const pinValid = pin.length === 4 && pin === pin2;
-
   const next = () => setStep((s) => Math.min(TOTAL, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
 
@@ -51,8 +45,10 @@ const ParentSetup = () => {
   const askNotifications = async () => { setBusy(true); await requestNotifications(); setP(getPerms()); setBusy(false); };
 
   const finish = () => {
-    setPerms({ pinSet: pinValid, biometric: bio ? 'granted' : 'denied', battery: 'granted' });
-    if (pinValid) localStorage.setItem('ag_pin', pin);
+    // The Security PIN is created once, during signup, and stored server-side
+    // (hashed). The wizard no longer collects a PIN — it only records that one
+    // exists and finalizes device permissions.
+    setPerms({ pinSet: true, battery: 'granted' });
     markSetupDone();
     navigate('/connect', { replace: true });
   };
@@ -173,37 +169,8 @@ const ParentSetup = () => {
             </div>
           )}
 
-          {/* STEP 5 — Security PIN */}
+          {/* STEP 5 — Complete */}
           {step === 5 && (
-            <div className="flex-1 flex flex-col">
-              <div className="w-16 h-16 rounded-3xl bg-violet-500/15 border border-violet-400/30 flex items-center justify-center mb-5"><KeyRound size={28} className="text-violet-400" /></div>
-              <h1 className="text-[25px] font-black text-white tracking-tight leading-tight">Create Security PIN</h1>
-              <p className="text-slate-400 text-[13.5px] font-semibold mt-2">Required to delete account, remove a child, disable monitoring, change security settings, or transfer ownership.</p>
-
-              <div className="flex flex-col gap-4 mt-6">
-                <div>
-                  <p className="text-slate-400 text-[12px] font-bold mb-2 px-1">Enter 4-digit PIN</p>
-                  <input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" type="password" placeholder="••••" className="w-full h-14 rounded-2xl bg-[#0b0c14] border border-white/10 px-4 text-[22px] tracking-[0.5em] text-white text-center placeholder:text-slate-700 focus:border-cyan-400/40 outline-none" />
-                </div>
-                <div>
-                  <p className="text-slate-400 text-[12px] font-bold mb-2 px-1">Confirm PIN</p>
-                  <input value={pin2} onChange={(e) => setPin2(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" type="password" placeholder="••••" className="w-full h-14 rounded-2xl bg-[#0b0c14] border border-white/10 px-4 text-[22px] tracking-[0.5em] text-white text-center placeholder:text-slate-700 focus:border-cyan-400/40 outline-none" />
-                  {pin2.length === 4 && pin !== pin2 && <p className="text-rose-400 text-[12px] font-bold mt-1.5 px-1">PINs don’t match</p>}
-                </div>
-                <button onClick={() => setBio(!bio)} className="ag-tap flex items-center gap-3 p-4 rounded-2xl border border-white/[0.08] bg-white/[0.03]">
-                  <Fingerprint size={20} className="text-cyan-400" />
-                  <div className="flex-1 text-left"><p className="text-white font-bold text-[14px]">Enable Biometric Login</p><p className="text-slate-500 text-[12px] font-semibold">Face ID / Fingerprint</p></div>
-                  <div className={`w-12 h-7 rounded-full flex items-center px-0.5 transition-colors ${bio ? 'bg-cyan-500/80 justify-end' : 'bg-white/10 justify-start'}`}><span className="w-6 h-6 rounded-full bg-white" /></div>
-                </button>
-              </div>
-
-              <div className="flex-1" />
-              <Button iconRight={ChevronRight} disabled={!pinValid} onClick={next} className="mt-7">Continue</Button>
-            </div>
-          )}
-
-          {/* STEP 6 — Complete */}
-          {step === 6 && (
             <div className="flex-1 flex flex-col items-center text-center justify-center">
               <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 240, damping: 18 }} className="w-24 h-24 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center mb-7">
                 <PartyPopper size={44} className="text-emerald-400" />
@@ -215,7 +182,7 @@ const ParentSetup = () => {
         </motion.div>
       </AnimatePresence>
 
-      {step === 6 && <Button iconRight={ChevronRight} onClick={finish} className="mt-6">Connect Child Device</Button>}
+      {step === TOTAL && <Button iconRight={ChevronRight} onClick={finish} className="mt-6">Connect Child Device</Button>}
     </Screen>
   );
 };

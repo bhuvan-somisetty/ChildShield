@@ -24,6 +24,7 @@ export const api = {
   // auth + pairing
   registerParent: (email, password, name, pin) => req('POST', '/auth/parent/register', { email, password, name, pin }),
   loginParent: (email, password) => req('POST', '/auth/parent/login', { email, password }),
+  emailAvailable: (email) => req('GET', `/auth/parent/email-available?email=${encodeURIComponent(email)}`),
   verifyPin: (pin) => req('POST', '/auth/parent/verify-pin', { pin }),
   setPin: (pin) => req('POST', '/auth/parent/set-pin', { pin }),
   googleConfig: () => req('GET', '/auth/google/config'),

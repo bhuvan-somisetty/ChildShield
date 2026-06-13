@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useChild } from '../../context/ChildContext';
 import { useRealtime } from '../../context/RealtimeContext';
+import { logout } from '../../lib/auth';
 import { useT } from '../../i18n/I18nContext';
 import { fmtMins, notificationsFor, NOTIF_CATEGORIES } from '../../data/childDemo';
 
@@ -617,7 +618,7 @@ export const SettingsHubV2 = () => {
       {G.map((g) => (<div key={g.label} className="flex flex-col gap-2.5"><Label>{g.label}</Label><Card className="divide-y divide-white/[0.05]">{g.items.map((it) => <Row key={it.label} {...it} onClick={() => navigate(it.to)} />)}</Card></div>))}
       <Card className="divide-y divide-white/[0.05]">
         <Row icon={RotateCcw} label={t('common.resetSettings')} sub="Requires Security PIN" accent="#64748b" onClick={() => setPinOpen(true)} />
-        <Row icon={Info} label={t('common.signOut')} badge="" accent="#f59e0b" onClick={() => navigate('/welcome')} />
+        <Row icon={Info} label={t('common.signOut')} badge="" accent="#f59e0b" onClick={() => { logout(); navigate('/welcome'); }} />
         <Row icon={Trash2} label={t('common.deleteAccount')} danger onClick={() => navigate('/app/settings/delete')} />
       </Card>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, User } from 'lucide-react';
 import { Screen, Button, Input, Header, Progress } from '../components/ui';
@@ -32,10 +32,8 @@ const GenderCard = ({ data, selected, anyPicked, onSelect }) => (
 
 const ChildSetup = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const params = new URLSearchParams(location.search); // review-only presets
-  const [step, setStep] = useState(params.get('step') === '2' ? 2 : 1);
-  const [gender, setGender] = useState(params.get('sel') === 'boy' || params.get('sel') === 'girl' ? params.get('sel') : null);
+  const [step, setStep] = useState(1);
+  const [gender, setGender] = useState(null);
   const [name, setName] = useState('');
 
   const picked = GENDERS.find((g) => g.id === gender);

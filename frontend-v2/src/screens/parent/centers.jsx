@@ -9,6 +9,7 @@ import {
 import { useChild } from '../../context/ChildContext';
 import { useRealtime } from '../../context/RealtimeContext';
 import { fmtMins } from '../../data/childDemo';
+import { api } from '../../lib/agClient';
 
 /* ── shared ──────────────────────────────────────────────────────────────── */
 const Page = ({ title, sub, right, children }) => {
@@ -44,12 +45,15 @@ const PinSheet = ({ mode, onClose }) => {
   const isPin = ['current', 'new', 'confirm'].includes(step);
   const key = step;
   const val = vals[key] ?? '';
-  const maxLen = step === 'code' ? 6 : 4;
-  const canNext = step === 'email' ? vals.email.includes('@') : step === 'code' ? vals.code.length === 6 : val.length === 4;
-  const next = () => {
+  const maxLen = 6; // all PINs are 6 digits (matches the server-side Security PIN)
+  const canNext = step === 'email' ? vals.email.includes('@') : val.length === 6;
+  const next = async () => {
     if (step === 'current' && saved && vals.current !== saved) return setErr('Incorrect PIN');
-    if (step === 'confirm' && vals.new !== vals.confirm) return setErr('PINs don’t match');
-    if (step === 'confirm') localStorage.setItem('ag_pin', vals.new);
+    if (step === 'confirm') {
+      if (vals.new !== vals.confirm) return setErr('PINs don’t match');
+      try { await api.setPin(vals.new); } catch { return setErr('Could not update PIN. Please try again.'); }
+      localStorage.setItem('ag_pin', vals.new);
+    }
     setIdx((i) => i + 1);
   };
   return (
