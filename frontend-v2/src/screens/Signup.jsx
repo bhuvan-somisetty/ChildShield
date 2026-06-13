@@ -5,6 +5,7 @@ import { User, Mail, Lock, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck,
 import { Screen, Button, Input, Brand, Progress, Modal } from '../components/ui';
 import { api, setToken } from '../lib/agClient';
 import { signInWithGoogle } from '../lib/google';
+import { useStepHistory } from '../lib/useStepHistory';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -145,6 +146,16 @@ const Signup = () => {
     }
   };
 
+  // Back preserves all entered data (name/email/password/PIN). Google users skip
+  // the password step, so step 3 returns to step 1. From step 1, Back returns to
+  // the login screen. Used by both the in-app arrow and the browser Back button.
+  const goBackStep = () => {
+    if (step === 3) setStep(googleAuth ? 1 : 2);
+    else if (step === 2) setStep(1);
+    else navigate('/login');
+  };
+  useStepHistory(step, 1, goBackStep);
+
   /* ── Success ──────────────────────────────────────────────────────────── */
   if (done) {
     return (
@@ -173,6 +184,13 @@ const Signup = () => {
   return (
     <Screen align="between" glow={step === 3 ? '#06b6d4' : '#4f46e5'} footer={footer}>
       <div className="w-full flex flex-col">
+        {/* Step 1 has no inline Back inside the form (steps 2 & 3 do), so expose a
+            top-left Back arrow that returns to the login screen. */}
+        {step === 1 && (
+          <button onClick={() => navigate('/login')} aria-label="Go back" className="ag-tap self-start mb-3 -mt-1 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white">
+            <ChevronLeft size={20} />
+          </button>
+        )}
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-7">
           {step === 3 ? (

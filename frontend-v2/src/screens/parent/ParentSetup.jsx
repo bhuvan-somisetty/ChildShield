@@ -6,6 +6,7 @@ import {
   Plus, Trash2, Navigation, Users, PartyPopper,
 } from 'lucide-react';
 import { Screen, Button } from '../../components/ui';
+import { useStepHistory } from '../../lib/useStepHistory';
 import {
   getPerms, setPerms, requestLocation, requestNotifications,
   getContacts, setContacts, markSetupDone, isSetupDone,
@@ -40,6 +41,7 @@ const ParentSetup = () => {
 
   const next = () => setStep((s) => Math.min(TOTAL, s + 1));
   const back = () => setStep((s) => Math.max(1, s - 1));
+  useStepHistory(step, 1, back); // browser Back walks the wizard steps (state preserved)
 
   const askLocation = async () => { setBusy(true); const r = await requestLocation(); setP(getPerms()); setBusy(false); return r; };
   const askNotifications = async () => { setBusy(true); await requestNotifications(); setP(getPerms()); setBusy(false); };
@@ -62,8 +64,8 @@ const ParentSetup = () => {
     <Screen align="start" glow="#2563eb">
       {/* Progress header */}
       <div className="w-full flex items-center gap-3 mb-7">
-        {step > 1 && step < TOTAL ? (
-          <button onClick={back} className="ag-tap w-9 h-9 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-slate-300"><ChevronLeft size={18} /></button>
+        {step > 1 ? (
+          <button onClick={back} aria-label="Go back" className="ag-tap w-9 h-9 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-slate-300"><ChevronLeft size={18} /></button>
         ) : <div className="w-9" />}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1.5"><span className="text-slate-400 text-[11px] font-bold uppercase tracking-wide">Parent Setup</span><span className="text-slate-500 text-[11px] font-bold">Step {step} of {TOTAL}</span></div>
