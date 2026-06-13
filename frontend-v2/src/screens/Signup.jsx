@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Lock, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { User, Mail, Lock, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck, Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react';
 import { Screen, Button, Input, Brand, Progress, Modal } from '../components/ui';
 import { api, setToken } from '../lib/agClient';
+import { signInWithGoogle } from '../lib/google';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -62,6 +63,7 @@ const Signup = () => {
   const [done, setDone] = useState(false);
   const [revealPin, setRevealPin] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [error, setError] = useState('');
 
   const [f, setF] = useState({ name: '', email: '', pass: '', confirm: '' });
@@ -76,18 +78,43 @@ const Signup = () => {
   const pinValid = pin.length === 6 && pin2.length === 6 && pin === pin2;
   const pinMismatch = pin2.length === 6 && pin !== pin2;
 
-  const continueWithGoogle = () => { setGoogleAuth(true); setStep(3); };
+  // Real Google sign-up — opens the account-selection popup and creates (or
+  // links) the parent account via the backend BEFORE the PIN screen. The account
+  // already exists by the time we advance to step 3, so the PIN is then attached
+  // to the authenticated account. No bypass, no setTimeout.
+  const continueWithGoogle = async () => {
+    setError('');
+    setGoogleBusy(true);
+    try {
+      const r = await signInWithGoogle(); // verifies identity server-side + sets token
+      setGoogleAuth(true);
+      if (r.needsPin) setStep(3);          // new/PIN-less account → collect the Security PIN
+      else setDone(true);                  // returning account already has a PIN
+    } catch (err) {
+      if (err.message === 'popup_closed' || err.message === 'access_denied') { /* user cancelled */ }
+      else if (err.message === 'google_not_configured') setError('Google sign-in is unavailable right now.');
+      else setError('Google sign-in failed. Please try again.');
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
-  // Real account creation — registers the parent (with hashed password + Security
-  // PIN) against the backend. Only advances to the success screen on a 201/200.
+  // Finalize: email accounts are registered here (with hashed password + PIN);
+  // Google accounts already exist, so we only attach the Security PIN. Only the
+  // fields relevant to the active flow are validated.
   const confirmPin = async () => {
     setModalOpen(false);
     setError('');
-    if (!step1Valid || !passValid || !passMatch || !pinValid) { setError('Please complete all fields correctly.'); return; }
+    const detailsOk = googleAuth ? true : (step1Valid && passValid && passMatch);
+    if (!detailsOk || !pinValid) { setError('Please complete all fields correctly.'); return; }
     setSubmitting(true);
     try {
-      const { token } = await api.registerParent(f.email.trim().toLowerCase(), f.pass, f.name.trim(), pin);
-      setToken(token);
+      if (googleAuth) {
+        await api.setPin(pin); // authenticated via the token from signInWithGoogle
+      } else {
+        const { token } = await api.registerParent(f.email.trim().toLowerCase(), f.pass, f.name.trim(), pin);
+        setToken(token);
+      }
       setDone(true);
     } catch (err) {
       setError(err.message === 'Email already registered'
@@ -161,9 +188,11 @@ const Signup = () => {
                 <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or sign up with</span>
                 <div className="flex-1 h-px bg-white/[0.07]" />
               </div>
-              <button onClick={continueWithGoogle} className="ag-tap w-full flex items-center justify-center gap-3 min-h-[56px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold">
-                <GoogleIcon /> <span>Continue with Google</span>
+              <button onClick={continueWithGoogle} disabled={googleBusy} className="ag-tap w-full flex items-center justify-center gap-3 min-h-[56px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-full text-white text-[14px] font-bold disabled:opacity-60">
+                {googleBusy ? <Loader2 size={18} className="animate-spin" /> : <GoogleIcon />}
+                <span>{googleBusy ? 'Connecting…' : 'Continue with Google'}</span>
               </button>
+              {error && step === 1 && <p className="text-rose-400 text-[12.5px] font-semibold text-center px-1">{error}</p>}
             </motion.div>
           )}
 
@@ -196,6 +225,9 @@ const Signup = () => {
           {/* STEP 3 — Parent Security PIN */}
           {step === 3 && (
             <motion.div key="s3" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.25 }} className="flex flex-col gap-5">
+              <button onClick={() => { setError(''); setStep(googleAuth ? 1 : 2); }} className="ag-tap self-start flex items-center gap-1 text-slate-400 hover:text-white text-xs font-bold -mt-1">
+                <ChevronLeft size={15} /> Back
+              </button>
               <p className="text-slate-400 text-[13px] font-medium leading-relaxed text-center -mt-2 max-w-[320px] mx-auto">
                 This PIN protects your child’s safety settings and approves important parental actions like unlocking apps, removing restrictions, or disconnecting a device.
               </p>

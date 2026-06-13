@@ -25,6 +25,12 @@ services:
         value: "1"          # Render Postgres requires SSL
       - key: AG_JWT_SECRET
         generateValue: true # Render generates a strong secret once and keeps it stable
+      # Google OAuth (authorization-code popup flow). Set the actual values in the
+      # Render dashboard — they are secret and must not be committed.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
       # CORS is currently open ('*') in code. To lock it to the frontend origin later,
       # set this and tighten server.js (see env documentation / future phase).
       # - key: FRONTEND_URL

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { ScanLine, Hash, ArrowRight, CheckCircle2, RefreshCw, AlertCircle } from 'lucide-react';
+import { ScanLine, Hash, ArrowRight, CheckCircle2, RefreshCw, AlertCircle, ChevronLeft } from 'lucide-react';
 import { Screen, Button, Brand } from '../../components/ui';
 import { CHILD } from '../../data/childDemo';
 import { api } from '../../lib/agClient';
@@ -92,6 +92,9 @@ const ConnectChild = () => {
   return (
     <Screen align="between" glow="#06b6d4">
       <div className="w-full flex flex-col items-center text-center">
+        <button onClick={() => navigate('/setup')} aria-label="Go back" className="ag-tap self-start mb-4 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white">
+          <ChevronLeft size={20} />
+        </button>
         <Brand variant="badge" className="mb-6" />
         <h1 className="text-[26px] font-black text-white tracking-tight leading-tight max-w-[300px]">Connect a Child Device</h1>
         <p className="text-slate-500 text-[14px] font-semibold mt-3 mb-7 max-w-[300px] leading-relaxed">
