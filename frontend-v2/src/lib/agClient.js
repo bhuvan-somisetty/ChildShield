@@ -30,6 +30,7 @@ export const api = {
   googleConfig: () => req('GET', '/auth/google/config'),
   googleAuth: (code) => req('POST', '/auth/google', { code }),
   me: () => req('GET', '/me'),
+  deleteAccount: () => req('DELETE', '/me'),
   createChild: (data) => req('POST', '/children', data),
   listChildren: () => req('GET', '/children'),
   claimPairing: (code, platform) => req('POST', '/pair/claim', { code, platform }),

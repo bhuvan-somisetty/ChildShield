@@ -10,6 +10,7 @@ import { useChild } from '../../context/ChildContext';
 import { useRealtime } from '../../context/RealtimeContext';
 import { fmtMins } from '../../data/childDemo';
 import { api } from '../../lib/agClient';
+import { logout } from '../../lib/auth';
 
 /* ── shared ──────────────────────────────────────────────────────────────── */
 const Page = ({ title, sub, right, children }) => {
@@ -445,6 +446,26 @@ export const DeleteAccount = () => {
   const [step, setStep] = useState('report'); // report | confirm | pin | done
   const [pin, setPin] = useState('');
   const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  // Verify the Security PIN, permanently delete the server account, then run the
+  // SAME logout() teardown (token + sockets + local storage) before finishing.
+  const confirmDelete = async () => {
+    if (pin.length !== 6 || busy) return;
+    setBusy(true); setErr('');
+    try {
+      const { ok } = await api.verifyPin(pin);
+      if (!ok) { setErr('Incorrect Security PIN.'); setBusy(false); return; }
+      await api.deleteAccount();
+      logout(); // clears token, sockets, pairing + all ag_* local storage
+      setStep('done');
+    } catch {
+      setErr('Could not delete the account. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
   const downloadReport = () => {
     const archive = { app: 'AlphaGuard AI', exportedAt: new Date().toISOString(), reason: 'pre-deletion 30-day report', child, settings: (() => { try { return JSON.parse(localStorage.getItem('ag_settings') || '{}'); } catch { return {}; } })(), safeZones: (() => { try { return JSON.parse(localStorage.getItem('ag_safezones') || '[]'); } catch { return []; } })() };
     const blob = new Blob([JSON.stringify(archive, null, 2)], { type: 'application/json' });
@@ -488,7 +509,8 @@ export const DeleteAccount = () => {
             <input autoFocus type="tel" inputMode="numeric" value={pin} maxLength={6} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} className="absolute inset-0 w-full h-full opacity-0" />
             <div className="flex items-center justify-center gap-2">{Array.from({ length: 6 }).map((_, i) => (<div key={i} className={`flex items-center justify-center w-11 h-14 rounded-2xl border-2 text-[20px] font-black text-white ${i < pin.length ? 'border-cyan-400/60 bg-cyan-500/[0.06]' : 'border-white/[0.08] bg-[#0b0c14]'}`}>{pin[i] ? '•' : ''}</div>))}</div>
           </div>
-          <button disabled={pin.length !== 6} onClick={() => setStep('done')} className="ag-tap w-full h-12 rounded-full bg-gradient-to-r from-rose-600 to-red-600 text-white font-extrabold disabled:opacity-50 flex items-center justify-center gap-2"><Trash2 size={17} /> Permanently Delete</button>
+          {err && <p className="text-rose-400 text-[12.5px] font-bold">{err}</p>}
+          <button disabled={pin.length !== 6 || busy} onClick={confirmDelete} className="ag-tap w-full h-12 rounded-full bg-gradient-to-r from-rose-600 to-red-600 text-white font-extrabold disabled:opacity-50 flex items-center justify-center gap-2"><Trash2 size={17} /> {busy ? 'Deleting…' : 'Permanently Delete'}</button>
         </Card>
       )}
     </Page>
