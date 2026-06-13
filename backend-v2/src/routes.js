@@ -44,6 +44,14 @@ export default function buildRoutes(io) {
     res.json({ token: sign({ sub: p.id, role: 'parent', parentId: p.id }), parent: publicParent(p) });
   });
 
+  // Public: lets signup surface a "already registered" error immediately,
+  // before the user finishes the multi-step form.
+  r.get('/auth/parent/email-available', (req, res) => {
+    const email = String(req.query.email || '').toLowerCase().trim();
+    if (!/.+@.+\..+/.test(email)) return res.status(400).json({ error: 'Invalid email address' });
+    res.json({ available: !parents.find((p) => p.email === email) });
+  });
+
   r.post('/auth/parent/login', async (req, res) => {
     const { email, password } = req.body || {};
     const p = parents.find((x) => x.email === (email || '').toLowerCase());

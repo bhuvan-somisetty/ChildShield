@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Lock, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck, Eye, EyeOff, KeyRound, Loader2 } from 'lucide-react';
@@ -69,9 +69,29 @@ const Signup = () => {
   const [f, setF] = useState({ name: '', email: '', pass: '', confirm: '' });
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
+  const [emailStatus, setEmailStatus] = useState('idle'); // idle | checking | ok | taken | error
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
-  const step1Valid = f.name.trim() && /.+@.+\..+/.test(f.email);
+  const emailFormatOk = /.+@.+\..+/.test(f.email);
+
+  // Check email availability against the backend AS THE USER TYPES, so a
+  // "already registered" error appears immediately — not only after submit.
+  useEffect(() => {
+    if (!emailFormatOk) { setEmailStatus('idle'); return undefined; }
+    setEmailStatus('checking');
+    let active = true;
+    const t = setTimeout(async () => {
+      try {
+        const { available } = await api.emailAvailable(f.email.trim().toLowerCase());
+        if (active) setEmailStatus(available ? 'ok' : 'taken');
+      } catch {
+        if (active) setEmailStatus('error'); // don't block on network failure; register still validates
+      }
+    }, 400);
+    return () => { active = false; clearTimeout(t); };
+  }, [f.email, emailFormatOk]);
+
+  const step1Valid = f.name.trim() && emailFormatOk && emailStatus !== 'taken' && emailStatus !== 'checking';
   const strength = pwStrength(f.pass);
   const passValid = f.pass.length >= 8;
   const passMatch = f.confirm.length > 0 && f.confirm === f.pass;
@@ -182,7 +202,13 @@ const Signup = () => {
           {step === 1 && (
             <motion.div key="s1" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4">
               <Input label="Full Name" icon={User} value={f.name} onChange={set('name')} placeholder="Jane Doe" />
-              <Input label="Email Address" icon={Mail} type="email" value={f.email} onChange={set('email')} placeholder="parent@family.com" />
+              <Input label="Email Address" icon={Mail} type="email" value={f.email} onChange={set('email')} placeholder="parent@family.com"
+                error={emailStatus === 'taken' ? 'An account with this email already exists.' : undefined}
+                success={emailStatus === 'ok' ? 'Email available' : undefined} />
+              {emailStatus === 'checking' && <span className="text-slate-500 text-[11.5px] font-semibold -mt-2 px-1">Checking availability…</span>}
+              {emailStatus === 'taken' && (
+                <button type="button" onClick={() => navigate('/login')} className="self-start -mt-2 px-1 text-cyan-400 text-[12px] font-bold hover:underline">Sign in instead →</button>
+              )}
               <div className="flex items-center gap-3 my-2">
                 <div className="flex-1 h-px bg-white/[0.07]" />
                 <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or sign up with</span>
