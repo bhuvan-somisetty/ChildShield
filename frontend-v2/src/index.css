@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* ════════════════════════════════════════════════════════════════════════
+   AlphaGuard AI — V2 Design Tokens
+   Dark-only · mobile-first · 8pt spacing system
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Surfaces */
+  --ag-bg:        #030307;
+  --ag-surface:   #0b0c14;
+  --ag-surface-2: #11131d;
+
+  /* Brand accents */
+  --ag-blue:   #2563eb;
+  --ag-indigo: #4f46e5;
+  --ag-cyan:   #06b6d4;
+  --ag-violet: #a855f7;
+  --ag-emerald:#10b981;
+  --ag-rose:   #f43f5e;
+
+  /* 8pt spacing scale */
+  --ag-space-1: 4px;   --ag-space-2: 8px;   --ag-space-3: 12px;
+  --ag-space-4: 16px;  --ag-space-5: 20px;  --ag-space-6: 24px;
+  --ag-space-8: 32px;  --ag-space-10: 40px; --ag-space-12: 48px;
+  --ag-space-16: 64px;
+
+  /* Safe-area insets */
+  --ag-safe-top:    env(safe-area-inset-top, 0px);
+  --ag-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ag-safe-left:   env(safe-area-inset-left, 0px);
+  --ag-safe-right:  env(safe-area-inset-right, 0px);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body, #root { height: 100%; }
+
+/* Mobile-first: never allow page-level horizontal scroll */
+html, body, #root { max-width: 100%; overflow-x: hidden; }
+
+/* Inputs must be allowed to shrink inside flex layouts (prevents the classic
+   flexbox min-content overflow that blows the mobile layout out past 100vw). */
+input, textarea, select { min-width: 0; }
+
+body {
+  margin: 0;
+  background: var(--ag-bg);
+  color: #fff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+}
+
+/* ── Helpers ──────────────────────────────────────────────────────────── */
+.ag-min-h-screen { min-height: 100vh; min-height: 100dvh; }
+
+.ag-no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.ag-no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Premium press feedback for tappable elements */
+.ag-tap { transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; }
+.ag-tap:active { transform: scale(0.97); }
+/* Larger, full-card press feedback */
+.ag-press { transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; }
+.ag-press:active { transform: scale(0.985); }
+.ag-press:focus-visible, .ag-tap:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; border-radius: 18px; }
+
+.ag-grad-text {
+  background: linear-gradient(120deg, #fff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-tap, .ag-tap:active, .ag-press, .ag-press:active { transition: none; transform: none; }
+}
