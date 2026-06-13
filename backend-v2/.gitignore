@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Local JSON-fallback database (dev runtime data — not for production/commit)
+data/
+
+# Environment (never commit secrets — see .env.example)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage / cache
+coverage/
+.nyc_output/
+
+# Deploy / editor / OS
+.vercel/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
