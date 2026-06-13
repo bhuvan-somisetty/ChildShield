@@ -100,8 +100,38 @@ export default function buildRoutes(io) {
     res.json({ ok: true });
   });
 
+  // Permanently delete the authenticated parent account and everything it owns
+  // (children, pairings, devices, telemetry, chat, zones, settings). Used by the
+  // Delete Account flow — server-side erasure to match the client logout wipe.
+  r.delete('/me', requireParent, (req, res) => {
+    const pid = req.auth.parentId;
+    const kids = children.filter((c) => c.parentId === pid).map((c) => c.id);
+    const pairIds = pairings.filter((p) => p.parentId === pid).map((p) => p.id);
+    const rm = (repo, pred) => repo.filter(pred).forEach((row) => repo.remove(row.id));
+    rm(messages, (m) => pairIds.includes(m.pairingId));
+    rm(devices, (d) => d.ownerType === 'child' && kids.includes(d.ownerId));
+    rm(locations, (l) => kids.includes(l.childId));
+    rm(battery, (b) => kids.includes(b.childId));
+    rm(permissions, (x) => x.ownerId === pid || kids.includes(x.ownerId));
+    rm(sos, (s) => s.parentId === pid);
+    rm(notifications, (n) => n.parentId === pid);
+    rm(requests, (x) => x.parentId === pid);
+    rm(securityAlerts, (s) => s.parentId === pid);
+    rm(Repo('safeZones'), (z) => z.parentId === pid);
+    rm(Repo('zoneEvents'), (e) => e.parentId === pid);
+    rm(Repo('settings'), (s) => s.ownerId === pid || kids.includes(s.ownerId));
+    rm(pairings, (p) => p.parentId === pid);
+    rm(children, (c) => c.parentId === pid);
+    parents.remove(pid);
+    res.json({ ok: true });
+  });
+
   r.get('/me', requireAuth, (req, res) => {
-    if (req.auth.role === 'parent') return res.json({ role: 'parent', parent: publicParent(parents.byId(req.auth.parentId)) });
+    if (req.auth.role === 'parent') {
+      const p = parents.byId(req.auth.parentId);
+      if (!p) return res.status(401).json({ error: 'Account no longer exists' }); // deleted account, stale token
+      return res.json({ role: 'parent', parent: publicParent(p) });
+    }
     const c = children.byId(req.auth.childId);
     res.json({ role: 'child', child: c ? publicChild(c) : null, pairingId: req.auth.pairingId });
   });
