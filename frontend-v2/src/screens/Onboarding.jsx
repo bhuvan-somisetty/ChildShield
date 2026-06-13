@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { Screen, Button, Progress } from '../components/ui';
+import { useStepHistory } from '../lib/useStepHistory';
 import { LocationArt, DeviceArt, SosArt, AiArt, PrivacyArt } from './OnboardingArt';
 
 const SLIDES = [
@@ -24,6 +25,10 @@ const Onboarding = () => {
   const Art = s.Art;
   const last = i === SLIDES.length - 1;
   const next = () => (last ? navigate('/role') : setI(i + 1));
+  // Back returns to the previous slide (state preserved); from the first slide it
+  // returns to the Welcome page.
+  const back = () => (i === 0 ? navigate('/welcome') : setI(i - 1));
+  useStepHistory(i, 0, () => setI((n) => Math.max(0, n - 1)));
 
   return (
     <Screen
@@ -31,13 +36,16 @@ const Onboarding = () => {
       glow={s.accent}
       footer={<Button iconRight={ChevronRight} onClick={next}>{last ? 'Agree & Continue' : 'Continue'}</Button>}
     >
-      {/* Top: progress + skip */}
-      <div className="w-full flex items-center justify-between min-h-[28px]">
+      {/* Top: back + progress + skip */}
+      <div className="w-full flex items-center justify-between gap-3 min-h-[44px]">
+        <button onClick={back} aria-label="Go back" className="ag-tap flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white flex-shrink-0">
+          <ChevronLeft size={20} />
+        </button>
         <Progress count={SLIDES.length} active={i} color={s.accent} />
         {!last ? (
-          <button onClick={() => navigate('/role')} className="ag-tap text-slate-500 hover:text-white text-[13px] font-bold">Skip</button>
+          <button onClick={() => navigate('/role')} className="ag-tap text-slate-500 hover:text-white text-[13px] font-bold flex-shrink-0">Skip</button>
         ) : (
-          <span className="w-8" />
+          <span className="w-11 flex-shrink-0" />
         )}
       </div>
 

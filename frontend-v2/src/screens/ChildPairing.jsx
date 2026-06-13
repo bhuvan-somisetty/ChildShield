@@ -5,6 +5,7 @@ import { Hash, ArrowRight, ChevronLeft, ScanLine, QrCode } from 'lucide-react';
 import jsQR from 'jsqr';
 import { Screen, Button } from '../components/ui';
 import { api, setToken } from '../lib/agClient';
+import { useStepHistory } from '../lib/useStepHistory';
 
 // Child device pairing. The PARENT device generates the 6-digit code + QR
 // (backend mints it on the authenticated POST /children call). The child joins
@@ -114,6 +115,10 @@ const ChildPairing = () => {
   useEffect(() => () => stopCamera(), [stopCamera]); // cleanup on unmount
 
   const submitManual = () => { if (code.length === 6) claim(code); };
+
+  // Browser Back inside the scanner returns to manual entry instead of leaving
+  // the pairing flow; from manual entry it returns to the child-setup route.
+  useStepHistory(mode === 'scan' ? 2 : 1, 1, () => setMode('enter'));
 
   /* ── QR SCANNER ───────────────────────────────────────────────────────── */
   if (mode === 'scan') {

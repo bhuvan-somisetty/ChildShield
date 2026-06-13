@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Check, User } from 'lucide-react';
-import { Screen, Button, Input, Header, Progress } from '../components/ui';
+import { ArrowRight, Check, User, ChevronLeft } from 'lucide-react';
+import { Screen, Button, Input, Progress } from '../components/ui';
+import { useStepHistory } from '../lib/useStepHistory';
 
 const GENDERS = [
   { id: 'boy', emoji: '👦', label: 'Boy', accent: '#06b6d4' },
@@ -38,6 +39,10 @@ const ChildSetup = () => {
 
   const picked = GENDERS.find((g) => g.id === gender);
 
+  // Back preserves entered data; from the first step it returns to role selection.
+  const goBack = () => (step === 2 ? setStep(1) : navigate('/role'));
+  useStepHistory(step, 1, () => setStep((s) => Math.max(1, s - 1)));
+
   const footer =
     step === 1
       ? <Button iconRight={ArrowRight} disabled={!gender} onClick={() => setStep(2)}>Continue</Button>
@@ -45,9 +50,15 @@ const ChildSetup = () => {
 
   return (
     <Screen align="between" glow={picked ? picked.accent : '#06b6d4'} footer={footer}>
-      {/* progress */}
-      <div className="w-full flex justify-center">
-        <Progress count={2} active={step - 1} color={picked ? picked.accent : '#06b6d4'} />
+      {/* back + progress */}
+      <div className="w-full flex items-center gap-3">
+        <button onClick={goBack} aria-label="Go back" className="ag-tap flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white flex-shrink-0">
+          <ChevronLeft size={20} />
+        </button>
+        <div className="flex-1 flex justify-center">
+          <Progress count={2} active={step - 1} color={picked ? picked.accent : '#06b6d4'} />
+        </div>
+        <span className="w-11 flex-shrink-0" />
       </div>
 
       <div className="flex-1 flex flex-col justify-center">
@@ -66,7 +77,6 @@ const ChildSetup = () => {
             </motion.div>
           ) : (
             <motion.div key="name" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="w-full">
-              <Header onBack={() => setStep(1)} className="mb-8" />
               <div className="flex flex-col items-center text-center mb-8">
                 {picked && (
                   <div className="relative mb-6">

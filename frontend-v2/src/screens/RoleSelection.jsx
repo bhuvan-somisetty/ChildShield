@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, MapPin, Users, Lock, Check, ChevronRight } from 'lucide-react';
+import { ShieldCheck, MapPin, Users, Lock, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Screen, Button, Brand } from '../components/ui';
 
 /* ── Illustrations ────────────────────────────────────────────────────────── */
@@ -88,6 +88,9 @@ const RoleSelection = () => {
     >
       {/* Top */}
       <div className="w-full flex flex-col items-center text-center">
+        <button onClick={() => navigate('/onboarding')} aria-label="Go back" className="ag-tap self-start mb-4 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white">
+          <ChevronLeft size={20} />
+        </button>
         <Brand variant="badge" className="mb-6" />
         <h1 className="text-[27px] font-black text-white tracking-tight leading-[1.15] max-w-[300px]">How will you use AlphaGuard?</h1>
         <p className="text-slate-500 text-[14px] font-semibold mt-2.5 max-w-[280px] leading-relaxed">Choose how you would like to set up this device.</p>
