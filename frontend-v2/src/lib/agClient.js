@@ -34,6 +34,7 @@ export const api = {
   createChild: (data) => req('POST', '/children', data),
   listChildren: () => req('GET', '/children'),
   claimPairing: (code, platform) => req('POST', '/pair/claim', { code, platform }),
+  regeneratePairing: (childId) => req('POST', '/pair/regenerate', { childId }),
   pairStatus: () => req('GET', '/pair/status'),
   // data
   messages: (pairingId) => req('GET', `/chat/${pairingId}/messages`),

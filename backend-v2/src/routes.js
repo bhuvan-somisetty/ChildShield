@@ -155,10 +155,14 @@ export default function buildRoutes(io) {
   });
 
   // Child device claims a pairing code → gets a child token + registers device.
+  // A code that exists but is no longer pending (revoked by a regenerate, or
+  // already claimed) is rejected with a distinct, actionable message.
   r.post('/pair/claim', (req, res) => {
     const { code, platform } = req.body || {};
-    const pairing = pairings.find((p) => p.code === code && p.status === 'pending');
-    if (!pairing) return res.status(404).json({ error: 'Invalid or used code' });
+    const byCode = pairings.find((p) => p.code === code);
+    if (!byCode) return res.status(404).json({ error: 'Invalid pairing code.' });
+    if (byCode.status !== 'pending') return res.status(409).json({ error: 'Pairing request is no longer valid. Ask your parent for a new code.' });
+    const pairing = byCode;
     pairings.update(pairing.id, { status: 'active', pairedAt: now() });
     const c = children.byId(pairing.childId);
     const dev = devices.insert({ ownerType: 'child', ownerId: c.id, platform: platform || 'android', online: false, lastSeen: now() });
@@ -166,6 +170,25 @@ export default function buildRoutes(io) {
     // Notify parent that pairing completed.
     io.to(svc.room.parent(pairing.parentId)).emit('pair:active', { pairingId: pairing.id, child: publicChild(c) });
     res.json({ token, child: publicChild(c), pairingId: pairing.id, deviceId: dev.id });
+  });
+
+  // Regenerate the pairing code/QR for a child. Enforces exactly ONE active
+  // (pending) pairing request per child: every existing pending request is
+  // revoked first, so the old code + old QR immediately stop working, then a new
+  // unique code is minted. The QR payload is derived from the code, so a new code
+  // is a new QR.
+  r.post('/pair/regenerate', requireParent, (req, res) => {
+    const { childId } = req.body || {};
+    const c = childId
+      ? children.byId(childId)
+      : children.find((x) => x.parentId === req.auth.parentId);
+    if (!c || c.parentId !== req.auth.parentId) return res.status(404).json({ error: 'Child not found' });
+    // Invalidate every still-pending request for this child.
+    pairings.filter((p) => p.childId === c.id && p.status === 'pending').forEach((p) => pairings.update(p.id, { status: 'revoked', revokedAt: now() }));
+    // Mint a fresh, collision-free code.
+    let code; do { code = code6(); } while (pairings.find((p) => p.code === code));
+    const pairing = pairings.insert({ code, parentId: req.auth.parentId, childId: c.id, status: 'pending' });
+    res.json({ child: publicChild(c), pairing: { id: pairing.id, code: pairing.code, status: pairing.status } });
   });
 
   r.get('/pair/status', requireParent, (req, res) => {
