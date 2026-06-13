@@ -22,8 +22,9 @@ const req = async (method, path, body) => {
 
 export const api = {
   // auth + pairing
-  registerParent: (email, password, name) => req('POST', '/auth/parent/register', { email, password, name }),
+  registerParent: (email, password, name, pin) => req('POST', '/auth/parent/register', { email, password, name, pin }),
   loginParent: (email, password) => req('POST', '/auth/parent/login', { email, password }),
+  verifyPin: (pin) => req('POST', '/auth/parent/verify-pin', { pin }),
   me: () => req('GET', '/me'),
   createChild: (data) => req('POST', '/children', data),
   listChildren: () => req('GET', '/children'),

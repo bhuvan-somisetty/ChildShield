@@ -20,6 +20,7 @@ import ConnectChild from './screens/parent/ConnectChild';
 import ChildConnected from './screens/child/ChildConnected';
 import ChildActivation from './screens/child/ChildActivation';
 import ChildShell from './components/layout/ChildShell';
+import RequireAuth from './components/RequireAuth';
 import ChildHome from './screens/child/app/Home';
 import ChildSOS from './screens/child/app/SOS';
 import ChildContacts from './screens/child/app/Contacts';
@@ -72,8 +73,8 @@ const App = () => {
         <Route path="/child/activate" element={<ChildActivation />} />
         <Route path="/child/dashboard" element={<Navigate to="/child/app/home" replace />} />
 
-        {/* Child Application */}
-        <Route path="/child/app" element={<ChildShell />}>
+        {/* Child Application (requires a claimed child device token) */}
+        <Route path="/child/app" element={<RequireAuth role="child"><ChildShell /></RequireAuth>}>
           <Route index element={<Navigate to="/child/app/home" replace />} />
           <Route path="home" element={<ChildHome />} />
           <Route path="sos" element={<ChildSOS />} />
@@ -85,8 +86,8 @@ const App = () => {
           <Route path="settings" element={<ChildSettingsScreen />} />
         </Route>
 
-        {/* Parent Platform (locked until a child is connected) */}
-        <Route path="/app" element={<ParentShell />}>
+        {/* Parent Platform (requires login; ParentShell additionally locks until a child is connected) */}
+        <Route path="/app" element={<RequireAuth role="parent"><ParentShell /></RequireAuth>}>
           <Route index element={<Navigate to="/app/home" replace />} />
           <Route path="home" element={<DashboardV2 />} />
           <Route path="controls" element={<Controls />} />

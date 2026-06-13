@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ChevronRight } from 'lucide-react';
 import { Screen, Button, Input, Brand } from '../components/ui';
+import { api, setToken } from '../lib/agClient';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -17,13 +18,24 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  // Mock sign-in — shows the loading micro-interaction, then proceeds to the
-  // parent setup wizard (which auto-forwards returning parents to /connect).
-  const submit = (e) => {
+  // Real sign-in — authenticates against the backend, persists the JWT, then
+  // proceeds to the parent setup wizard. Empty/invalid credentials are rejected.
+  const submit = async (e) => {
     e.preventDefault();
+    setError('');
+    if (!email.trim() || !password) { setError('Enter your email and password.'); return; }
     setSubmitting(true);
-    setTimeout(() => navigate('/setup'), 1100);
+    try {
+      const { token } = await api.loginParent(email.trim().toLowerCase(), password);
+      setToken(token);
+      navigate('/setup');
+    } catch (err) {
+      setError(err.message === 'Invalid credentials' ? 'Incorrect email or password.' : 'Login failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -36,8 +48,9 @@ const Login = () => {
         </div>
 
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <Input label="Email Address" icon={Mail} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="parent@family.com" />
-          <Input label="Password" icon={Lock} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••••••" />
+          <Input label="Email Address" icon={Mail} type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="parent@family.com" />
+          <Input label="Password" icon={Lock} type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }} placeholder="••••••••••••" />
+          {error && <p className="text-rose-400 text-[12.5px] font-semibold -mt-1 px-1">{error}</p>}
           <button type="button" onClick={() => navigate('/forgot')} className="ag-tap self-end text-cyan-400/90 hover:text-cyan-300 text-[12.5px] font-bold -mt-1">
             Forgot Password?
           </button>
