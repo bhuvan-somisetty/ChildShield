@@ -50,8 +50,10 @@ const ChildPairing = () => {
       navigate('/child/connected');
     } catch (err) {
       claimedRef.current = false;
-      const msg = err.message && err.message.toLowerCase().includes('invalid')
-        ? 'That code is invalid or has already been used.'
+      // Prefer the backend's actionable message (e.g. a regenerated/used code →
+      // "Pairing request is no longer valid. Ask your parent for a new code.").
+      const msg = err.message && /valid|code/i.test(err.message)
+        ? err.message
         : 'Pairing failed. Check the code and try again.';
       setError(msg); setScanError(msg);
       setMode('enter'); // surface the failure on the manual screen
