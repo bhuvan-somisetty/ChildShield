@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, MessageCircle, Siren, Sparkles, Settings } from 'lucide-react';
+import { Home, MessageCircle, Siren, Sparkles, Settings, ListChecks } from 'lucide-react';
 import { ChildAppProvider } from '../../child/ChildAppContext';
 import MonitorListener from '../../screens/child/app/MonitorListener';
 
 const TABS = [
   { to: '/child/app/home', label: 'Home', icon: Home },
+  { to: '/child/app/tasks', label: 'Tasks', icon: ListChecks },
   { to: '/child/app/chat', label: 'Chat', icon: MessageCircle },
   { to: '/child/app/disha', label: 'DISHA', icon: Sparkles },
   { to: '/child/app/settings', label: 'Settings', icon: Settings },

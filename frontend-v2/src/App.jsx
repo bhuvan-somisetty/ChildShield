@@ -28,7 +28,9 @@ import ChildChat from './screens/child/app/Chat';
 import ChildDisha from './screens/child/app/Disha';
 import ChildDishaVoice from './screens/child/app/DishaVoice';
 import ChildGoals from './screens/child/app/Goals';
+import ChildTasks from './screens/child/app/Tasks';
 import ChildSettingsScreen from './screens/child/app/Settings';
+import TasksCenter from './screens/parent/TasksCenter';
 import ParentShell from './components/layout/ParentShell';
 import DashboardV2 from './screens/parent/DashboardV2';
 import {
@@ -82,6 +84,7 @@ const App = () => {
           <Route path="chat" element={<ChildChat />} />
           <Route path="disha" element={<ChildDisha />} />
           <Route path="disha/voice" element={<ChildDishaVoice />} />
+          <Route path="tasks" element={<ChildTasks />} />
           <Route path="goals" element={<ChildGoals />} />
           <Route path="settings" element={<ChildSettingsScreen />} />
         </Route>
@@ -90,6 +93,7 @@ const App = () => {
         <Route path="/app" element={<RequireAuth role="parent"><ParentShell /></RequireAuth>}>
           <Route index element={<Navigate to="/app/home" replace />} />
           <Route path="home" element={<DashboardV2 />} />
+          <Route path="tasks" element={<TasksCenter />} />
           <Route path="controls" element={<Controls />} />
           <Route path="screen-time" element={<ScreenTimeCenter />} />
           <Route path="night" element={<NightRestrictions />} />

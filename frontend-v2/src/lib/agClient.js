@@ -47,6 +47,13 @@ export const api = {
   requests: () => req('GET', '/requests'),
   decideRequest: (id, decision) => req('POST', `/requests/${id}/decide`, { decision }),
   notifications: () => req('GET', '/notifications'),
+  // Phase 1 — shared tasks (triple-state + history)
+  listTasks: (childId) => req('GET', childId ? `/tasks?childId=${encodeURIComponent(childId)}` : '/tasks'),
+  createTask: (data) => req('POST', '/tasks', data),
+  updateTask: (id, patch) => req('PATCH', `/tasks/${id}`, patch),
+  cycleTask: (id) => req('POST', `/tasks/${id}/cycle`, {}),
+  deleteTask: (id) => req('DELETE', `/tasks/${id}`),
+  taskHistory: (id) => req('GET', `/tasks/${id}/history`),
 };
 
 // ── Socket.IO ───────────────────────────────────────────────────────────────
