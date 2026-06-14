@@ -12,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, process.env.AG_DB_FILE || 'alphaguard.json');
 
-const TABLES = ['parents', 'children', 'pairings', 'devices', 'messages', 'sos', 'locations', 'battery', 'permissions', 'notifications', 'appRequests', 'securityAlerts', 'safeZones', 'zoneEvents', 'settings', 'tasks', 'taskHistory', 'targets', 'targetHistory', 'rewards', 'rewardHistory', 'achievements', 'streaks', 'aiReports'];
+const TABLES = ['parents', 'children', 'pairings', 'devices', 'messages', 'sos', 'locations', 'battery', 'permissions', 'notifications', 'appRequests', 'securityAlerts', 'safeZones', 'zoneEvents', 'settings', 'tasks', 'taskHistory', 'targets', 'targetHistory', 'rewards', 'rewardHistory', 'achievements', 'streaks', 'aiReports', 'supportTickets', 'ticketComments', 'ticketHistory', 'ticketAttachments', 'featureRequests', 'announcements', 'changelog', 'appRatings'];
 const empty = () => TABLES.reduce((o, t) => ((o[t] = []), o), {});
 
 let cache = null;

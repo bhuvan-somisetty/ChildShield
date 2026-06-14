@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "migrate": "node migrate.js",
-    "test": "node test/sync.test.mjs && node test/pg.test.mjs && node test/pg-integration.test.mjs && node test/tasks.test.mjs && node test/growth.test.mjs"
+    "test": "node test/sync.test.mjs && node test/pg.test.mjs && node test/pg-integration.test.mjs && node test/tasks.test.mjs && node test/growth.test.mjs && node test/support.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

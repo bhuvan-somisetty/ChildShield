@@ -21,6 +21,9 @@ const PG_TABLE = {
   targets: 'targets', targetHistory: 'target_history',
   rewards: 'rewards', rewardHistory: 'reward_history',
   achievements: 'achievements', streaks: 'streaks', aiReports: 'ai_reports',
+  supportTickets: 'support_tickets', ticketComments: 'ticket_comments', ticketHistory: 'ticket_history',
+  ticketAttachments: 'ticket_attachments', featureRequests: 'feature_requests',
+  announcements: 'announcements', changelog: 'changelog', appRatings: 'app_ratings',
 };
 // Typed/indexed key columns per table → which row field fills them.
 const KEYCOLS = {
@@ -48,6 +51,14 @@ const KEYCOLS = {
   achievements: { family_id: 'familyId', child_id: 'childId', at: 'at' },
   streaks: { child_id: 'childId', kind: 'kind' },
   aiReports: { family_id: 'familyId', child_id: 'childId', period: 'period', at: 'at' },
+  supportTickets: { family_id: 'familyId', user_id: 'userId', ticket_number: 'ticketNumber', status: 'status', priority: 'priority' },
+  ticketComments: { ticket_id: 'ticketId', at: 'at' },
+  ticketHistory: { ticket_id: 'ticketId', at: 'at' },
+  ticketAttachments: { ticket_id: 'ticketId', at: 'at' },
+  featureRequests: { family_id: 'familyId', user_id: 'userId', status: 'status' },
+  announcements: { status: 'status', at: 'at' },
+  changelog: { at: 'at' },
+  appRatings: { family_id: 'familyId', user_id: 'userId' },
 };
 
 let pool = null;

@@ -4,9 +4,11 @@
 import { Repo, now } from './db.js';
 import { verify } from './auth.js';
 import * as svc from './services.js';
+import { isAdminEmail, adminRoom } from './admin.js';
 
 const devices = Repo('devices');
 const pairings = Repo('pairings');
+const parents = Repo('parents');
 
 const setPresence = (io, auth, online) => {
   if (auth.role === 'child') {
@@ -33,6 +35,9 @@ export default function attachSockets(io) {
     if (a.role === 'parent') {
       socket.join(svc.room.parent(a.parentId));
       pairings.filter((p) => p.parentId === a.parentId).forEach((p) => socket.join(svc.room.pairing(p.id)));
+      // Platform admins also join the shared admin room for live support updates.
+      const p = parents.byId(a.parentId);
+      if (p && isAdminEmail(p.email)) socket.join(adminRoom());
     } else {
       socket.join(svc.room.child(a.childId));
       if (a.pairingId) socket.join(svc.room.pairing(a.pairingId));
