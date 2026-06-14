@@ -1,8 +1,36 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, StickyNote, ListChecks, X } from 'lucide-react';
+import { Plus, Trash2, StickyNote, ListChecks, X, Target } from 'lucide-react';
 import { useTasks, STATE_META } from '../../../lib/useTasks';
+import { useLiveList, TARGET_STATUS } from '../../../lib/useGrowth';
 import { api } from '../../../lib/agClient';
+
+// Child Targets view — see goals and nudge personal progress.
+const ChildTargets = () => {
+  const { items, setItems, loading } = useLiveList('child', null, { name: 'target', load: () => api.listTargets().then((r) => r.targets) });
+  const bump = async (t) => {
+    const progress = Math.min(100, (t.progress || 0) + 10);
+    setItems((p) => p.map((x) => (x.id === t.id ? { ...x, progress } : x)));
+    const { target } = await api.updateTarget(t.id, { progress });
+    setItems((p) => p.map((x) => (x.id === t.id ? target : x)));
+  };
+  if (!loading && items.length === 0) return <div className="flex flex-col items-center text-center gap-2 py-14"><Target size={34} className="text-slate-600" /><p className="text-white font-bold text-[15px]">No goals yet</p><p className="text-slate-500 text-[13px] font-semibold">Your parent will set goals for you.</p></div>;
+  return (
+    <div className="flex flex-col gap-2.5">
+      {items.map((t) => {
+        const m = TARGET_STATUS[t.status] || TARGET_STATUS.not_started;
+        return (
+          <div key={t.id} className="p-4 rounded-[22px] border bg-[#0b0f0d]" style={{ borderColor: `${m.color}33` }}>
+            <div className="flex items-center justify-between"><p className="text-white font-bold text-[15px]">{t.title}</p><span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: `${m.color}1a`, color: m.color }}>{m.label}</span></div>
+            <div className="flex items-center justify-between mt-2.5 mb-1.5"><span className="text-slate-400 text-[12px] font-bold">{t.category}</span><span className="text-white text-[13px] font-black">{t.progress}%</span></div>
+            <div className="h-2 rounded-full bg-white/[0.08] overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ width: `${t.progress}%` }} /></div>
+            {t.status !== 'completed' && <button onClick={() => bump(t)} className="ag-tap mt-3 w-full h-10 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[13px] font-bold">+10% progress</button>}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 // Big tap target that cycles ⬜ → ✅ → ❌ → ⬜ with a spring pop.
 const StateButton = ({ state, onTap }) => {
@@ -42,6 +70,7 @@ const NewTaskSheet = ({ open, onClose, onCreate }) => {
 const ChildTasks = () => {
   const { tasks, loading, error, cycle, setTasks } = useTasks('child');
   const [sheet, setSheet] = useState(false);
+  const [tab, setTab] = useState('tasks');
 
   const create = useCallback(async (data) => {
     const { task } = await api.createTask(data);
@@ -56,15 +85,23 @@ const ChildTasks = () => {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[24px] font-black text-white tracking-tight leading-none">My Tasks</h1>
-          <p className="text-emerald-400/90 text-[13px] font-bold mt-1.5">{done}/{tasks.length} completed</p>
+          <h1 className="text-[24px] font-black text-white tracking-tight leading-none">Tasks &amp; Targets</h1>
+          <p className="text-emerald-400/90 text-[13px] font-bold mt-1.5">{done}/{tasks.length} tasks done</p>
         </div>
-        <button onClick={() => setSheet(true)} className="ag-tap w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-[0_8px_24px_rgba(16,185,129,0.4)]"><Plus size={22} className="text-white" /></button>
+        {tab === 'tasks' && <button onClick={() => setSheet(true)} className="ag-tap w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center shadow-[0_8px_24px_rgba(16,185,129,0.4)]"><Plus size={22} className="text-white" /></button>}
       </div>
 
-      {error && <div className="p-4 rounded-2xl bg-rose-500/[0.08] border border-rose-500/20"><p className="text-rose-400 text-[13px] font-semibold text-center">{error}</p></div>}
+      <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
+        {[['tasks', 'Tasks'], ['targets', 'Goals']].map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} className={`ag-tap flex-1 h-9 rounded-xl text-[13px] font-bold ${tab === id ? 'bg-white/[0.08] text-white' : 'text-slate-500'}`}>{label}</button>
+        ))}
+      </div>
 
-      {!loading && tasks.length === 0 && !error && (
+      {tab === 'targets' && <ChildTargets />}
+
+      {tab === 'tasks' && error && <div className="p-4 rounded-2xl bg-rose-500/[0.08] border border-rose-500/20"><p className="text-rose-400 text-[13px] font-semibold text-center">{error}</p></div>}
+
+      {tab === 'tasks' && !loading && tasks.length === 0 && !error && (
         <div className="flex flex-col items-center text-center gap-2 py-14">
           <ListChecks size={34} className="text-slate-600" />
           <p className="text-white font-bold text-[15px]">All clear!</p>
@@ -72,7 +109,7 @@ const ChildTasks = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-2.5">
+      <div className={`flex flex-col gap-2.5 ${tab === 'tasks' ? '' : 'hidden'}`}>
         <AnimatePresence initial={false}>
           {tasks.map((t) => {
             const m = STATE_META[t.completionState] || STATE_META.not_started;

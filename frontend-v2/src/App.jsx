@@ -29,8 +29,11 @@ import ChildDisha from './screens/child/app/Disha';
 import ChildDishaVoice from './screens/child/app/DishaVoice';
 import ChildGoals from './screens/child/app/Goals';
 import ChildTasks from './screens/child/app/Tasks';
+import ChildRewards from './screens/child/app/Rewards';
+import ChildAchievements from './screens/child/app/Achievements';
 import ChildSettingsScreen from './screens/child/app/Settings';
 import TasksCenter from './screens/parent/TasksCenter';
+import AIReports from './screens/parent/AIReports';
 import ParentShell from './components/layout/ParentShell';
 import DashboardV2 from './screens/parent/DashboardV2';
 import {
@@ -85,6 +88,8 @@ const App = () => {
           <Route path="disha" element={<ChildDisha />} />
           <Route path="disha/voice" element={<ChildDishaVoice />} />
           <Route path="tasks" element={<ChildTasks />} />
+          <Route path="rewards" element={<ChildRewards />} />
+          <Route path="achievements" element={<ChildAchievements />} />
           <Route path="goals" element={<ChildGoals />} />
           <Route path="settings" element={<ChildSettingsScreen />} />
         </Route>
@@ -104,7 +109,7 @@ const App = () => {
           <Route path="chat" element={<ChatCenter />} />
           <Route path="activity" element={<ActivityHistory />} />
           <Route path="analytics" element={<Analytics />} />
-          <Route path="reports" element={<ReportsCenter />} />
+          <Route path="reports" element={<AIReports />} />
           <Route path="reports/daily" element={<DailyReports />} />
           <Route path="notifications" element={<NotificationCenter />} />
           <Route path="notifications/:cat" element={<NotificationCategory />} />

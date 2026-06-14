@@ -4,6 +4,10 @@ import { Plus, Pencil, Trash2, History, X, ListChecks, StickyNote } from 'lucide
 import { Card, Button, Input, Modal } from '../../components/ui';
 import { api } from '../../lib/agClient';
 import { useTasks, STATE_META } from '../../lib/useTasks';
+import TargetsPanel from './TargetsPanel';
+import RewardsPanel from './RewardsPanel';
+
+const TABS = [{ id: 'tasks', label: 'Tasks' }, { id: 'targets', label: 'Targets' }, { id: 'rewards', label: 'Rewards' }];
 
 const StateChip = ({ state, onClick }) => {
   const m = STATE_META[state] || STATE_META.not_started;
@@ -69,6 +73,7 @@ const TasksCenter = () => {
   const { tasks, loading, error, cycle, setTasks, reload } = useTasks('parent', child?.id);
   const [editor, setEditor] = useState({ open: false, task: null });
   const [historyId, setHistoryId] = useState(null);
+  const [tab, setTab] = useState('tasks');
 
   useEffect(() => {
     api.listChildren()
@@ -90,16 +95,28 @@ const TasksCenter = () => {
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center"><ListChecks size={18} className="text-cyan-400" /></div>
           <div>
-            <h1 className="text-[19px] font-black text-white tracking-tight leading-none">Tasks</h1>
+            <h1 className="text-[19px] font-black text-white tracking-tight leading-none">Tasks &amp; Targets</h1>
             {child && <p className="text-slate-500 text-[12px] font-semibold mt-1">{child.name}</p>}
           </div>
         </div>
-        {child && <button onClick={() => setEditor({ open: true, task: null })} className="ag-tap inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-[13px] font-black"><Plus size={16} /> New</button>}
+        {child && tab === 'tasks' && <button onClick={() => setEditor({ open: true, task: null })} className="ag-tap inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-[13px] font-black"><Plus size={16} /> New</button>}
       </div>
+
+      {/* Tab bar: Tasks | Targets | Rewards */}
+      {child && (
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
+          {TABS.map((tb) => (
+            <button key={tb.id} onClick={() => setTab(tb.id)} className={`ag-tap flex-1 h-9 rounded-xl text-[13px] font-bold transition-colors ${tab === tb.id ? 'bg-white/[0.08] text-white' : 'text-slate-500'}`}>{tb.label}</button>
+          ))}
+        </div>
+      )}
+
+      {child && tab === 'targets' && <TargetsPanel childId={child.id} childName={child.name} />}
+      {child && tab === 'rewards' && <RewardsPanel childId={child.id} childName={child.name} />}
 
       {childErr && <Card className="p-4"><p className="text-slate-400 text-[13px] font-semibold text-center">{childErr}</p></Card>}
       {error && <Card className="p-4"><p className="text-rose-400 text-[13px] font-semibold text-center">{error}</p></Card>}
-      {child && !loading && tasks.length === 0 && !error && (
+      {child && tab === 'tasks' && !loading && tasks.length === 0 && !error && (
         <Card className="p-8 flex flex-col items-center text-center gap-2">
           <ListChecks size={30} className="text-slate-600" />
           <p className="text-white font-bold text-[14px]">No tasks yet</p>
@@ -107,7 +124,7 @@ const TasksCenter = () => {
         </Card>
       )}
 
-      <div className="flex flex-col gap-2.5">
+      <div className={`flex flex-col gap-2.5 ${tab === 'tasks' ? '' : 'hidden'}`}>
         <AnimatePresence initial={false}>
           {tasks.map((t) => (
             <motion.div key={t.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.2 }}>

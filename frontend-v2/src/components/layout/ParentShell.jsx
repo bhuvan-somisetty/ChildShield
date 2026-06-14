@@ -27,7 +27,7 @@ const TABS = [
   { to: '/app/home', key: 'nav.dashboard', icon: LayoutGrid },
   { to: '/app/tasks', key: 'nav.tasks', icon: ListChecks },
   { to: '/app/location', key: 'nav.location', icon: MapPin },
-  { to: '/app/monitoring', key: 'nav.monitor', icon: Eye },
+  { to: '/app/reports', key: 'nav.reports', icon: Sparkles },
   { to: '/app/settings', key: 'nav.settings', icon: Settings },
 ];
 

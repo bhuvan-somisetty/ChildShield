@@ -18,6 +18,9 @@ const PG_TABLE = {
   permissions: 'permissions', notifications: 'notifications', appRequests: 'app_requests',
   securityAlerts: 'security_alerts', safeZones: 'safe_zones', zoneEvents: 'zone_events', settings: 'settings',
   tasks: 'tasks', taskHistory: 'task_history',
+  targets: 'targets', targetHistory: 'target_history',
+  rewards: 'rewards', rewardHistory: 'reward_history',
+  achievements: 'achievements', streaks: 'streaks', aiReports: 'ai_reports',
 };
 // Typed/indexed key columns per table → which row field fills them.
 const KEYCOLS = {
@@ -38,6 +41,13 @@ const KEYCOLS = {
   settings: { owner_id: 'ownerId', key: 'key' },
   tasks: { family_id: 'familyId', child_id: 'childId', completion_state: 'completionState' },
   taskHistory: { family_id: 'familyId', task_id: 'taskId', at: 'at' },
+  targets: { family_id: 'familyId', child_id: 'childId', status: 'status' },
+  targetHistory: { family_id: 'familyId', target_id: 'targetId', at: 'at' },
+  rewards: { family_id: 'familyId', child_id: 'childId', target_id: 'targetId', status: 'status' },
+  rewardHistory: { family_id: 'familyId', reward_id: 'rewardId', at: 'at' },
+  achievements: { family_id: 'familyId', child_id: 'childId', at: 'at' },
+  streaks: { child_id: 'childId', kind: 'kind' },
+  aiReports: { family_id: 'familyId', child_id: 'childId', period: 'period', at: 'at' },
 };
 
 let pool = null;
