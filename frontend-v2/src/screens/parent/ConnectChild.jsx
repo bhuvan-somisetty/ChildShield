@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { Hash, ArrowRight, CheckCircle2, RefreshCw, AlertCircle, ChevronLeft, Copy, Check, QrCode } from 'lucide-react';
-import { Screen, Button, Brand } from '../../components/ui';
+import { Hash, ArrowRight, CheckCircle2, RefreshCw, AlertCircle, ChevronLeft, Copy, Check, QrCode, ShieldAlert } from 'lucide-react';
+import { Screen, Button, Brand, Modal } from '../../components/ui';
 import { CHILD } from '../../data/childDemo';
 import { api } from '../../lib/agClient';
 
@@ -20,17 +20,23 @@ const ConnectChild = () => {
   const [busy, setBusy] = useState(true);
   const [regening, setRegening] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
   const pollRef = useRef(null);
 
   // Create (or reuse) a real backend child + pending pairing → returns a 6-digit
   // code minted and stored server-side. The child device enters this code; the
   // backend validates it against PostgreSQL before activating the pairing.
+  // If we already have a child but its code was revoked (e.g. the parent stopped
+  // a previous attempt), we mint a fresh code for the SAME child rather than
+  // creating a duplicate.
   const generate = useCallback(async (force = false) => {
     setBusy(true); setError('');
     try {
       const existing = jget('ag_pairing');
-      if (existing && existing.code && !force) { setPairing(existing); setBusy(false); return; }
-      const r = await api.createChild({ name: 'My Child', age: 10, grade: '', school: '', emoji: '🧒', color: '#10b981' });
+      if (existing && existing.code && existing.pairingId && !force) { setPairing(existing); setBusy(false); return; }
+      const r = existing && existing.childId
+        ? await api.regeneratePairing(existing.childId)
+        : await api.createChild({ name: 'My Child', age: 10, grade: '', school: '', emoji: '🧒', color: '#10b981' });
       const next = { pairingId: r.pairing.id, childId: r.child.id, code: r.pairing.code };
       localStorage.setItem('ag_pairing', JSON.stringify(next));
       setPairing(next);
@@ -63,6 +69,18 @@ const ConnectChild = () => {
       setRegening(false);
     }
   }, [pairing, generate]);
+
+  // Stop Connecting: invalidate the active request server-side (old code + old QR
+  // immediately stop working), keep the child so a future visit mints a fresh
+  // code, then return to the previous screen.
+  const stopConnecting = useCallback(async () => {
+    setExitOpen(false);
+    const childId = pairing?.childId || jget('ag_pairing')?.childId;
+    try { if (childId) await api.revokePairing(childId); } catch { /* best-effort */ }
+    if (childId) localStorage.setItem('ag_pairing', JSON.stringify({ childId }));
+    else localStorage.removeItem('ag_pairing');
+    navigate('/setup');
+  }, [pairing, navigate]);
 
   // One-click copy of the current code (with an execCommand fallback).
   const copy = useCallback(async () => {
@@ -124,7 +142,7 @@ const ConnectChild = () => {
   return (
     <Screen align="between" glow="#06b6d4">
       <div className="w-full flex flex-col items-center text-center">
-        <button onClick={() => navigate('/setup')} aria-label="Go back" className="ag-tap self-start mb-3 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white">
+        <button onClick={() => (pairing?.code && !error ? setExitOpen(true) : navigate('/setup'))} aria-label="Go back" className="ag-tap self-start mb-3 flex items-center justify-center w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white">
           <ChevronLeft size={20} />
         </button>
         <Brand variant="badge" className="mb-4" />
@@ -203,6 +221,29 @@ const ConnectChild = () => {
       </div>
 
       <p className="text-center text-slate-600 text-[12px] font-semibold mt-4">Your connection is end-to-end encrypted.</p>
+
+      {/* Exit confirmation — Back does not leave immediately while a request is live. */}
+      <Modal open={exitOpen} onClose={() => setExitOpen(false)} variant="center" title="Stop Connecting Child Device?">
+        <div className="flex flex-col items-center text-center">
+          <div className="relative mb-4">
+            <div className="absolute -inset-2 rounded-2xl bg-amber-500/20 blur-lg" />
+            <div className="relative w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-center justify-center">
+              <ShieldAlert size={26} className="text-amber-400" />
+            </div>
+          </div>
+          <p className="text-slate-400 text-[13.5px] font-medium leading-relaxed max-w-[300px]">
+            Your current pairing code and QR code will no longer be available. You can continue waiting or stop the pairing process.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2.5 mt-6">
+          <button onClick={() => setExitOpen(false)} className="ag-tap w-full min-h-[52px] rounded-2xl text-white text-[14px] font-black border border-cyan-400/30" style={{ background: 'linear-gradient(135deg,#06b6d4,#2563eb)', boxShadow: '0 0 26px rgba(6,182,212,0.28)' }}>
+            Continue Waiting
+          </button>
+          <button onClick={stopConnecting} className="ag-tap w-full min-h-[52px] rounded-2xl text-rose-300 text-[14px] font-bold bg-rose-500/[0.08] border border-rose-500/25 hover:bg-rose-500/[0.14] transition-colors">
+            Stop Connecting
+          </button>
+        </div>
+      </Modal>
     </Screen>
   );
 };

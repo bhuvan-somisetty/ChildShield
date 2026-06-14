@@ -161,7 +161,7 @@ export default function buildRoutes(io) {
     const { code, platform } = req.body || {};
     const byCode = pairings.find((p) => p.code === code);
     if (!byCode) return res.status(404).json({ error: 'Invalid pairing code.' });
-    if (byCode.status !== 'pending') return res.status(409).json({ error: 'Pairing request is no longer valid. Ask your parent for a new code.' });
+    if (byCode.status !== 'pending') return res.status(409).json({ error: 'Pairing request is no longer valid. Ask your parent to generate a new code.' });
     const pairing = byCode;
     pairings.update(pairing.id, { status: 'active', pairedAt: now() });
     const c = children.byId(pairing.childId);
@@ -189,6 +189,20 @@ export default function buildRoutes(io) {
     let code; do { code = code6(); } while (pairings.find((p) => p.code === code));
     const pairing = pairings.insert({ code, parentId: req.auth.parentId, childId: c.id, status: 'pending' });
     res.json({ child: publicChild(c), pairing: { id: pairing.id, code: pairing.code, status: pairing.status } });
+  });
+
+  // Revoke (without replacing) every pending pairing request for a child — used
+  // when the parent stops the pairing process. The old code + old QR immediately
+  // become invalid; no new request is created.
+  r.post('/pair/revoke', requireParent, (req, res) => {
+    const { childId } = req.body || {};
+    const c = childId
+      ? children.byId(childId)
+      : children.find((x) => x.parentId === req.auth.parentId);
+    if (!c || c.parentId !== req.auth.parentId) return res.status(404).json({ error: 'Child not found' });
+    let revoked = 0;
+    pairings.filter((p) => p.childId === c.id && p.status === 'pending').forEach((p) => { pairings.update(p.id, { status: 'revoked', revokedAt: now() }); revoked += 1; });
+    res.json({ ok: true, revoked });
   });
 
   r.get('/pair/status', requireParent, (req, res) => {
