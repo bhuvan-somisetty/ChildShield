@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutGrid, Activity, MapPin, Eye, Settings, Sparkles, X, Send, Bell } from 'lucide-react';
+import { LayoutGrid, ListChecks, Activity, MapPin, Eye, Settings, Sparkles, X, Send, Bell } from 'lucide-react';
 import { isConnected } from '../../screens/parent/ConnectChild';
 import { ChildProvider, useChild } from '../../context/ChildContext';
 import { RealtimeProvider, useRealtime } from '../../context/RealtimeContext';
@@ -25,7 +25,7 @@ const NotifBell = () => {
 
 const TABS = [
   { to: '/app/home', key: 'nav.dashboard', icon: LayoutGrid },
-  { to: '/app/activity', key: 'nav.activity', icon: Activity },
+  { to: '/app/tasks', key: 'nav.tasks', icon: ListChecks },
   { to: '/app/location', key: 'nav.location', icon: MapPin },
   { to: '/app/monitoring', key: 'nav.monitor', icon: Eye },
   { to: '/app/settings', key: 'nav.settings', icon: Settings },

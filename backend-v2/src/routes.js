@@ -6,6 +6,7 @@ import { Repo, id, now } from './db.js';
 import { hashPassword, comparePassword, sign, requireAuth, requireParent, requireChild } from './auth.js';
 import { googleEnabled, googleClientId, verifyGoogleCode } from './google.js';
 import * as svc from './services.js';
+import * as taskSvc from './tasks.js';
 
 const parents = Repo('parents');
 const children = Repo('children');
@@ -19,6 +20,7 @@ const permissions = Repo('permissions');
 const notifications = Repo('notifications');
 const requests = Repo('appRequests');
 const securityAlerts = Repo('securityAlerts');
+const tasks = Repo('tasks');
 
 const code6 = () => String(Math.floor(100000 + Math.random() * 900000));
 const publicParent = (p) => ({ id: p.id, email: p.email, name: p.name });
@@ -212,6 +214,67 @@ export default function buildRoutes(io) {
   r.get('/devices', requireParent, (req, res) => {
     const childIds = children.filter((c) => c.parentId === req.auth.parentId).map((c) => c.id);
     res.json({ devices: devices.filter((d) => d.ownerType === 'child' && childIds.includes(d.ownerId)) });
+  });
+
+  /* ── Phase 1: Shared parent/child Tasks (triple-state + history) ───────── */
+  // Family = parent account. A child may only ever read/act on its own tasks; a
+  // parent on any task in their family. The actor id for the history log.
+  const actorId = (auth) => (auth.role === 'parent' ? auth.parentId : auth.childId);
+  const canMutate = (auth, t) => !!t && !t.deletedAt && t.familyId === auth.parentId
+    && (auth.role === 'parent' || t.childId === auth.childId);
+
+  r.get('/tasks', requireAuth, (req, res) => {
+    let list = tasks.filter((t) => t.familyId === req.auth.parentId && !t.deletedAt);
+    if (req.auth.role === 'child') list = list.filter((t) => t.childId === req.auth.childId);
+    else if (req.query.childId) list = list.filter((t) => t.childId === req.query.childId);
+    res.json({ tasks: list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).map(taskSvc.publicTask) });
+  });
+
+  r.post('/tasks', requireAuth, (req, res) => {
+    const b = req.body || {};
+    if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'Task title is required' });
+    let childId;
+    if (req.auth.role === 'parent') {
+      const child = children.byId(b.childId);
+      if (!child || child.parentId !== req.auth.parentId) return res.status(404).json({ error: 'Child not found' });
+      childId = child.id;
+    } else {
+      childId = req.auth.childId;
+    }
+    const t = taskSvc.createTask(io, {
+      familyId: req.auth.parentId, childId, source: req.auth.role, actorRole: req.auth.role, actorId: actorId(req.auth),
+      title: b.title, description: b.description, category: b.category, note: b.note, dueAt: b.dueAt,
+    });
+    res.json({ task: taskSvc.publicTask(t) });
+  });
+
+  r.patch('/tasks/:id', requireAuth, (req, res) => {
+    const t = tasks.byId(req.params.id);
+    if (!canMutate(req.auth, t)) return res.status(404).json({ error: 'Task not found' });
+    res.json({ task: taskSvc.publicTask(taskSvc.updateTask(io, t, { actorRole: req.auth.role, actorId: actorId(req.auth), patch: req.body || {} })) });
+  });
+
+  // Advance the triple state ⬜→✅→❌→⬜.
+  r.post('/tasks/:id/cycle', requireAuth, (req, res) => {
+    const t = tasks.byId(req.params.id);
+    if (!canMutate(req.auth, t)) return res.status(404).json({ error: 'Task not found' });
+    res.json({ task: taskSvc.publicTask(taskSvc.cycleTask(io, t, { actorRole: req.auth.role, actorId: actorId(req.auth) })) });
+  });
+
+  r.delete('/tasks/:id', requireAuth, (req, res) => {
+    const t = tasks.byId(req.params.id);
+    if (!canMutate(req.auth, t)) return res.status(404).json({ error: 'Task not found' });
+    // A child can only delete tasks it created; parent-created tasks are parent-only.
+    if (req.auth.role === 'child' && t.source !== 'child') return res.status(403).json({ error: 'Only a parent can delete this task' });
+    res.json(taskSvc.deleteTask(io, t, { actorRole: req.auth.role, actorId: actorId(req.auth) }));
+  });
+
+  // Full edit history (who/what/when). Readable even for soft-deleted tasks.
+  r.get('/tasks/:id/history', requireAuth, (req, res) => {
+    const t = tasks.byId(req.params.id);
+    const ok = t && t.familyId === req.auth.parentId && (req.auth.role === 'parent' || t.childId === req.auth.childId);
+    if (!ok) return res.status(404).json({ error: 'Task not found' });
+    res.json({ history: taskSvc.getHistory(t.id) });
   });
 
   /* ── Dev/demo: one-call session for the two existing apps ────────────── */

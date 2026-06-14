@@ -17,6 +17,7 @@ const PG_TABLE = {
   messages: 'messages', sos: 'sos', locations: 'locations', battery: 'battery',
   permissions: 'permissions', notifications: 'notifications', appRequests: 'app_requests',
   securityAlerts: 'security_alerts', safeZones: 'safe_zones', zoneEvents: 'zone_events', settings: 'settings',
+  tasks: 'tasks', taskHistory: 'task_history',
 };
 // Typed/indexed key columns per table → which row field fills them.
 const KEYCOLS = {
@@ -35,6 +36,8 @@ const KEYCOLS = {
   safeZones: { parent_id: 'parentId', child_id: 'childId', pairing_id: 'pairingId' },
   zoneEvents: { parent_id: 'parentId', child_id: 'childId', pairing_id: 'pairingId', zone_id: 'zoneId', type: 'type', at: 'at' },
   settings: { owner_id: 'ownerId', key: 'key' },
+  tasks: { family_id: 'familyId', child_id: 'childId', completion_state: 'completionState' },
+  taskHistory: { family_id: 'familyId', task_id: 'taskId', at: 'at' },
 };
 
 let pool = null;

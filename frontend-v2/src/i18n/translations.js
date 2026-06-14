@@ -3,7 +3,7 @@
 // back to English via the t() resolver, so adding a language never breaks UI.
 export const TRANSLATIONS = {
   en: {
-    'nav.dashboard': 'Dashboard', 'nav.activity': 'Activity', 'nav.location': 'Location', 'nav.monitor': 'Monitor', 'nav.settings': 'Settings',
+    'nav.dashboard': 'Dashboard', 'nav.tasks': 'Tasks', 'nav.activity': 'Activity', 'nav.location': 'Location', 'nav.monitor': 'Monitor', 'nav.settings': 'Settings',
     'common.notifications': 'Notifications', 'common.search': 'Search', 'common.markAllRead': 'Mark all read', 'common.unreadOnly': 'Unread only', 'common.signOut': 'Sign Out', 'common.deleteAccount': 'Delete Account', 'common.resetSettings': 'Reset Settings',
     'dash.quickActions': 'Quick Actions', 'dash.familySafety': 'Family Safety', 'dash.recentAlerts': 'Recent Alerts', 'dash.aiRecommendations': 'AI Recommendations', 'dash.location': 'Location', 'dash.safetyScore': 'Safety Score', 'dash.screenTime': "Today's Screen Time", 'dash.remainingToday': 'Remaining today', 'dash.safeZone': 'Safe zone', 'dash.appsRestricted': 'Apps restricted', 'dash.emergencyStatus': 'Emergency Status', 'dash.viewAll': 'View all',
     'settings.title': 'Settings', 'settings.account': 'Account', 'settings.preferences': 'Preferences', 'settings.dataPrivacy': 'Data & Privacy', 'settings.supportLegal': 'Support & Legal',
