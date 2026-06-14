@@ -75,8 +75,11 @@ export const updateTarget = (io, target, { actorRole, actorId, patch }) => {
   const updated = targets.update(target.id, { ...changes, updatedAt: now() });
   Object.entries(changes).forEach(([field, newValue]) => logTarget(updated, { actorRole, actorId, changeType: field === 'progress' ? 'progress' : field === 'status' ? 'status' : 'field_edit', field, oldValue: target[field] ?? null, newValue }));
   emit(io, updated.familyId, updated.childId, 'target:upserted', publicTarget(updated));
-  // Completing a target unlocks any rewards promised against it.
-  if (statusChanged && updated.status === 'completed') unlockRewardsForTarget(io, updated.id);
+  // Completing a target unlocks any rewards promised against it + a badge.
+  if (statusChanged && updated.status === 'completed') {
+    unlockRewardsForTarget(io, updated.id);
+    awardBadge(io, { familyId: updated.familyId, childId: updated.childId, key: 'target_crusher', title: 'Target Crusher', when: true });
+  }
   return updated;
 };
 
@@ -145,14 +148,25 @@ const unlockRewardsForTarget = (io, targetId) => {
 const MILESTONES = [3, 7, 14, 30, 60, 90];
 const categoryStreakKind = (category) => {
   const c = String(category || '').toLowerCase();
-  if (c.includes('study') || c.includes('math') || c.includes('homework')) return 'study';
+  if (c.includes('study') || c.includes('math') || c.includes('homework') || c.includes('school')) return 'study';
   if (c.includes('read')) return 'reading';
-  if (c.includes('exercise') || c.includes('fitness') || c.includes('sport') || c.includes('workout')) return 'exercise';
+  if (c.includes('cod') || c.includes('program')) return 'coding';
+  if (c.includes('exercise') || c.includes('fitness') || c.includes('sport') || c.includes('workout') || c.includes('health')) return 'exercise';
   return null;
 };
+// Category-specific named badges, awarded the first time a category streak reaches 7 days.
+const CATEGORY_BADGE = { study: 'Homework Hero', reading: 'Reading Champion', coding: 'Coding Explorer', exercise: 'Exercise Master' };
 
 export const publicStreak = (s) => ({ childId: s.childId, kind: s.kind, current: s.current || 0, longest: s.longest || 0, lastQualifiedDate: s.lastQualifiedDate || null });
-export const publicAchievement = (a) => ({ id: a.id, childId: a.childId, kind: a.kind, streakKind: a.streakKind, milestone: a.milestone, title: a.title, at: a.at });
+export const publicAchievement = (a) => ({ id: a.id, childId: a.childId, kind: a.kind, streakKind: a.streakKind || null, badge: a.badge || null, milestone: a.milestone || null, title: a.title, at: a.at });
+
+// Idempotent named badge (Reading Champion, Consistency King, Target Crusher…).
+const awardBadge = (io, { familyId, childId, key, title, when }) => {
+  if (!when || !title) return;
+  if (achievements.find((a) => a.childId === childId && a.badge === key)) return;
+  const a = achievements.insert({ familyId, childId, kind: 'badge', badge: key, title, at: now() });
+  emit(io, familyId, childId, 'achievement:unlocked', publicAchievement(a));
+};
 
 const advanceStreak = (io, { familyId, childId, kind, today }) => {
   let s = streaks.find((x) => x.childId === childId && x.kind === kind);
@@ -170,6 +184,9 @@ const advanceStreak = (io, { familyId, childId, kind, today }) => {
       emit(io, familyId, childId, 'achievement:unlocked', publicAchievement(a));
     }
   }
+  // Category-specific named badge at 7 days; Consistency King for a 14-day overall streak.
+  awardBadge(io, { familyId, childId, key: `cat:${kind}`, title: CATEGORY_BADGE[kind], when: current >= 7 });
+  if (kind === 'task_completion') awardBadge(io, { familyId, childId, key: 'consistency_king', title: 'Consistency King', when: current >= 14 });
   return updated;
 };
 
@@ -216,11 +233,31 @@ export const generateReport = (io, { familyId, childId, period }) => {
   const failurePct = pct(failed.length, total);
   const risk = completionPct >= 80 ? 'Low' : completionPct >= 50 ? 'Medium' : 'High';
 
+  // ── Category performance ──────────────────────────────────────────────────
+  const byCat = {};
+  childTasks.forEach((t) => { const k = t.category || 'Uncategorized'; (byCat[k] = byCat[k] || { total: 0, completed: 0 }); byCat[k].total += 1; if (t.completionState === 'completed') byCat[k].completed += 1; });
+  const categories = Object.entries(byCat).map(([category, v]) => ({ category, total: v.total, completed: v.completed, completionPct: pct(v.completed, v.total) }))
+    .sort((a, b) => b.completionPct - a.completionPct);
+  const ranked = categories.filter((c) => c.total >= 2);
+  const mostSuccessfulCategory = ranked[0]?.category || null;
+  const mostMissedCategory = ranked.length ? ranked[ranked.length - 1].category : null;
+
+  // ── Recurring task success ────────────────────────────────────────────────
+  const recurringTasks = childTasks.filter((t) => t.recurringId);
+  const recurringSuccessRate = pct(recurringTasks.filter((t) => t.completionState === 'completed').length, recurringTasks.length);
+
+  // ── Weekly trend (this window vs the previous one) ────────────────────────
+  const prevSince = since - days * 86400000;
+  const prevTasks = tasks.filter((t) => t.childId === childId && !t.deletedAt && (t.stateChangedAt && t.stateChangedAt >= prevSince && t.stateChangedAt < since));
+  const prevPct = pct(prevTasks.filter((t) => t.completionState === 'completed').length, prevTasks.length);
+  const trendDelta = prevTasks.length ? completionPct - prevPct : 0;
+
   // Rule-based recommendation from the weakest real signal.
   let recommendation = 'Keep up the consistent effort.';
   if (total === 0) recommendation = 'Create a few tasks to start tracking progress.';
   else if (completionPct < 50) recommendation = 'Break work into smaller daily tasks to lift completion.';
   else if (failurePct >= 30) recommendation = 'Several tasks were marked failed — review what is blocking them.';
+  else if (mostMissedCategory && ranked.length > 1 && ranked[ranked.length - 1].completionPct < 60) recommendation = `${mostMissedCategory} is frequently missed — schedule it at a more productive time.`;
   else {
     const reading = childStreaks.find((s) => s.kind === 'reading')?.current || 0;
     const exercise = childStreaks.find((s) => s.kind === 'exercise')?.current || 0;
@@ -233,6 +270,9 @@ export const generateReport = (io, { familyId, childId, period }) => {
     tasksTotal: total, tasksCompleted: completed.length, tasksFailed: failed.length,
     currentTaskStreak: taskStreak, mostProductiveTime,
     avgTargetProgress, targets: targetProgress,
+    categories, mostSuccessfulCategory, mostMissedCategory,
+    recurringSuccessRate, recurringCount: recurringTasks.length,
+    trendDelta, previousCompletionPct: prevPct,
     streaks: childStreaks, riskLevel: risk, recommendation,
   };
   const summary = `Task completion ${completionPct}% · ${taskStreak}-day streak · ${childTargets.length} target(s) at ${avgTargetProgress}% avg · Risk: ${risk}. ${recommendation}`;

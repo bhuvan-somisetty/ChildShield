@@ -11,6 +11,25 @@ export const STATE_META = {
 };
 export const nextState = (s) => STATE_ORDER[(STATE_ORDER.indexOf(s) + 1) % STATE_ORDER.length];
 
+export const CATEGORIES = ['Homework', 'Study', 'Reading', 'Coding', 'Exercise', 'Chores', 'Health', 'School', 'Custom'];
+export const CATEGORY_COLOR = { Homework: '#6366f1', Study: '#3b82f6', Reading: '#06b6d4', Coding: '#a855f7', Exercise: '#f59e0b', Chores: '#64748b', Health: '#10b981', School: '#ec4899', Custom: '#94a3b8' };
+// Agenda buckets from a list of tasks with dueAt (YYYY-MM-DD).
+export const bucketByAgenda = (tasks) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const out = { overdue: [], today: [], tomorrow: [], upcoming: [] };
+  tasks.forEach((t) => {
+    const due = t.dueAt ? String(t.dueAt).slice(0, 10) : null;
+    if (!due) { out.upcoming.push(t); return; }
+    if (t.completionState === 'not_started' && due < today) out.overdue.push(t);
+    else if (due === today) out.today.push(t);
+    else if (due === tomorrow) out.tomorrow.push(t);
+    else if (due > tomorrow) out.upcoming.push(t);
+    else out.today.push(t);
+  });
+  return out;
+};
+
 // Loads tasks for the given role (parent passes the selected childId) and keeps
 // them live over Socket.IO (task:upserted / task:deleted from the shared family
 // room). Reuses the cached socket session — no second connection.

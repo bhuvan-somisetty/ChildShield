@@ -24,6 +24,8 @@ const PG_TABLE = {
   supportTickets: 'support_tickets', ticketComments: 'ticket_comments', ticketHistory: 'ticket_history',
   ticketAttachments: 'ticket_attachments', featureRequests: 'feature_requests',
   announcements: 'announcements', changelog: 'changelog', appRatings: 'app_ratings',
+  taskCategories: 'task_categories', taskComments: 'task_comments',
+  recurringTasks: 'recurring_tasks', calendarEvents: 'calendar_events',
 };
 // Typed/indexed key columns per table → which row field fills them.
 const KEYCOLS = {
@@ -59,6 +61,10 @@ const KEYCOLS = {
   announcements: { status: 'status', at: 'at' },
   changelog: { at: 'at' },
   appRatings: { family_id: 'familyId', user_id: 'userId' },
+  taskCategories: { family_id: 'familyId', name: 'name' },
+  taskComments: { task_id: 'taskId', family_id: 'familyId', at: 'at' },
+  recurringTasks: { family_id: 'familyId', child_id: 'childId', status: 'status' },
+  calendarEvents: { family_id: 'familyId', child_id: 'childId', at: 'at' },
 };
 
 let pool = null;

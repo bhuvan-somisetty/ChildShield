@@ -38,6 +38,7 @@ export const publicTask = (t) => ({
   completionState: t.completionState,
   stateChangedAt: t.stateChangedAt || null,
   dueAt: t.dueAt || null,
+  recurringId: t.recurringId || null,
   version: t.version || 1,
   createdAt: t.createdAt,
   updatedAt: t.updatedAt || t.createdAt,
