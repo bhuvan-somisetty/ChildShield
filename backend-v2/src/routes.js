@@ -8,6 +8,8 @@ import { googleEnabled, googleClientId, verifyGoogleCode } from './google.js';
 import * as svc from './services.js';
 import * as taskSvc from './tasks.js';
 import * as growth from './growth.js';
+import * as support from './support.js';
+import { isAdminEmail } from './admin.js';
 
 const parents = Repo('parents');
 const children = Repo('children');
@@ -24,6 +26,15 @@ const securityAlerts = Repo('securityAlerts');
 const tasks = Repo('tasks');
 const targets = Repo('targets');
 const rewards = Repo('rewards');
+const supportTickets = Repo('supportTickets');
+const featureRequests = Repo('featureRequests');
+
+// Platform-admin gate — admin status is decided server-side by email allowlist.
+const requireAdminFor = (parents) => (req, res, next) => requireAuth(req, res, () => {
+  const p = req.auth.role === 'parent' && parents.byId(req.auth.parentId);
+  if (!p || !isAdminEmail(p.email)) return res.status(403).json({ error: 'Admin only' });
+  next();
+});
 
 const code6 = () => String(Math.floor(100000 + Math.random() * 900000));
 const publicParent = (p) => ({ id: p.id, email: p.email, name: p.name });
@@ -135,7 +146,7 @@ export default function buildRoutes(io) {
     if (req.auth.role === 'parent') {
       const p = parents.byId(req.auth.parentId);
       if (!p) return res.status(401).json({ error: 'Account no longer exists' }); // deleted account, stale token
-      return res.json({ role: 'parent', parent: publicParent(p) });
+      return res.json({ role: 'parent', parent: publicParent(p), admin: isAdminEmail(p.email) });
     }
     const c = children.byId(req.auth.childId);
     res.json({ role: 'child', child: c ? publicChild(c) : null, pairingId: req.auth.pairingId });
@@ -372,6 +383,87 @@ export default function buildRoutes(io) {
     if (!childInScope(req.auth, childId)) return res.status(404).json({ error: 'Child not found' });
     res.json({ report: growth.generateReport(io, { familyId: req.auth.parentId, childId, period }) });
   });
+
+  /* ── Phase 3: Help & Support ecosystem ─────────────────────────────────── */
+  const requireAdmin = requireAdminFor(parents);
+  const ownTicket = (auth, t) => t && t.familyId === auth.parentId && t.userId === auth.parentId;
+
+  // Report an Issue → creates a ticket (appears instantly in /admin/support).
+  r.post('/support/tickets', requireParent, (req, res) => {
+    const b = req.body || {};
+    if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'Title is required' });
+    const t = support.createTicket(io, { familyId: req.auth.parentId, userId: req.auth.parentId, ...b });
+    res.json({ ticket: support.publicTicket(t) });
+  });
+  r.get('/support/tickets', requireParent, (req, res) => res.json({ tickets: support.listUserTickets(req.auth.parentId, req.auth.parentId) }));
+  r.get('/support/tickets/:id', requireParent, (req, res) => {
+    const t = supportTickets.byId(req.params.id);
+    if (!ownTicket(req.auth, t)) return res.status(404).json({ error: 'Ticket not found' });
+    res.json(support.getTicketThread(t, { includeInternal: false }));
+  });
+  r.post('/support/tickets/:id/comments', requireParent, (req, res) => {
+    const t = supportTickets.byId(req.params.id);
+    if (!ownTicket(req.auth, t)) return res.status(404).json({ error: 'Ticket not found' });
+    if (!String((req.body || {}).body || '').trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
+    support.addComment(io, t, { authorRole: 'user', authorId: req.auth.parentId, body: req.body.body, attachment: req.body.attachment });
+    res.json(support.getTicketThread(supportTickets.byId(t.id), { includeInternal: false }));
+  });
+  r.post('/support/tickets/:id/close', requireParent, (req, res) => {
+    const t = supportTickets.byId(req.params.id);
+    if (!ownTicket(req.auth, t)) return res.status(404).json({ error: 'Ticket not found' });
+    res.json({ ticket: support.publicTicket(support.closeTicketByUser(io, t, { userId: req.auth.parentId })) });
+  });
+
+  // Admin support dashboard
+  r.get('/admin/support/tickets', requireAdmin, (_req, res) => res.json({ stats: support.supportStats(), tickets: support.listAllTickets() }));
+  r.get('/admin/support/tickets/:id', requireAdmin, (req, res) => {
+    const t = supportTickets.byId(req.params.id);
+    if (!t) return res.status(404).json({ error: 'Ticket not found' });
+    res.json(support.getTicketThread(t, { includeInternal: true }));
+  });
+  r.patch('/admin/support/tickets/:id', requireAdmin, (req, res) => {
+    const t = supportTickets.byId(req.params.id);
+    if (!t) return res.status(404).json({ error: 'Ticket not found' });
+    res.json({ ticket: support.publicTicket(support.updateTicket(io, t, { actorRole: 'admin', actorId: req.auth.parentId, patch: req.body || {} }), { includeInternal: true }) });
+  });
+  r.post('/admin/support/tickets/:id/comments', requireAdmin, (req, res) => {
+    const t = supportTickets.byId(req.params.id);
+    if (!t) return res.status(404).json({ error: 'Ticket not found' });
+    if (!String((req.body || {}).body || '').trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
+    support.addComment(io, t, { authorRole: 'admin', authorId: req.auth.parentId, body: req.body.body, internal: req.body.internal, attachment: req.body.attachment });
+    res.json(support.getTicketThread(supportTickets.byId(t.id), { includeInternal: true }));
+  });
+
+  // Feature requests
+  r.post('/feature-requests', requireParent, (req, res) => {
+    const b = req.body || {};
+    if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'Title is required' });
+    res.json({ feature: support.publicFeature(support.createFeature(io, { familyId: req.auth.parentId, userId: req.auth.parentId, ...b })) });
+  });
+  r.get('/feature-requests', requireParent, (req, res) => res.json({ features: support.listUserFeatures(req.auth.parentId, req.auth.parentId) }));
+  r.get('/admin/feature-requests', requireAdmin, (_req, res) => res.json({ features: support.listAllFeatures() }));
+  r.patch('/admin/feature-requests/:id', requireAdmin, (req, res) => {
+    const f = featureRequests.byId(req.params.id);
+    if (!f) return res.status(404).json({ error: 'Feature request not found' });
+    res.json({ feature: support.publicFeature(support.updateFeature(io, f, { patch: req.body || {} })) });
+  });
+
+  // Announcements
+  r.get('/announcements', requireAuth, (_req, res) => res.json({ announcements: support.listPublishedAnnouncements() }));
+  r.post('/admin/announcements', requireAdmin, (req, res) => res.json({ announcement: support.publicAnnouncement(support.createAnnouncement(io, req.body || {})) }));
+  r.get('/admin/announcements', requireAdmin, (_req, res) => res.json({ announcements: support.listAllAnnouncements() }));
+
+  // What's New / changelog
+  r.get('/changelog', requireAuth, (_req, res) => res.json({ changelog: support.listChangelog() }));
+  r.post('/admin/changelog', requireAdmin, (req, res) => res.json({ entry: support.publicChangelog(support.createChangelog(io, req.body || {})) }));
+
+  // Ratings
+  r.post('/ratings', requireParent, (req, res) => {
+    const stars = Number((req.body || {}).stars);
+    if (!(stars >= 1 && stars <= 5)) return res.status(400).json({ error: 'stars must be 1-5' });
+    res.json({ rating: support.createRating(io, { familyId: req.auth.parentId, userId: req.auth.parentId, stars, feedback: (req.body || {}).feedback }) });
+  });
+  r.get('/admin/ratings', requireAdmin, (_req, res) => res.json(support.ratingStats()));
 
   /* ── Dev/demo: one-call session for the two existing apps ────────────── */
   // Idempotently provisions a demo parent + child + ACTIVE pairing and returns a

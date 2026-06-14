@@ -31,6 +31,10 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
+      # Platform support administrators (comma-separated emails). These parent
+      # accounts gain access to /admin/support and the admin dashboard.
+      - key: AG_ADMIN_EMAILS
+        sync: false
       # CORS is currently open ('*') in code. To lock it to the frontend origin later,
       # set this and tighten server.js (see env documentation / future phase).
       # - key: FRONTEND_URL

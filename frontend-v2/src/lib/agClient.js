@@ -66,6 +66,39 @@ export const api = {
   streaks: (childId) => req('GET', `/streaks/${childId}`),
   achievements: (childId) => req('GET', `/achievements/${childId}`),
   generateReport: (childId, period) => req('POST', '/ai/reports', { childId, period }),
+  // Phase 3 — Help & Support
+  createTicket: (data) => req('POST', '/support/tickets', data),
+  listTickets: () => req('GET', '/support/tickets'),
+  getTicket: (id) => req('GET', `/support/tickets/${id}`),
+  commentTicket: (id, body, attachment) => req('POST', `/support/tickets/${id}/comments`, { body, attachment }),
+  closeTicket: (id) => req('POST', `/support/tickets/${id}/close`, {}),
+  createFeature: (data) => req('POST', '/feature-requests', data),
+  listFeatures: () => req('GET', '/feature-requests'),
+  announcements: () => req('GET', '/announcements'),
+  changelog: () => req('GET', '/changelog'),
+  rateApp: (stars, feedback) => req('POST', '/ratings', { stars, feedback }),
+  // admin
+  adminTickets: () => req('GET', '/admin/support/tickets'),
+  adminTicket: (id) => req('GET', `/admin/support/tickets/${id}`),
+  adminUpdateTicket: (id, patch) => req('PATCH', `/admin/support/tickets/${id}`, patch),
+  adminReplyTicket: (id, body, internal) => req('POST', `/admin/support/tickets/${id}/comments`, { body, internal }),
+  adminFeatures: () => req('GET', '/admin/feature-requests'),
+  adminUpdateFeature: (id, patch) => req('PATCH', `/admin/feature-requests/${id}`, patch),
+  adminCreateAnnouncement: (data) => req('POST', '/admin/announcements', data),
+  adminCreateChangelog: (data) => req('POST', '/admin/changelog', data),
+};
+
+// App version + auto-captured device/browser info attached to bug reports.
+export const APP_VERSION = '2.1.0';
+export const clientInfo = () => {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const platform = (typeof navigator !== 'undefined' && navigator.platform) || 'unknown';
+  const screenInfo = typeof window !== 'undefined' && window.screen ? `${window.screen.width}x${window.screen.height}` : '';
+  let browser = 'Unknown';
+  if (/Edg\//.test(ua)) browser = 'Edge'; else if (/Chrome\//.test(ua)) browser = 'Chrome';
+  else if (/Firefox\//.test(ua)) browser = 'Firefox'; else if (/Safari\//.test(ua)) browser = 'Safari';
+  const m = ua.match(/(Chrome|Firefox|Version|Edg)\/(\d+)/);
+  return { device: `${platform} · ${screenInfo}`, browser: `${browser}${m ? ' ' + m[2] : ''}`, appVersion: APP_VERSION };
 };
 
 // ── Socket.IO ───────────────────────────────────────────────────────────────

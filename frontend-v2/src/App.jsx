@@ -34,6 +34,8 @@ import ChildAchievements from './screens/child/app/Achievements';
 import ChildSettingsScreen from './screens/child/app/Settings';
 import TasksCenter from './screens/parent/TasksCenter';
 import AIReports from './screens/parent/AIReports';
+import HelpSupportCenter from './screens/parent/SupportCenter';
+import AdminSupport from './screens/parent/AdminSupport';
 import ParentShell from './components/layout/ParentShell';
 import DashboardV2 from './screens/parent/DashboardV2';
 import {
@@ -142,8 +144,10 @@ const App = () => {
           <Route path="settings/subscription" element={<SubscriptionCenter />} />
           <Route path="settings/data" element={<DataControlCenter />} />
           <Route path="settings/export" element={<DataExportCenter />} />
-          <Route path="settings/support" element={<SupportCenter />} />
-          <Route path="settings/help" element={<SupportCenter />} />
+          <Route path="settings/support" element={<HelpSupportCenter />} />
+          <Route path="settings/help" element={<HelpSupportCenter />} />
+          <Route path="support" element={<HelpSupportCenter />} />
+          <Route path="admin/support" element={<AdminSupport />} />
           <Route path="settings/help/faq" element={<FAQPage />} />
           <Route path="settings/contact" element={<ContactCenter />} />
           <Route path="settings/legal" element={<LegalCenter />} />
