@@ -54,6 +54,18 @@ export const api = {
   cycleTask: (id) => req('POST', `/tasks/${id}/cycle`, {}),
   deleteTask: (id) => req('DELETE', `/tasks/${id}`),
   taskHistory: (id) => req('GET', `/tasks/${id}/history`),
+  // Phase 2 — targets, rewards/promises, streaks, achievements, AI reports
+  listTargets: (childId) => req('GET', childId ? `/targets?childId=${encodeURIComponent(childId)}` : '/targets'),
+  createTarget: (data) => req('POST', '/targets', data),
+  updateTarget: (id, patch) => req('PATCH', `/targets/${id}`, patch),
+  deleteTarget: (id) => req('DELETE', `/targets/${id}`),
+  listRewards: (childId) => req('GET', childId ? `/rewards?childId=${encodeURIComponent(childId)}` : '/rewards'),
+  createReward: (data) => req('POST', '/rewards', data),
+  updateReward: (id, patch) => req('PATCH', `/rewards/${id}`, patch),
+  deleteReward: (id) => req('DELETE', `/rewards/${id}`),
+  streaks: (childId) => req('GET', `/streaks/${childId}`),
+  achievements: (childId) => req('GET', `/achievements/${childId}`),
+  generateReport: (childId, period) => req('POST', '/ai/reports', { childId, period }),
 };
 
 // ── Socket.IO ───────────────────────────────────────────────────────────────

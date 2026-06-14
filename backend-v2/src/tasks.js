@@ -29,6 +29,9 @@ export const publicTask = (t) => ({
   description: t.description || '',
   note: t.note || '',
   category: t.category || '',
+  priority: t.priority || 'normal',
+  startTime: t.startTime || null,
+  endTime: t.endTime || null,
   source: t.source,
   createdByRole: t.createdByRole,
   createdById: t.createdById,
@@ -59,11 +62,12 @@ const emit = (io, task, event, body) => {
   else io.to(room.parent(task.familyId)).emit(event, body);
 };
 
-export const createTask = (io, { familyId, childId, source, actorRole, actorId, title, description, category, note, dueAt }) => {
+export const createTask = (io, { familyId, childId, source, actorRole, actorId, title, description, category, note, priority, startTime, endTime, dueAt }) => {
   const t = tasks.insert({
     familyId, childId, listId: null,
     title: String(title || '').trim() || 'Untitled task',
     description: description || '', note: note || '', category: category || '',
+    priority: priority || 'normal', startTime: startTime || null, endTime: endTime || null,
     source, createdByRole: actorRole, createdById: actorId,
     completionState: 'not_started', stateChangedAt: null,
     approvalStatus: 'none', dueAt: dueAt || null,
@@ -74,7 +78,7 @@ export const createTask = (io, { familyId, childId, source, actorRole, actorId, 
   return t;
 };
 
-const EDITABLE = ['title', 'description', 'note', 'category', 'dueAt'];
+const EDITABLE = ['title', 'description', 'note', 'category', 'priority', 'startTime', 'endTime', 'dueAt'];
 
 export const updateTask = (io, task, { actorRole, actorId, patch }) => {
   const changes = {};

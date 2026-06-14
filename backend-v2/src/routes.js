@@ -7,6 +7,7 @@ import { hashPassword, comparePassword, sign, requireAuth, requireParent, requir
 import { googleEnabled, googleClientId, verifyGoogleCode } from './google.js';
 import * as svc from './services.js';
 import * as taskSvc from './tasks.js';
+import * as growth from './growth.js';
 
 const parents = Repo('parents');
 const children = Repo('children');
@@ -21,6 +22,8 @@ const notifications = Repo('notifications');
 const requests = Repo('appRequests');
 const securityAlerts = Repo('securityAlerts');
 const tasks = Repo('tasks');
+const targets = Repo('targets');
+const rewards = Repo('rewards');
 
 const code6 = () => String(Math.floor(100000 + Math.random() * 900000));
 const publicParent = (p) => ({ id: p.id, email: p.email, name: p.name });
@@ -258,7 +261,9 @@ export default function buildRoutes(io) {
   r.post('/tasks/:id/cycle', requireAuth, (req, res) => {
     const t = tasks.byId(req.params.id);
     if (!canMutate(req.auth, t)) return res.status(404).json({ error: 'Task not found' });
-    res.json({ task: taskSvc.publicTask(taskSvc.cycleTask(io, t, { actorRole: req.auth.role, actorId: actorId(req.auth) })) });
+    const updated = taskSvc.cycleTask(io, t, { actorRole: req.auth.role, actorId: actorId(req.auth) });
+    growth.onTaskCompleted(io, updated); // advances streaks + unlocks achievements when ✅
+    res.json({ task: taskSvc.publicTask(updated) });
   });
 
   r.delete('/tasks/:id', requireAuth, (req, res) => {
@@ -275,6 +280,97 @@ export default function buildRoutes(io) {
     const ok = t && t.familyId === req.auth.parentId && (req.auth.role === 'parent' || t.childId === req.auth.childId);
     if (!ok) return res.status(404).json({ error: 'Task not found' });
     res.json({ history: taskSvc.getHistory(t.id) });
+  });
+
+  /* ── Phase 2: Targets ──────────────────────────────────────────────────── */
+  const inFamily = (auth, row) => row && !row.deletedAt && row.familyId === auth.parentId
+    && (auth.role === 'parent' || row.childId === auth.childId);
+  const resolveChild = (auth, bodyChildId) => {
+    if (auth.role === 'child') return auth.childId;
+    const c = children.byId(bodyChildId);
+    return c && c.parentId === auth.parentId ? c.id : null;
+  };
+
+  r.get('/targets', requireAuth, (req, res) => {
+    let list = targets.filter((t) => t.familyId === req.auth.parentId && !t.deletedAt);
+    if (req.auth.role === 'child') list = list.filter((t) => t.childId === req.auth.childId);
+    else if (req.query.childId) list = list.filter((t) => t.childId === req.query.childId);
+    res.json({ targets: list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).map(growth.publicTarget) });
+  });
+  r.post('/targets', requireParent, (req, res) => {
+    const b = req.body || {};
+    if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'Target title is required' });
+    const childId = resolveChild(req.auth, b.childId);
+    if (!childId) return res.status(404).json({ error: 'Child not found' });
+    res.json({ target: growth.publicTarget(growth.createTarget(io, { familyId: req.auth.parentId, childId, actorRole: 'parent', actorId: req.auth.parentId, ...b })) });
+  });
+  // Parent edits everything; child may update progress/status (manual progress).
+  r.patch('/targets/:id', requireAuth, (req, res) => {
+    const t = targets.byId(req.params.id);
+    if (!inFamily(req.auth, t)) return res.status(404).json({ error: 'Target not found' });
+    const patch = req.auth.role === 'child'
+      ? { progress: req.body?.progress, status: req.body?.status }
+      : (req.body || {});
+    res.json({ target: growth.publicTarget(growth.updateTarget(io, t, { actorRole: req.auth.role, actorId: actorId(req.auth), patch })) });
+  });
+  r.delete('/targets/:id', requireParent, (req, res) => {
+    const t = targets.byId(req.params.id);
+    if (!inFamily(req.auth, t)) return res.status(404).json({ error: 'Target not found' });
+    res.json(growth.deleteTarget(io, t, { actorRole: 'parent', actorId: req.auth.parentId }));
+  });
+  r.get('/targets/:id/history', requireAuth, (req, res) => {
+    const t = targets.byId(req.params.id);
+    if (!t || t.familyId !== req.auth.parentId || (req.auth.role === 'child' && t.childId !== req.auth.childId)) return res.status(404).json({ error: 'Target not found' });
+    res.json({ history: growth.getTargetHistory(t.id) });
+  });
+
+  /* ── Phase 2: Rewards + Promises ───────────────────────────────────────── */
+  r.get('/rewards', requireAuth, (req, res) => {
+    let list = rewards.filter((x) => x.familyId === req.auth.parentId && !x.deletedAt);
+    if (req.auth.role === 'child') list = list.filter((x) => x.childId === req.auth.childId);
+    else if (req.query.childId) list = list.filter((x) => x.childId === req.query.childId);
+    res.json({ rewards: list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).map(growth.publicReward) });
+  });
+  r.post('/rewards', requireParent, (req, res) => {
+    const b = req.body || {};
+    if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'Reward title is required' });
+    const childId = resolveChild(req.auth, b.childId);
+    if (!childId) return res.status(404).json({ error: 'Child not found' });
+    res.json({ reward: growth.publicReward(growth.createReward(io, { familyId: req.auth.parentId, childId, actorRole: 'parent', actorId: req.auth.parentId, ...b })) });
+  });
+  // Parent edits all + status; child may only acknowledge a promise.
+  r.patch('/rewards/:id', requireAuth, (req, res) => {
+    const x = rewards.byId(req.params.id);
+    if (!inFamily(req.auth, x)) return res.status(404).json({ error: 'Reward not found' });
+    const patch = req.auth.role === 'child' ? { childAcknowledged: req.body?.childAcknowledged } : (req.body || {});
+    res.json({ reward: growth.publicReward(growth.updateReward(io, x, { actorRole: req.auth.role, actorId: actorId(req.auth), patch })) });
+  });
+  r.delete('/rewards/:id', requireParent, (req, res) => {
+    const x = rewards.byId(req.params.id);
+    if (!inFamily(req.auth, x)) return res.status(404).json({ error: 'Reward not found' });
+    res.json(growth.deleteReward(io, x, { actorRole: 'parent', actorId: req.auth.parentId }));
+  });
+
+  /* ── Phase 2: Streaks + Achievements ───────────────────────────────────── */
+  const childInScope = (auth, cid) => auth.role === 'parent'
+    ? (children.byId(cid)?.parentId === auth.parentId)
+    : cid === auth.childId;
+  r.get('/streaks/:childId', requireAuth, (req, res) => {
+    if (!childInScope(req.auth, req.params.childId)) return res.status(404).json({ error: 'Child not found' });
+    res.json({ streaks: growth.listStreaks(req.params.childId) });
+  });
+  r.get('/achievements/:childId', requireAuth, (req, res) => {
+    if (!childInScope(req.auth, req.params.childId)) return res.status(404).json({ error: 'Child not found' });
+    res.json({ achievements: growth.listAchievements(req.params.childId) });
+  });
+
+  /* ── Phase 2: AI analysis reports (computed from real data) ────────────── */
+  r.post('/ai/reports', requireAuth, (req, res) => {
+    const childId = req.auth.role === 'child' ? req.auth.childId : (req.body || {}).childId;
+    const period = ((req.body || {}).period) || 'weekly';
+    if (!['daily', 'weekly', 'monthly'].includes(period)) return res.status(400).json({ error: 'period must be daily|weekly|monthly' });
+    if (!childInScope(req.auth, childId)) return res.status(404).json({ error: 'Child not found' });
+    res.json({ report: growth.generateReport(io, { familyId: req.auth.parentId, childId, period }) });
   });
 
   /* ── Dev/demo: one-call session for the two existing apps ────────────── */
