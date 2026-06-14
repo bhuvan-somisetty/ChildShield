@@ -9,6 +9,7 @@ import * as svc from './services.js';
 import * as taskSvc from './tasks.js';
 import * as growth from './growth.js';
 import * as support from './support.js';
+import * as productivity from './productivity.js';
 import { isAdminEmail } from './admin.js';
 
 const parents = Repo('parents');
@@ -28,6 +29,7 @@ const targets = Repo('targets');
 const rewards = Repo('rewards');
 const supportTickets = Repo('supportTickets');
 const featureRequests = Repo('featureRequests');
+const recurringTasks = Repo('recurringTasks');
 
 // Platform-admin gate — admin status is decided server-side by email allowlist.
 const requireAdminFor = (parents) => (req, res, next) => requireAuth(req, res, () => {
@@ -241,6 +243,7 @@ export default function buildRoutes(io) {
     let list = tasks.filter((t) => t.familyId === req.auth.parentId && !t.deletedAt);
     if (req.auth.role === 'child') list = list.filter((t) => t.childId === req.auth.childId);
     else if (req.query.childId) list = list.filter((t) => t.childId === req.query.childId);
+    if (req.query.category) list = list.filter((t) => (t.category || '') === req.query.category); // category filtering
     res.json({ tasks: list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).map(taskSvc.publicTask) });
   });
 
@@ -291,6 +294,48 @@ export default function buildRoutes(io) {
     const ok = t && t.familyId === req.auth.parentId && (req.auth.role === 'parent' || t.childId === req.auth.childId);
     if (!ok) return res.status(404).json({ error: 'Task not found' });
     res.json({ history: taskSvc.getHistory(t.id) });
+  });
+
+  /* ── Phase 2.5: Productivity & Planning ────────────────────────────────── */
+  // Categories (built-ins + family custom)
+  r.get('/task-categories', requireAuth, (req, res) => res.json({ categories: productivity.listCategories(req.auth.parentId) }));
+  r.post('/task-categories', requireParent, (req, res) => {
+    const c = productivity.addCategory(io, { familyId: req.auth.parentId, name: (req.body || {}).name, color: (req.body || {}).color });
+    if (!c) return res.status(400).json({ error: 'Invalid or duplicate category' });
+    res.json({ category: { id: c.id, name: c.name, color: c.color, custom: true } });
+  });
+
+  // Task comment threads (parent ↔ child, realtime)
+  r.get('/tasks/:id/comments', requireAuth, (req, res) => {
+    const t = tasks.byId(req.params.id);
+    if (!t || t.familyId !== req.auth.parentId || (req.auth.role === 'child' && t.childId !== req.auth.childId)) return res.status(404).json({ error: 'Task not found' });
+    res.json({ comments: productivity.listTaskComments(t.id) });
+  });
+  r.post('/tasks/:id/comments', requireAuth, (req, res) => {
+    const t = tasks.byId(req.params.id);
+    if (!canMutate(req.auth, t)) return res.status(404).json({ error: 'Task not found' });
+    if (!String((req.body || {}).body || '').trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
+    productivity.addTaskComment(io, t, { authorRole: req.auth.role, authorId: actorId(req.auth), body: req.body.body });
+    res.json({ comments: productivity.listTaskComments(t.id) });
+  });
+
+  // Recurring tasks (materialise into real task instances)
+  r.get('/recurring', requireAuth, (req, res) => {
+    const childId = req.auth.role === 'child' ? req.auth.childId : req.query.childId;
+    res.json({ recurring: productivity.listRecurring(req.auth.parentId, childId) });
+  });
+  r.post('/recurring', requireParent, (req, res) => {
+    const b = req.body || {};
+    if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'Title is required' });
+    const child = children.byId(b.childId);
+    if (!child || child.parentId !== req.auth.parentId) return res.status(404).json({ error: 'Child not found' });
+    const rule = productivity.createRecurring(io, { familyId: req.auth.parentId, childId: child.id, createdByRole: 'parent', createdById: req.auth.parentId, ...b });
+    res.json({ recurring: productivity.publicRecurring(rule) });
+  });
+  r.delete('/recurring/:id', requireParent, (req, res) => {
+    const rule = recurringTasks.byId(req.params.id);
+    if (!rule || rule.familyId !== req.auth.parentId || rule.status !== 'active') return res.status(404).json({ error: 'Recurring task not found' });
+    res.json(productivity.deleteRecurring(io, rule));
   });
 
   /* ── Phase 2: Targets ──────────────────────────────────────────────────── */

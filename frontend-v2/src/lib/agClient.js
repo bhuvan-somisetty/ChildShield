@@ -54,6 +54,14 @@ export const api = {
   cycleTask: (id) => req('POST', `/tasks/${id}/cycle`, {}),
   deleteTask: (id) => req('DELETE', `/tasks/${id}`),
   taskHistory: (id) => req('GET', `/tasks/${id}/history`),
+  // Phase 2.5 — categories, recurring, task comments
+  taskCategories: () => req('GET', '/task-categories'),
+  addCategory: (name, color) => req('POST', '/task-categories', { name, color }),
+  taskComments: (id) => req('GET', `/tasks/${id}/comments`),
+  commentTask: (id, body) => req('POST', `/tasks/${id}/comments`, { body }),
+  createRecurring: (data) => req('POST', '/recurring', data),
+  listRecurring: (childId) => req('GET', childId ? `/recurring?childId=${encodeURIComponent(childId)}` : '/recurring'),
+  deleteRecurring: (id) => req('DELETE', `/recurring/${id}`),
   // Phase 2 — targets, rewards/promises, streaks, achievements, AI reports
   listTargets: (childId) => req('GET', childId ? `/targets?childId=${encodeURIComponent(childId)}` : '/targets'),
   createTarget: (data) => req('POST', '/targets', data),

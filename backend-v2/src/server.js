@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import buildRoutes from './routes.js';
 import attachSockets from './sockets.js';
 import { startZoneScheduler } from './services.js';
+import { startRecurringScheduler } from './productivity.js';
 import { initDB } from './db.js';
 
 export function createServer() {
@@ -20,6 +21,7 @@ export function createServer() {
   app.use('/api', buildRoutes(io));
   attachSockets(io);
   startZoneScheduler(io); // late/missed/stayed checks
+  startRecurringScheduler(io); // materialise recurring task instances
 
   return { app, server, io };
 }
