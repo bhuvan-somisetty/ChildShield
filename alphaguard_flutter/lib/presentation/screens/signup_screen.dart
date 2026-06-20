@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/api/api_client.dart';
 import '../../state/auth_controller.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/app_text_field.dart';
@@ -26,6 +27,15 @@ class _SignupScreenState extends State<SignupScreen> {
   // 0=credentials  1=enter PIN  2=confirm PIN  3=security explanation
   int _step = 0;
   String? _pinError;
+  bool _coldStart = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ApiClient.onColdStart.stream.listen((warming) {
+      if (mounted) setState(() => _coldStart = warming);
+    });
+  }
 
   @override
   void dispose() {
@@ -386,6 +396,23 @@ class _SignupScreenState extends State<SignupScreen> {
           textAlign: TextAlign.center,
         ),
       ),
+      if (_coldStart) ...[
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.10),
+            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.30)),
+          ),
+          child: const Row(children: [
+            SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF59E0B))),
+            SizedBox(width: 10),
+            Expanded(child: Text('Server warming up — this takes 30–60 s on first use…',
+                style: TextStyle(color: Color(0xFFFCD34D), fontSize: 12.5, fontWeight: FontWeight.w600))),
+          ]),
+        ),
+      ],
       if (auth.error != null) ...[
         const SizedBox(height: 12),
         Text(auth.error!, style: const TextStyle(color: AppColors.danger,

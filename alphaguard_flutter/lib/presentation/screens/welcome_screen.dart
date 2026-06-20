@@ -83,8 +83,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                 for (final item in [
                   ('Privacy', '/support/privacy'),
                   ('Terms', '/support/terms'),
-                  ('Child Safety', '/support/privacy'),
+                  ('Child Safety', '/support/child-safety'),
                   ('Data Deletion', '/support/privacy'),
+                  ('Support', '/support/manual'),
                 ])
                   GestureDetector(
                     onTap: () => context.push(item.$2),
@@ -93,7 +94,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                       style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
                     ),
                   ),
-                const Text('Support', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
               ],
             ),
             const SizedBox(height: 6),

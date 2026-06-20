@@ -14,7 +14,6 @@ import '../screens/approvals_center_screen.dart';
 import '../screens/assistant/assistant_screen.dart';
 import '../screens/controls_hub_screen.dart';
 import '../screens/safety/sos_screen.dart';
-import '../widgets/child_switcher.dart';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -135,14 +134,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final familyCtrl = context.watch<FamilyController>();
     final child = familyCtrl.selectedChild;
-    final safe = MediaQuery.of(context).padding;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(
         children: [
-          SizedBox(height: safe.top + 8),
-          _buildHeader(context),
           Expanded(
             child: familyCtrl.loading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
@@ -171,34 +167,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ],
                       ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          const ChildSwitcher(),
-          const Spacer(),
-          GestureDetector(
-            onTap: () => context.push('/notifications'),
-            child: Stack(
-              children: [
-                const Icon(Icons.notifications_outlined, color: AppColors.textSecondary, size: 26),
-                Positioned(
-                  right: 0, top: 0,
-                  child: Container(
-                    width: 8, height: 8,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.danger),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 4),
         ],
       ),
     );
