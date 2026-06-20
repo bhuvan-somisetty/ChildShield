@@ -51,6 +51,12 @@ dependencies:
   # SVG rendering (exact lucide icon paths — Brand mark + hero illustrations)
   flutter_svg: ^2.0.10
 
+  # QR code generation (parent pairing screen — displays code as scannable QR)
+  qr_flutter: ^4.1.0
+
+  # QR code scanning (child pairing screen — scan parent's QR with camera)
+  mobile_scanner: ^6.0.0
+
   # Misc
   cupertino_icons: ^1.0.8
 

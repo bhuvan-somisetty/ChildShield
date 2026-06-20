@@ -5,15 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../state/family_controller.dart';
 
-/// ConnectChild — shown to the parent after ParentSetup completes.
-/// Displays a 6-digit pairing code that the child enters on their device.
-/// Polls every 3 s to detect when the child claims the code, then auto-
-/// navigates to /home — matching frontend-v2 ConnectChild.jsx.
+/// ConnectChild — mandatory step shown to the parent after ParentSetup.
+/// The dashboard (/home) is inaccessible until at least one child device pairs.
+/// Displays a 6-digit code AND a scannable QR code. Polls every 3 s.
 class ConnectChildScreen extends StatefulWidget {
   const ConnectChildScreen({super.key});
   @override
@@ -29,6 +29,7 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
   bool _connected = false;
   bool _regening = false;
   String? _error;
+  bool _showQr = false;
 
   Timer? _pollTimer;
 
@@ -52,8 +53,6 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
     _pollTimer?.cancel();
     super.dispose();
   }
-
-  // ── Code init: reuse cached childId or create a new pending child ──────────
 
   Future<void> _initCode() async {
     final prefs = await SharedPreferences.getInstance();
@@ -86,7 +85,10 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
       if (mounted) setState(() { _code = code; _childId = childId; _loading = false; });
       _startPolling();
     } catch (e) {
-      if (mounted) setState(() { _error = 'Could not generate a pairing code. Check your connection and retry.'; _loading = false; });
+      if (mounted) setState(() {
+        _error = 'Could not generate a pairing code. Check your connection and retry.';
+        _loading = false;
+      });
     }
   }
 
@@ -113,8 +115,6 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
     }
   }
 
-  // ── Polling: check every 3 s if a child has claimed the code ──────────────
-
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _checkPairing());
@@ -125,7 +125,8 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
     try {
       final fc = context.read<FamilyController>();
       await fc.load();
-      final active = fc.children.any((c) => c.pairingStatus == 'active' || c.pairingStatus == 'claimed');
+      final active = fc.children.any((c) =>
+          c.pairingStatus == 'active' || c.pairingStatus == 'claimed');
       if (active && mounted) {
         _pollTimer?.cancel();
         final prefs = await SharedPreferences.getInstance();
@@ -156,27 +157,28 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
           child: Column(
             children: [
               const SizedBox(height: 16),
-              // ── Header ────────────────────────────────────────────────────
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.go('/home'),
-                    child: Container(
-                      width: 38, height: 38,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white.withValues(alpha: 0.06),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-                      ),
-                      child: const Icon(Icons.close, color: AppColors.textMuted, size: 20),
-                    ),
+              // Header — no close/skip; dashboard requires a connected child
+              Row(children: [
+                Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.cyan.withValues(alpha: 0.12),
+                    border: Border.all(color: AppColors.cyan.withValues(alpha: 0.30)),
                   ),
-                  const SizedBox(width: 14),
-                  const Text('Connect Child Device',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white)),
-                ],
-              ),
-              const SizedBox(height: 32),
+                  child: const Icon(Icons.link, color: AppColors.cyan, size: 20),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Connect Child Device',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white)),
+                    Text('Required before accessing dashboard',
+                        style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  ]),
+                ),
+              ]),
+              const SizedBox(height: 28),
               if (_connected) _buildSuccess() else _buildPairing(),
               const SizedBox(height: 40),
             ],
@@ -189,7 +191,6 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
   Widget _buildPairing() {
     return Column(
       children: [
-        // Shield logo
         Container(
           width: 80, height: 80,
           decoration: BoxDecoration(
@@ -202,76 +203,102 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
           ),
           child: Center(
             child: SvgPicture.asset('assets/icons/shield.svg', width: 36, height: 36,
-              colorFilter: const ColorFilter.mode(Color(0xFF22D3EE), BlendMode.srcIn)),
+                colorFilter: const ColorFilter.mode(Color(0xFF22D3EE), BlendMode.srcIn)),
           ),
         ),
         const SizedBox(height: 22),
-        const Text('Connect Your Child\'s Device', textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.3)),
+        const Text("Connect Your Child's Device", textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.3)),
         const SizedBox(height: 10),
-        const Text('Have your child open AlphaGuard on their device and enter this code.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8), height: 1.6)),
-        const SizedBox(height: 32),
-        // Code display
+        const Text('Have your child open AlphaGuard and scan the QR code, or enter the 6-digit code manually.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8), height: 1.6)),
+        const SizedBox(height: 28),
         if (_loading)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: CircularProgressIndicator(color: AppColors.cyan))
+          const Padding(padding: EdgeInsets.symmetric(vertical: 24),
+              child: CircularProgressIndicator(color: AppColors.cyan))
         else if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 14), textAlign: TextAlign.center),
+            child: Column(children: [
+              Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 14), textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              TextButton(onPressed: _createCode,
+                  child: const Text('Retry', style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.w700))),
+            ]),
           )
-        else
-          _buildCodeDisplay(),
+        else ...[
+          // Tab: code vs QR
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: Colors.white.withValues(alpha: 0.06),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+            ),
+            child: Row(children: [
+              Expanded(child: _TabBtn(label: '6-Digit Code', active: !_showQr,
+                  onTap: () => setState(() => _showQr = false))),
+              Expanded(child: _TabBtn(label: 'QR Code', active: _showQr,
+                  onTap: () => setState(() => _showQr = true))),
+            ]),
+          ),
+          const SizedBox(height: 20),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 260),
+            child: _showQr ? _buildQrDisplay() : _buildCodeDisplay(),
+          ),
+        ],
         const SizedBox(height: 28),
-        // Waiting indicator
         AnimatedBuilder(
           animation: _pulseOp,
           builder: (_, __) => Opacity(
             opacity: _pulseOp.value,
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Container(width: 8, height: 8, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.cyan)),
+              Container(width: 8, height: 8,
+                  decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.cyan)),
               const SizedBox(width: 8),
-              const Text('Waiting for child to connect...', style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+              const Text('Waiting for child to connect…',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
             ]),
           ),
         ),
         const SizedBox(height: 32),
-        // Instructions
         _InstructionStep(n: 1, text: "Open AlphaGuard on your child's device"),
         const SizedBox(height: 10),
-        _InstructionStep(n: 2, text: 'Select "Connect to Parent" on the role screen'),
+        _InstructionStep(n: 2, text: 'Select "Child" on the role screen'),
         const SizedBox(height: 10),
-        _InstructionStep(n: 3, text: 'Enter the 6-digit code shown above'),
+        _InstructionStep(n: 3, text: 'Tap "Scan QR" or "Enter Code" and pair with the code above'),
         const SizedBox(height: 32),
-        // Actions
         Row(children: [
           Expanded(
-            child: OutlinedButton(
+            child: OutlinedButton.icon(
               onPressed: _regening ? null : _regenerate,
+              icon: _regening
+                  ? const SizedBox(width: 14, height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textMuted))
+                  : const Icon(Icons.refresh, size: 16),
+              label: const Text('New Code', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.textMuted,
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: _regening
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textMuted))
-                : const Text('New Code', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
             ),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: ElevatedButton(
-              onPressed: () => context.go('/home'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.08),
-                foregroundColor: Colors.white,
+            child: OutlinedButton.icon(
+              onPressed: _copyCode,
+              icon: const Icon(Icons.share_outlined, size: 16),
+              label: const Text('Share Code', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.cyan,
+                side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.35)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text('Skip for now', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
             ),
           ),
         ]),
@@ -282,6 +309,7 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
   Widget _buildCodeDisplay() {
     final digits = _code.isEmpty ? '------' : _code;
     return Column(
+      key: const ValueKey('code'),
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
@@ -291,26 +319,20 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
             border: Border.all(color: AppColors.cyan.withValues(alpha: 0.35)),
             boxShadow: [BoxShadow(color: AppColors.cyan.withValues(alpha: 0.12), blurRadius: 24)],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (int i = 0; i < digits.length; i++) ...[
-                if (i == 3) ...[
-                  const SizedBox(width: 10),
-                  Container(width: 16, height: 2, color: AppColors.textMuted.withValues(alpha: 0.4)),
-                  const SizedBox(width: 10),
-                ],
-                Text(
-                  digits[i],
-                  style: const TextStyle(
-                    fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF22D3EE),
-                    letterSpacing: 2, fontFeatures: [FontFeature.tabularFigures()],
-                  ),
-                ),
-                if (i < digits.length - 1 && i != 2) const SizedBox(width: 6),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            for (int i = 0; i < digits.length; i++) ...[
+              if (i == 3) ...[
+                const SizedBox(width: 10),
+                Container(width: 16, height: 2, color: AppColors.textMuted.withValues(alpha: 0.4)),
+                const SizedBox(width: 10),
               ],
+              Text(digits[i], style: const TextStyle(
+                fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF22D3EE),
+                letterSpacing: 2, fontFeatures: [FontFeature.tabularFigures()],
+              )),
+              if (i < digits.length - 1 && i != 2) const SizedBox(width: 6),
             ],
-          ),
+          ]),
         ),
         const SizedBox(height: 16),
         GestureDetector(
@@ -325,10 +347,12 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(_copied ? Icons.check : Icons.copy_outlined,
-                color: _copied ? const Color(0xFF10B981) : AppColors.cyan, size: 16),
+                  color: _copied ? const Color(0xFF10B981) : AppColors.cyan, size: 16),
               const SizedBox(width: 6),
               Text(_copied ? 'Copied!' : 'Copy code',
-                style: TextStyle(color: _copied ? const Color(0xFF10B981) : AppColors.cyan, fontWeight: FontWeight.w700, fontSize: 13)),
+                  style: TextStyle(
+                      color: _copied ? const Color(0xFF10B981) : AppColors.cyan,
+                      fontWeight: FontWeight.w700, fontSize: 13)),
             ]),
           ),
         ),
@@ -336,33 +360,88 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
     );
   }
 
-  Widget _buildSuccess() {
+  Widget _buildQrDisplay() {
     return Column(
+      key: const ValueKey('qr'),
       children: [
-        const SizedBox(height: 40),
         Container(
-          width: 100, height: 100,
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF10B981).withValues(alpha: 0.15),
-            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-            boxShadow: [BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.35), blurRadius: 30)],
+            borderRadius: BorderRadius.circular(24),
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: AppColors.cyan.withValues(alpha: 0.25), blurRadius: 32)],
           ),
-          child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981), size: 50),
+          child: QrImageView(
+            data: _code,
+            version: QrVersions.auto,
+            size: 190,
+            backgroundColor: Colors.white,
+            eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF030307)),
+            dataModuleStyle: const QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square, color: Color(0xFF030307)),
+          ),
         ),
-        const SizedBox(height: 24),
-        const Text('Child Device Connected!', textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
         const SizedBox(height: 12),
-        const Text('Taking you to the dashboard...', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
-        const SizedBox(height: 24),
-        const CircularProgressIndicator(color: Color(0xFF10B981)),
+        Text('Code: $_code',
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13,
+                fontWeight: FontWeight.w600, letterSpacing: 3)),
+        const SizedBox(height: 4),
+        const Text('Child scans this QR with their AlphaGuard app',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
       ],
     );
   }
+
+  Widget _buildSuccess() {
+    return Column(children: [
+      const SizedBox(height: 40),
+      Container(
+        width: 100, height: 100,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+          boxShadow: [BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.35), blurRadius: 30)],
+        ),
+        child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981), size: 50),
+      ),
+      const SizedBox(height: 24),
+      const Text('Child Device Connected!', textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
+      const SizedBox(height: 12),
+      const Text('Taking you to the dashboard…',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+      const SizedBox(height: 24),
+      const CircularProgressIndicator(color: Color(0xFF10B981)),
+    ]);
+  }
 }
 
-// ── Shared sub-widgets ────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+class _TabBtn extends StatelessWidget {
+  const _TabBtn({required this.label, required this.active, required this.onTap});
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(11),
+        color: active ? AppColors.cyan.withValues(alpha: 0.15) : Colors.transparent,
+        border: Border.all(color: active ? AppColors.cyan.withValues(alpha: 0.35) : Colors.transparent),
+      ),
+      child: Text(label, textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+              color: active ? AppColors.cyan : AppColors.textMuted)),
+    ),
+  );
+}
 
 class _InstructionStep extends StatelessWidget {
   const _InstructionStep({required this.n, required this.text});
@@ -370,22 +449,21 @@ class _InstructionStep extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Container(
-        width: 26, height: 26,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.cyan.withValues(alpha: 0.12),
-          border: Border.all(color: AppColors.cyan.withValues(alpha: 0.30)),
-        ),
-        child: Center(child: Text('$n', style: const TextStyle(color: AppColors.cyan, fontSize: 12, fontWeight: FontWeight.w800))),
+  Widget build(BuildContext context) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Container(
+      width: 26, height: 26,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.cyan.withValues(alpha: 0.12),
+        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.30)),
       ),
-      const SizedBox(width: 12),
-      Expanded(child: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(text, style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.4)),
-      )),
-    ]);
-  }
+      child: Center(child: Text('$n',
+          style: const TextStyle(color: AppColors.cyan, fontSize: 12, fontWeight: FontWeight.w800))),
+    ),
+    const SizedBox(width: 12),
+    Expanded(child: Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(text, style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.4)),
+    )),
+  ]);
 }

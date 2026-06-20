@@ -24,6 +24,7 @@ import 'presentation/screens/settings/account_settings_screen.dart';
 import 'presentation/screens/settings/device_registry_screen.dart';
 import 'presentation/screens/settings/notification_inbox_screen.dart';
 import 'presentation/screens/settings/notification_preferences_screen.dart';
+import 'presentation/screens/support/child_safety_policy_screen.dart';
 import 'presentation/screens/support/legal_consent_screen.dart';
 import 'presentation/screens/support/privacy_policy_screen.dart';
 import 'presentation/screens/support/terms_conditions_screen.dart';
@@ -83,6 +84,7 @@ GoRouter buildRouter(AuthController auth) {
       GoRoute(path: '/support/terms', builder: (_, __) => const TermsConditionsScreen()),
       GoRoute(path: '/support/consent', builder: (_, __) => const LegalConsentScreen()),
       GoRoute(path: '/support/manual', builder: (_, __) => const UserManualScreen()),
+      GoRoute(path: '/support/child-safety', builder: (_, __) => const ChildSafetyPolicyScreen()),
       GoRoute(path: '/child/contacts', builder: (_, __) => const ChildContactsScreen()),
       GoRoute(path: '/child/disha', builder: (_, __) => const ChildDishaScreen()),
       GoRoute(path: '/controls', builder: (_, __) => const ControlsHubScreen()),
@@ -122,7 +124,7 @@ GoRouter buildRouter(AuthController auth) {
         '/home', '/notifications', '/notification-settings', '/sos', '/devices',
         '/tasks', '/rewards', '/chat', '/radar', '/profile',
         '/settings/account', '/support/privacy', '/support/terms',
-        '/support/consent', '/support/manual', '/child/contacts',
+        '/support/consent', '/support/manual', '/support/child-safety', '/child/contacts',
         '/child/disha', '/controls', '/app-management', '/approvals',
         '/setup', '/connect', '/child-connected', '/child-activate',
       };
