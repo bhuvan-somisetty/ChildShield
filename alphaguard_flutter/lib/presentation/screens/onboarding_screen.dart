@@ -247,8 +247,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           ResponsiveShell(
             child: Column(
               children: [
-                // Status bar clearance (no extra gap)
-                SizedBox(height: safe.top),
                 // Progress + skip row — compact, close to the top
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),

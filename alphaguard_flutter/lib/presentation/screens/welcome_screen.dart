@@ -46,7 +46,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
       body: ResponsiveShell(
         child: Column(
           children: [
-            SizedBox(height: safe.top + 8),
+            const SizedBox(height: 8),
             // ── Hero ──────────────────────────────────────────────────────
             Expanded(
               child: Column(

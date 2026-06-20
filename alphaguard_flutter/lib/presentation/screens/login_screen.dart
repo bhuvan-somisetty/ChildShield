@@ -61,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: safe.top + 8),
+              const SizedBox(height: 8),
               // ── Back to role selection (matches V2) ──────────────────────
               GestureDetector(
                 onTap: () => context.go('/role'),

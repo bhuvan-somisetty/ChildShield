@@ -89,7 +89,7 @@ class _SignupScreenState extends State<SignupScreen> {
             children: [
               // Header: back + step dots
               Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 4),
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
                 child: Row(children: [
                   GestureDetector(
                     onTap: _prevStep,
