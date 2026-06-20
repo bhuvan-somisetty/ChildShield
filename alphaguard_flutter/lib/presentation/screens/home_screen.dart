@@ -9,7 +9,10 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/child.dart';
 import '../../state/family_controller.dart';
+import '../screens/app_management_screen.dart';
+import '../screens/approvals_center_screen.dart';
 import '../screens/assistant/assistant_screen.dart';
+import '../screens/controls_hub_screen.dart';
 import '../screens/safety/sos_screen.dart';
 import '../widgets/child_switcher.dart';
 
@@ -53,8 +56,8 @@ class _Quick {
 }
 
 const _QUICK = [
-  _Quick(label: 'App\nManagement', icon: Icons.grid_view_rounded, accent: Color(0xFF06B6D4)),
-  _Quick(label: 'Controls', icon: Icons.tune_rounded, accent: Color(0xFF3B82F6)),
+  _Quick(label: 'App\nManagement', icon: Icons.grid_view_rounded, accent: Color(0xFF06B6D4), route: '_app-mgmt'),
+  _Quick(label: 'Controls', icon: Icons.tune_rounded, accent: Color(0xFF3B82F6), route: '_controls'),
   _Quick(label: 'SOS\nCenter', icon: Icons.crisis_alert_rounded, accent: Color(0xFFEF4444), route: '_sos'),
   _Quick(label: 'AI\nAssistant', icon: Icons.auto_awesome_rounded, accent: Color(0xFFA855F7), route: '_disha'),
 ];
@@ -109,8 +112,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AssistantScreen()));
       return;
     }
+    if (q.route == '_controls') {
+      Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const ControlsHubScreen()));
+      return;
+    }
+    if (q.route == '_app-mgmt') {
+      Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AppManagementScreen()));
+      return;
+    }
+    if (q.route == '_approvals') {
+      Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const ApprovalsCenterScreen()));
+      return;
+    }
     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-      content: Text('${q.label.replaceAll('\n', ' ')} — coming in Phase 6'),
+      content: Text('${q.label.replaceAll('\n', ' ')} — coming soon'),
       behavior: SnackBarBehavior.floating,
       backgroundColor: AppColors.bgElevated,
     ));

@@ -2,13 +2,17 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'presentation/screens/approvals_center_screen.dart';
+import 'presentation/screens/app_management_screen.dart';
 import 'presentation/screens/child/child_activation_screen.dart';
 import 'presentation/screens/child/child_connected_screen.dart';
 import 'presentation/screens/child/child_contacts_screen.dart';
+import 'presentation/screens/child/child_disha_screen.dart';
 import 'presentation/screens/child/child_pairing_screen.dart';
 import 'presentation/screens/child/child_shell.dart';
 import 'presentation/screens/child_setup_screen.dart';
 import 'presentation/screens/connect_child_screen.dart';
+import 'presentation/screens/controls_hub_screen.dart';
 import 'presentation/screens/parent_setup_screen.dart';
 import 'presentation/screens/forgot_password_screen.dart';
 import 'presentation/screens/main_shell.dart';
@@ -80,6 +84,10 @@ GoRouter buildRouter(AuthController auth) {
       GoRoute(path: '/support/consent', builder: (_, __) => const LegalConsentScreen()),
       GoRoute(path: '/support/manual', builder: (_, __) => const UserManualScreen()),
       GoRoute(path: '/child/contacts', builder: (_, __) => const ChildContactsScreen()),
+      GoRoute(path: '/child/disha', builder: (_, __) => const ChildDishaScreen()),
+      GoRoute(path: '/controls', builder: (_, __) => const ControlsHubScreen()),
+      GoRoute(path: '/app-management', builder: (_, __) => const AppManagementScreen()),
+      GoRoute(path: '/approvals', builder: (_, __) => const ApprovalsCenterScreen()),
       // Tab deep-links — redirect to /home with the matching tab query param.
       GoRoute(path: '/tasks', redirect: (_, __) => '/home?tab=tasks'),
       GoRoute(path: '/rewards', redirect: (_, __) => '/home?tab=rewards'),
@@ -115,6 +123,7 @@ GoRouter buildRouter(AuthController auth) {
         '/tasks', '/rewards', '/chat', '/radar', '/profile',
         '/settings/account', '/support/privacy', '/support/terms',
         '/support/consent', '/support/manual', '/child/contacts',
+        '/child/disha', '/controls', '/app-management', '/approvals',
         '/setup', '/connect', '/child-connected', '/child-activate',
       };
       if (deepLinks.contains(loc)) return null;

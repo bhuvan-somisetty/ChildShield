@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../state/auth_controller.dart';
 import 'child_contacts_screen.dart';
+import 'child_disha_screen.dart';
 import 'child_goals_screen.dart';
 import 'child_settings_screen.dart';
 import 'child_sos_screen.dart';
@@ -37,7 +38,7 @@ const _SECTIONS = [
   _Sec(label: 'SOS', icon: Icons.crisis_alert_rounded, accent: Color(0xFFEF4444), route: '_sos'),
   _Sec(label: 'Contacts', icon: Icons.phone_rounded, accent: Color(0xFF10B981), route: '_contacts'),
   _Sec(label: 'Chat', icon: Icons.chat_bubble_rounded, accent: Color(0xFF06B6D4)),
-  _Sec(label: 'DISHA', icon: Icons.auto_awesome_rounded, accent: Color(0xFFA855F7)),
+  _Sec(label: 'DISHA', icon: Icons.auto_awesome_rounded, accent: Color(0xFFA855F7), route: '_disha'),
   _Sec(label: 'Goals', icon: Icons.track_changes_rounded, accent: Color(0xFFF59E0B), route: '_goals'),
   _Sec(label: 'Settings', icon: Icons.settings_rounded, accent: Color(0xFF64748B), route: '_settings'),
 ];
@@ -95,8 +96,12 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
       Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const ChildSettingsScreen()));
       return;
     }
+    if (s.route == '_disha') {
+      Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const ChildDishaScreen()));
+      return;
+    }
     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-      content: Text('${s.label} — coming in Phase 6'),
+      content: Text('${s.label} — coming soon'),
       behavior: SnackBarBehavior.floating,
       backgroundColor: AppColors.bgElevated,
     ));
