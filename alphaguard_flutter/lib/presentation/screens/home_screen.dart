@@ -109,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
     if (q.route == '_disha') {
-      Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AssistantScreen()));
+      Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => AssistantScreen.parent()));
       return;
     }
     if (q.route == '_controls') {

@@ -243,11 +243,11 @@ class _ChildSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (children.isEmpty) {
-      return const Row(
+      return Row(
         children: [
           SvgPicture.asset('assets/icons/shield.svg', width: 18, height: 18, colorFilter: const ColorFilter.mode(AppColors.cyan, BlendMode.srcIn)),
-          SizedBox(width: 8),
-          Text('AlphaGuard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+          const SizedBox(width: 8),
+          const Text('AlphaGuard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
         ],
       );
     }

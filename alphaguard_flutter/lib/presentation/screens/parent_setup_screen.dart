@@ -100,7 +100,7 @@ class _ParentSetupScreenState extends State<ParentSetupScreen>
       0 => _StepWelcome(),
       1 => _StepLocation(),
       2 => _StepNotifications(),
-      3 => _StepContacts(contacts: _contacts, onChanged: (c) => setState(() {})),
+      3 => _StepContacts(contacts: _contacts, onChanged: () => setState(() {})),
       4 => _StepComplete(),
       _ => const SizedBox.shrink(),
     };
