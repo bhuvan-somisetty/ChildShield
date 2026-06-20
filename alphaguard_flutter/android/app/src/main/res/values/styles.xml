@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- LaunchTheme: shown while the Flutter engine is starting up.
+         Dark window background eliminates the white flash before Flutter
+         renders its first frame. Matches AlphaGuard brand bg #030307. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:statusBarColor">#030307</item>
+        <item name="android:navigationBarColor">#030307</item>
+    </style>
+
+    <!-- NormalTheme: applied once Flutter's embedding takes over.
+         Uses the window's default background; Flutter owns the surface. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/ag_bg</item>
+        <item name="android:statusBarColor">#030307</item>
+        <item name="android:navigationBarColor">#030307</item>
+    </style>
+</resources>
