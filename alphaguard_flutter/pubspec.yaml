@@ -29,7 +29,10 @@ dependencies:
 
   # Auth
   google_sign_in: ^6.2.1
-  sign_in_with_apple: ^6.1.3
+  # sign_in_with_apple removed: v6.x pulls in the objective_c native-assets
+  # package which invokes dartaotruntime.exe at Android build time — blocked by
+  # Windows Application Control on this build machine. Apple Sign-In is
+  # iOS-only and not needed for the Android APK.
 
   # Media (photo-proof capture; compresses on capture so data-URLs stay small)
   image_picker: ^1.1.2
