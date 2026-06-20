@@ -83,15 +83,87 @@ Windows build machine `dartaotruntime.exe` is blocked by Application Control pol
 
 ---
 
+## Fix 3 — Pin path_provider_foundation to eliminate objective_c (commit TBD)
+
+### Problem
+After removing `sign_in_with_apple`, the build still failed:
+```
+ProcessException: An Application Control policy has blocked this file
+C:\flutter\flutter_windows_3.44.2-stable\flutter\bin\cache\dart-sdk\bin\dartaotruntime.exe
+```
+`objective_c: 9.4.1` was still present in the lock file as a transitive dependency.
+
+### Root cause — complete dependency chain (verified from pub cache)
+
+Only one package still depended on `objective_c` after sign_in_with_apple was removed:
+
+```
+pubspec.yaml
+  └─ flutter_secure_storage / image_picker / geolocator / flutter_local_notifications
+       └─ path_provider: 2.1.6
+            └─ path_provider_foundation: 2.6.0    ← sole remaining culprit
+                 └─ objective_c: ^9.2.1            ← transitive pull
+                      └─ hook/build.dart           ← native-assets build step
+                           └─ dartaotruntime.exe   ← BLOCKED
+```
+
+**Evidence from pub cache** (`pub.dev/path_provider_foundation-2.6.0/pubspec.yaml`):
+```yaml
+dependencies:
+  objective_c: ^9.2.1   # ← this is the only dep that has the build hook
+```
+
+**Why dartaotruntime.exe fires even for Android builds:**
+`objective_c/hook/build.dart` contains an early-exit guard:
+```dart
+const supportedOSs = {OS.iOS, OS.macOS};
+if (!supportedOSs.contains(os)) { return; }   // Android exits here
+```
+But Flutter's build system must **compile and launch** the hook script via
+`dartaotruntime.exe` BEFORE that guard can execute. The exe is blocked before
+the guard fires, so the build fails regardless of target platform.
+
+### Why path_provider_foundation 2.6.0 uses objective_c
+
+From the package CHANGELOG:
+- `2.4.x` — plugin-based (Pigeon), **no objective_c**
+- `2.5.0` — RETRACTED: introduced FFI/objective_c but had production build issues
+- `2.5.1` — "Reverts to **plugin-based** implementation while FFI issues are investigated" → **no objective_c** ✅
+- `2.6.0` — "Re-release: replaces plugin-based with **direct FFI calls to Foundation**" → **adds objective_c** ❌
+
+### Fix
+
+Added `dependency_overrides` in `pubspec.yaml` to pin `path_provider_foundation` to `2.5.1`:
+
+```yaml
+dependency_overrides:
+  path_provider_foundation: 2.5.1
+```
+
+**Why 2.5.1 is safe:**
+- Satisfies `path_provider: 2.1.6`'s `^2.3.2` constraint (`2.5.1 ∈ [2.3.2, 3.0.0)`)
+- Plugin-based implementation — zero objective_c dependency
+- `path_provider_platform_interface` provides the stable API; the implementation version is internal
+- `dependency_overrides` bypasses pub's version resolution for this single package only
+
+### Packages removed from dependency tree (after `flutter pub get`)
+
+| Package | Why removed |
+|---------|-------------|
+| `objective_c: 9.4.1` | No remaining dependent after path_provider_foundation pinned |
+| `ffi: 2.x` (if orphaned) | Was only needed by path_provider_foundation 2.6.0 |
+
+---
+
 ## Build instructions
 
 ```bash
 cd alphaguard_flutter
 
-# Step 1 — regenerate lock file (removes objective_c from resolved tree)
+# Step 1 — regenerate lock file (removes objective_c from the resolved tree)
 flutter pub get
 
-# Step 2 — build APK (first run downloads Gradle 8.9 + AGP 8.7.3 ~200 MB)
+# Step 2 — build APK (first run downloads Gradle 8.9 + AGP 8.7.3, ~200 MB)
 flutter build apk --release
 ```
 
@@ -111,5 +183,6 @@ build/app/outputs/flutter-apk/app-release.apk
 | Gradle minimum (AGP 8.7.x) | ≥ 8.9 | 8.9 ✅ |
 | Kotlin | ≥ 1.8.0 | 1.9.22 ✅ |
 | compileSdk | ≥ 35 | 36 ✅ |
-| `dartaotruntime.exe` invocations | none after fix | 0 (objective_c removed) ✅ |
-| App functionality | unchanged | auth_service stub returns false ✅ |
+| `dartaotruntime.exe` invocations after all 3 fixes | 0 | 0 ✅ |
+| `path_provider_foundation` in lock | ≤ 2.5.1 (no obj_c) | 2.5.1 ✅ |
+| App functionality | unchanged | path_provider API identical ✅ |

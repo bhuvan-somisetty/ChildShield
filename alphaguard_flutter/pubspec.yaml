@@ -54,6 +54,20 @@ dependencies:
   # Misc
   cupertino_icons: ^1.0.8
 
+dependency_overrides:
+  # path_provider_foundation 2.6.0 replaced its Pigeon/plugin implementation
+  # with direct Objective-C FFI calls, pulling in the `objective_c` package.
+  # `objective_c` has a hook/build.dart that invokes dartaotruntime.exe even
+  # for Android builds (to reach its "if not iOS/macOS, return" early exit).
+  # dartaotruntime.exe is blocked by Windows Application Control on this
+  # build machine.
+  #
+  # Version 2.5.1 explicitly reverts to the plugin-based implementation
+  # ("Reverts to plugin-based implementation while FFI issues are
+  # investigated") and has no objective_c dependency. It satisfies
+  # path_provider's ^2.3.2 constraint and is fully API-compatible.
+  path_provider_foundation: 2.5.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
