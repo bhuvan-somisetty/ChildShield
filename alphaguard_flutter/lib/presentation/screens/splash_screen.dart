@@ -113,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       const SizedBox(height: 8),
                       const Text(
                         'FAMILY SAFETY PLATFORM',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF22D3EEB3), letterSpacing: 4),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xB322D3EE), letterSpacing: 4),
                       ),
                     ],
                   ),
@@ -161,7 +161,7 @@ class _LoadingDotsState extends State<_LoadingDots> with SingleTickerProviderSta
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Opacity(
             opacity: opacity,
-            child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF22D3EEB3), shape: BoxShape.circle)),
+            child: Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xB322D3EE), shape: BoxShape.circle)),
           ),
         );
       }),
