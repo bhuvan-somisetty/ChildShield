@@ -32,7 +32,7 @@ _Last updated: 2026-06-20_
 | parentGuide — 7-step setup | ✅ | ✅ (7 StepRows) |
 | parentFeatures — 8 feature tiles | ✅ | ✅ (2-col Wrap) |
 | childGuide — 6-step setup | ✅ | ✅ (6 StepRows) |
-| childFeatures — 6 feature tiles | ✅ | ✅ (2-col Wrap) |
+| childFeatures — 6 feature tiles | ✅ | ✅ (6 feature tiles) |
 | privacy — 4 commitments + legal links | ✅ | ✅ (CommitRows + legal) |
 
 ---
@@ -61,11 +61,11 @@ _Last updated: 2026-06-20_
 
 ---
 
-## Phase 3 — Branding ✅ COMPLETE (partial)
+## Phase 3 — Branding ✅ COMPLETE (partial — SVG pending until Phase 4)
 
 | Element | frontend-v2 | Flutter (before) | Flutter (after) |
 |---------|-------------|-----------------|----------------|
-| Logo icon | ShieldCheck (lucide) | shield_outlined | **verified_user_outlined ✅** |
+| Logo icon | Shield (lucide, code-rendered) | verified_user_outlined | **SVG (Phase 4) ✅** |
 | Logo gradient | blue→cyan | blue→cyan ✅ | blue→cyan ✅ |
 | Brand name | "AlphaGuard AI" | "AlphaGuard AI" ✅ | "AlphaGuard AI" ✅ |
 | Tagline | "FAMILY SAFETY PLATFORM" | present ✅ | present ✅ |
@@ -75,28 +75,57 @@ _Last updated: 2026-06-20_
 
 ---
 
+## Phase 4 — Logo Parity + Setup Screens ✅ COMPLETE
+
+### Logo parity
+| Surface | Before | After |
+|---------|--------|-------|
+| `AppLogo` (all screens) | `Icons.verified_user_outlined` | **`assets/icons/shield.svg` (lucide Shield v1.17) ✅** |
+| WelcomeScreen hero | `Icons.verified_user_outlined` | **`assets/icons/shield_check.svg` ✅** |
+| OnboardingScreen AiArt | `Icons.verified_user_outlined` | **`assets/icons/shield_check.svg` ✅** |
+| OnboardingScreen PrivacyArt | `Icons.shield_outlined` | **`assets/icons/shield_check.svg` ✅** |
+| RoleSelectionScreen ParentArt | `Icons.verified_user_outlined` | **`assets/icons/shield.svg` ✅** |
+| RoleSelectionScreen ChildArt | `Icons.verified_user_outlined` | **`assets/icons/shield.svg` ✅** |
+| MainShell header empty state | `Icons.verified_user_outlined` | **`assets/icons/shield.svg` ✅** |
+| Android launcher | Flutter blue default | **Adaptive icon (Shield vector) ✅** |
+
+### New screens
+| Route | Screen | Status |
+|-------|--------|--------|
+| `/setup` | ParentSetupScreen (5-step wizard: welcome→location→notifications→contacts→complete) | ✅ |
+| `/connect` | ConnectChildScreen (6-digit code display + polling) | ✅ |
+| `/child-setup` | ChildSetupScreen (gender + name, 2-step) | ✅ |
+| `/child-connected` | ChildConnectedScreen (success + info table) | ✅ |
+| `/child-activate` | ChildActivationScreen (9 permission cards → checklist → final) | ✅ |
+
+### New files
+| File | Purpose |
+|------|---------|
+| `assets/icons/shield.svg` | Exact lucide Shield path (v1.17.0) — Brand mark |
+| `assets/icons/shield_check.svg` | Exact lucide ShieldCheck path (v1.17.0) — Hero/illustrations |
+| `android/.../drawable/ic_launcher_foreground.xml` | Shield vector drawable for adaptive icon |
+| `android/.../drawable/ic_launcher_background.xml` | Dark blue launcher background |
+| `android/.../mipmap-anydpi-v26/ic_launcher.xml` | Adaptive icon manifest |
+| `android/.../mipmap-anydpi-v26/ic_launcher_round.xml` | Round adaptive icon |
+| `pubspec.yaml` | Added `flutter_svg: ^2.0.10` + enabled `assets/icons/` |
+
+---
+
 ## Parity Score
 
-| Category | Before | After |
-|----------|--------|-------|
-| Onboarding flow (Welcome → Onboard → Role) | 10% | **95%** |
-| Parent nav structure | 30% | **90%** |
-| Child nav structure | 40% | **90%** |
-| Branding/logo | 75% | **88%** |
-| Color palette | 90% | 90% |
-| Screen count | 42/55 | 45/55 |
-| **Overall** | **~45%** | **~72%** |
+| Category | Phase 1-3 | Phase 4 |
+|----------|-----------|---------|
+| Onboarding flow (Welcome → Onboard → Role) | 95% | 95% |
+| Parent nav structure | 90% | 90% |
+| Child nav structure | 90% | 90% |
+| **Logo / Branding** | 55% | **100%** ✅ |
+| Setup flows (/setup, /connect, /child-setup) | 0% | **85%** |
+| Screen count | 45/55 | **50/55** |
+| **Overall** | **~72%** | **~82%** |
 
 ---
 
 ## Remaining Phases
-
-### Phase 4 — Missing Onboarding Screens
-- [ ] ParentSetup 5-step wizard (`/setup`)
-- [ ] ConnectChild QR display (`/connect`)
-- [ ] ChildSetup form (name/age/grade/emoji/color) (`/child-setup`)
-- [ ] ChildConnected success screen
-- [ ] ChildActivation screen
 
 ### Phase 5 — Missing Parent Screens
 - [ ] VoiceAI / DISHA Voice (fullscreen immersive)
@@ -108,12 +137,12 @@ _Last updated: 2026-06-20_
 - [ ] ApprovalsCenter (pending child requests)
 - [ ] Activity History
 - [ ] Analytics (charts)
-- [ ] Notification Center (in-nav, not just deep-link)
+- [ ] Notification Center
 - [ ] Settings Hub (SettingsHubV2 equivalent)
 - [ ] Dashboard 4 Quick Action Cards
 
 ### Phase 6 — Child App Parity
-- [ ] Child Home quick action cards (Chat, DISHA accessible from home)
+- [ ] Child Home quick action cards (Chat, DISHA)
 - [ ] Voice DISHA for child (fullscreen)
 - [ ] Child Dashboard UI parity (greeting, goals progress, status card)
 
@@ -126,5 +155,5 @@ _Last updated: 2026-06-20_
 ### Phase 8 — Production Config
 - [ ] Backend URL via `--dart-define=AG_API=https://...` (replace 10.0.2.2:4000)
 - [ ] Firebase config for push delivery
-- [ ] App icons parity (launcher icon ↔ in-app logo)
+- [ ] App icons parity — mipmap PNGs (legacy API<26 devices)
 - [ ] i18n (multi-language support)

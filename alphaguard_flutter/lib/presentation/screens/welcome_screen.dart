@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/responsive/responsive.dart';
@@ -142,7 +143,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                 border: Border.all(color: const Color(0x4D4497FF)),
                 boxShadow: const [BoxShadow(color: Color(0x662563EB), blurRadius: 60, spreadRadius: 0)],
               ),
-              child: Icon(Icons.verified_user_outlined, color: AppColors.cyan, size: sz * 0.50),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/shield_check.svg',
+                  width: sz * 0.50,
+                  height: sz * 0.50,
+                  colorFilter: const ColorFilter.mode(Color(0xFF22D3EE), BlendMode.srcIn),
+                ),
+              ),
             ),
           ],
         ),

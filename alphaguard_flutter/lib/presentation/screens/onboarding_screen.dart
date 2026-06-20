@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -595,7 +596,13 @@ class _AiArtState extends State<_AiArt> with SingleTickerProviderStateMixin {
               ),
               border: Border.all(color: widget.accent.withValues(alpha: 0.4)),
             ),
-            child: Icon(Icons.verified_user_outlined, color: widget.accent, size: 36),
+            child: Center(
+              child: SvgPicture.asset(
+                'assets/icons/shield_check.svg',
+                width: 36, height: 36,
+                colorFilter: ColorFilter.mode(widget.accent, BlendMode.srcIn),
+              ),
+            ),
           ),
           // Node dots
           for (final pos in [
@@ -753,7 +760,13 @@ class _PrivacyArtState extends State<_PrivacyArt> with SingleTickerProviderState
                 color: widget.accent.withValues(alpha: 0.25),
                 border: Border.all(color: widget.accent.withValues(alpha: 0.6)),
               ),
-              child: Icon(Icons.shield_outlined, color: widget.accent, size: 10),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/shield_check.svg',
+                  width: 10, height: 10,
+                  colorFilter: ColorFilter.mode(widget.accent, BlendMode.srcIn),
+                ),
+              ),
             ),
           ),
         ],

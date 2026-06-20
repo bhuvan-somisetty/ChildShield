@@ -2,9 +2,14 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'presentation/screens/child/child_activation_screen.dart';
+import 'presentation/screens/child/child_connected_screen.dart';
 import 'presentation/screens/child/child_contacts_screen.dart';
 import 'presentation/screens/child/child_pairing_screen.dart';
 import 'presentation/screens/child/child_shell.dart';
+import 'presentation/screens/child_setup_screen.dart';
+import 'presentation/screens/connect_child_screen.dart';
+import 'presentation/screens/parent_setup_screen.dart';
 import 'presentation/screens/forgot_password_screen.dart';
 import 'presentation/screens/main_shell.dart';
 import 'presentation/screens/login_screen.dart';
@@ -55,6 +60,12 @@ GoRouter buildRouter(AuthController auth) {
       GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
       GoRoute(path: '/pair', builder: (_, __) => const ChildPairingScreen()),
       GoRoute(path: '/forgot', builder: (_, __) => const ForgotPasswordScreen()),
+      // ── Phase 4 setup flows ──────────────────────────────────────────────
+      GoRoute(path: '/setup', builder: (_, __) => const ParentSetupScreen()),
+      GoRoute(path: '/connect', builder: (_, __) => const ConnectChildScreen()),
+      GoRoute(path: '/child-setup', builder: (_, __) => const ChildSetupScreen()),
+      GoRoute(path: '/child-connected', builder: (_, __) => const ChildConnectedScreen()),
+      GoRoute(path: '/child-activate', builder: (_, __) => const ChildActivationScreen()),
       // Role-aware home — the matching shell based on auth role.
       GoRoute(path: '/home', builder: (_, __) => const UpdateGate(child: _RoleHome())),
 
@@ -92,8 +103,8 @@ GoRouter buildRouter(AuthController auth) {
           if (flow.contains(loc)) return null;
           return '/welcome';
         }
-        // Returning user (already onboarded) → auth screens.
-        const authScreens = {'/login', '/signup', '/pair', '/forgot', '/role'};
+        // Returning user (already onboarded) → auth screens or child setup.
+        const authScreens = {'/login', '/signup', '/pair', '/forgot', '/role', '/child-setup'};
         if (authScreens.contains(loc)) return null;
         return '/login';
       }
@@ -104,6 +115,7 @@ GoRouter buildRouter(AuthController auth) {
         '/tasks', '/rewards', '/chat', '/radar', '/profile',
         '/settings/account', '/support/privacy', '/support/terms',
         '/support/consent', '/support/manual', '/child/contacts',
+        '/setup', '/connect', '/child-connected', '/child-activate',
       };
       if (deepLinks.contains(loc)) return null;
       return '/home';

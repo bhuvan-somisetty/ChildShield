@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/responsive/responsive.dart';
@@ -320,7 +321,13 @@ class _ParentArtState extends State<_ParentArt> with TickerProviderStateMixin {
                   border: Border.all(color: widget.accent.withValues(alpha: 0.35)),
                   boxShadow: widget.active ? [BoxShadow(color: widget.accent.withValues(alpha: 0.35), blurRadius: 20)] : [],
                 ),
-                child: Icon(Icons.verified_user_outlined, color: widget.accent, size: 28),
+                child: Center(
+                  child: SvgPicture.asset(
+                    'assets/icons/shield.svg',
+                    width: 28, height: 28,
+                    colorFilter: ColorFilter.mode(widget.accent, BlendMode.srcIn),
+                  ),
+                ),
               ),
             ),
             // MapPin badge
@@ -409,7 +416,13 @@ class _ChildArtState extends State<_ChildArt> with TickerProviderStateMixin {
                 border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                 boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 20, offset: Offset(0, 8))],
               ),
-              child: Icon(Icons.verified_user_outlined, color: widget.accent, size: 20),
+              child: Center(
+                child: SvgPicture.asset(
+                  'assets/icons/shield.svg',
+                  width: 20, height: 20,
+                  colorFilter: ColorFilter.mode(widget.accent, BlendMode.srcIn),
+                ),
+              ),
             ),
             // Dots + lock
             Positioned(

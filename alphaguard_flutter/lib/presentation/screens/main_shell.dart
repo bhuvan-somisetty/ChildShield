@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -244,7 +245,7 @@ class _ChildSwitcher extends StatelessWidget {
     if (children.isEmpty) {
       return const Row(
         children: [
-          Icon(Icons.verified_user_outlined, color: AppColors.cyan, size: 18),
+          SvgPicture.asset('assets/icons/shield.svg', width: 18, height: 18, colorFilter: const ColorFilter.mode(AppColors.cyan, BlendMode.srcIn)),
           SizedBox(width: 8),
           Text('AlphaGuard', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
         ],
