@@ -26,6 +26,12 @@ const PG_TABLE = {
   announcements: 'announcements', changelog: 'changelog', appRatings: 'app_ratings',
   taskCategories: 'task_categories', taskComments: 'task_comments',
   recurringTasks: 'recurring_tasks', calendarEvents: 'calendar_events',
+  consents: 'consents', deletionRequests: 'deletion_requests',
+  appVersion: 'app_version', taskProofs: 'task_proofs',
+  deviceTokens: 'device_tokens', locationHistory: 'location_history', passwordResets: 'password_resets',
+  families: 'families', familyMembers: 'family_members', familyInvitations: 'family_invitations',
+  notificationSettings: 'notification_settings',
+  radarEvents: 'radar_events',
 };
 // Typed/indexed key columns per table → which row field fills them.
 const KEYCOLS = {
@@ -65,6 +71,18 @@ const KEYCOLS = {
   taskComments: { task_id: 'taskId', family_id: 'familyId', at: 'at' },
   recurringTasks: { family_id: 'familyId', child_id: 'childId', status: 'status' },
   calendarEvents: { family_id: 'familyId', child_id: 'childId', at: 'at' },
+  consents: { parent_id: 'parentId', version: 'version', at: 'at' },
+  deletionRequests: { parent_id: 'parentId', status: 'status', at: 'at' },
+  appVersion: { version: 'version' },
+  taskProofs: { task_id: 'taskId', family_id: 'familyId', child_id: 'childId', at: 'at' },
+  deviceTokens: { owner_id: 'ownerId', owner_type: 'ownerType', token: 'token' },
+  locationHistory: { child_id: 'childId', at: 'at' },
+  passwordResets: { parent_id: 'parentId', expires_at: 'expiresAt' },
+  families: { owner_id: 'ownerId' },
+  familyMembers: { family_id: 'familyId', user_id: 'userId', role: 'role' },
+  familyInvitations: { family_id: 'familyId', code: 'code', status: 'status' },
+  notificationSettings: { parent_id: 'parentId' },
+  radarEvents: { child_id: 'childId', parent_id: 'parentId', type: 'type', severity: 'severity', at: 'at' },
 };
 
 let pool = null;

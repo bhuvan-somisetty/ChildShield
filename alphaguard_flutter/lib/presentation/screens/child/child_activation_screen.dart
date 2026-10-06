@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../services/lifecycle/lifecycle_service.dart';
 
 /// ChildActivation — 3-stage permission activation flow on the child device.
 /// Stages: permissions grid → complete checklist → final success screen.
@@ -15,6 +17,31 @@ class ChildActivationScreen extends StatefulWidget {
 class _ChildActivationScreenState extends State<ChildActivationScreen> {
   final Set<int> _enabled = {};
   String _stage = 'permissions'; // 'permissions' | 'complete' | 'final'
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreProgress());
+  }
+
+  Future<void> _restoreProgress() async {
+    if (!mounted) return;
+    final lc = context.read<LifecycleService>();
+    final step = lc.childOnboardingStep;
+    if (step >= 2) {
+      setState(() { _stage = 'final'; _enableAll(); });
+    } else if (step >= 1) {
+      setState(() { _stage = 'complete'; _enableAll(); });
+    }
+  }
+
+  Future<void> _saveProgress(int step) async {
+    if (!mounted) return;
+    final lc = context.read<LifecycleService>();
+    await lc.saveChildOnboardingStep(step);
+    // ignore: avoid_print
+    print('[ONBOARDING] ONBOARDING STEP SAVED: $step');
+  }
 
   static const _perms = [
     _Perm(icon: Icons.location_on_outlined, label: 'Location Access', color: Color(0xFF06B6D4)),
@@ -54,11 +81,21 @@ class _ChildActivationScreenState extends State<ChildActivationScreen> {
     if (_stage == 'permissions') {
       _enableAll();
       setState(() => _stage = 'complete');
+      _saveProgress(1);
     } else if (_stage == 'complete') {
       setState(() => _stage = 'final');
+      _saveProgress(2);
+      _markPaired();
     } else {
       context.go('/home');
     }
+  }
+
+  Future<void> _markPaired() async {
+    if (!mounted) return;
+    await context.read<LifecycleService>().markChildPaired();
+    // ignore: avoid_print
+    print('[ONBOARDING] CHILD ACTIVATION COMPLETE');
   }
 
   double get _progress => _enabled.length / _perms.length;

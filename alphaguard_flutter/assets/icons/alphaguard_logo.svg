@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="agGradient" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#22D3EE"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shield outline, matching uploaded proportions: pointed top notch,
+       gently curved sides, pointed bottom -->
+  <path d="
+    M 100 16
+    L 100 16
+    C 108 24, 122 32, 145 38
+    C 158 41.5, 168 43, 168 43
+    L 168 100
+    C 168 138, 142 162, 100 184
+    C 58 162, 32 138, 32 100
+    L 32 43
+    C 32 43, 42 41.5, 55 38
+    C 78 32, 92 24, 100 16
+    Z
+  "
+  fill="none"
+  stroke="url(#agGradient)"
+  stroke-width="9"
+  stroke-linecap="round"
+  stroke-linejoin="round"/>
+
+  <!-- Parent figure: head + body, arms curving down to cradle child -->
+  <circle cx="100" cy="78" r="19" fill="url(#agGradient)"/>
+  <path d="
+    M 62 138
+    C 62 110, 79 95, 100 95
+    C 121 95, 138 110, 138 138
+    C 138 148, 130 152, 122 148
+    C 113 144, 108 136, 100 136
+    C 92 136, 87 144, 78 148
+    C 70 152, 62 148, 62 138
+    Z
+  "
+  fill="url(#agGradient)"/>
+
+  <!-- Child figure: smaller head + body, nested inside parent's embrace,
+       outlined in background color to separate from parent's body -->
+  <circle cx="100" cy="120" r="13" fill="#050816"/>
+  <circle cx="100" cy="120" r="11" fill="url(#agGradient)"/>
+  <path d="
+    M 80 154
+    C 80 138, 89 130, 100 130
+    C 111 130, 120 138, 120 154
+    L 120 158
+    C 120 161, 117 163, 113 161
+    C 109 158, 104 156, 100 156
+    C 96 156, 91 158, 87 161
+    C 83 163, 80 161, 80 158
+    Z
+  "
+  fill="#050816"/>
+  <path d="
+    M 82 152
+    C 82 137, 90 130, 100 130
+    C 110 130, 118 137, 118 152
+    L 118 156
+    C 118 159, 115 161, 112 159
+    C 108 156, 104 154, 100 154
+    C 96 154, 92 156, 88 159
+    C 85 161, 82 159, 82 156
+    Z
+  "
+  fill="url(#agGradient)"/>
+</svg>

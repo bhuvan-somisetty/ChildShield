@@ -35,8 +35,11 @@ services:
       # accounts gain access to /admin/support and the admin dashboard.
       - key: AG_ADMIN_EMAILS
         sync: false
-      # CORS is currently open ('*') in code. To lock it to the frontend origin later,
-      # set this and tighten server.js (see env documentation / future phase).
+      # CORS is locked to an allowlist in code (src/security.js). In production an
+      # EMPTY allowlist denies all browser origins, so set this to your frontend
+      # origin(s) before going live. Comma-separated; FRONTEND_URL also accepted.
+      - key: AG_CORS_ORIGINS
+        sync: false
       # - key: FRONTEND_URL
       #   sync: false
 

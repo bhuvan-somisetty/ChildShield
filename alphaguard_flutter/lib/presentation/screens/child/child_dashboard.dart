@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:battery_plus/battery_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +28,7 @@ String _greeting() {
   return 'Good evening';
 }
 
-// ── Section grid data ─────────────────────────────────────────────────────────
+// ── Section data ──────────────────────────────────────────────────────────────
 
 class _Sec {
   const _Sec({required this.label, required this.icon, required this.accent, this.route});
@@ -35,22 +39,15 @@ class _Sec {
 }
 
 const _SECTIONS = [
-  _Sec(label: 'SOS', icon: Icons.crisis_alert_rounded, accent: Color(0xFFEF4444), route: '_sos'),
-  _Sec(label: 'Contacts', icon: Icons.phone_rounded, accent: Color(0xFF10B981), route: '_contacts'),
-  _Sec(label: 'Chat', icon: Icons.chat_bubble_rounded, accent: Color(0xFF06B6D4)),
-  _Sec(label: 'DISHA', icon: Icons.auto_awesome_rounded, accent: Color(0xFFA855F7), route: '_disha'),
-  _Sec(label: 'Goals', icon: Icons.track_changes_rounded, accent: Color(0xFFF59E0B), route: '_goals'),
-  _Sec(label: 'Settings', icon: Icons.settings_rounded, accent: Color(0xFF64748B), route: '_settings'),
+  _Sec(label: 'SOS',      icon: Icons.crisis_alert_rounded,  accent: Color(0xFFEF4444), route: '_sos'),
+  _Sec(label: 'Contacts', icon: Icons.phone_rounded,         accent: Color(0xFF10B981), route: '_contacts'),
+  _Sec(label: 'DISHA',    icon: Icons.auto_awesome_rounded,  accent: Color(0xFFA855F7), route: '_disha'),
+  _Sec(label: 'Goals',    icon: Icons.track_changes_rounded, accent: Color(0xFFF59E0B), route: '_goals'),
+  _Sec(label: 'Settings', icon: Icons.settings_rounded,      accent: Color(0xFF64748B), route: '_settings'),
 ];
 
 // ── Child Dashboard ───────────────────────────────────────────────────────────
 
-/// Child home — matches ChildHome.jsx exactly:
-///   1. Greeting row + "PROTECTED" badge
-///   2. Identity card (gradient, glow, grade/school, telemetry 3-grid, location row)
-///   3. Full-width pulsing SOS button
-///   4. 6-section grid (3 cols)
-///   5. Goals snapshot card
 class ChildDashboard extends StatefulWidget {
   const ChildDashboard({super.key, required this.childId, this.childName});
   final String childId;
@@ -60,21 +57,50 @@ class ChildDashboard extends StatefulWidget {
 }
 
 class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProviderStateMixin {
-  // Opacity oscillation 0.4 → 0.8 → 0.4, period 1.8s → each half = 900ms
-  late final AnimationController _sosCtrl = AnimationController(
-    vsync: this, duration: const Duration(milliseconds: 900),
-  );
+  late final AnimationController _sosCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
   late final Animation<double> _sosAnim = Tween<double>(begin: 0.4, end: 0.8)
       .animate(CurvedAnimation(parent: _sosCtrl, curve: Curves.easeInOut));
+
+  final Battery _battery = Battery();
+  int? _batteryLevel;
+  bool _charging = false;
+  String _networkLabel = '—';
+  Timer? _telTimer;
 
   @override
   void initState() {
     super.initState();
     _sosCtrl.repeat(reverse: true);
+    _refreshTelemetry();
+    _telTimer = Timer.periodic(const Duration(seconds: 30), (_) => _refreshTelemetry());
+  }
+
+  Future<void> _refreshTelemetry() async {
+    try {
+      final level   = await _battery.batteryLevel;
+      final state   = await _battery.batteryState;
+      final results = await Connectivity().checkConnectivity();
+      if (!mounted) return;
+      setState(() {
+        _batteryLevel = level;
+        _charging     = state == BatteryState.charging || state == BatteryState.full;
+        _networkLabel = _connLabel(results.isNotEmpty ? results.first : ConnectivityResult.none);
+      });
+    } catch (_) {}
+  }
+
+  String _connLabel(ConnectivityResult r) {
+    switch (r) {
+      case ConnectivityResult.wifi:     return 'Wi-Fi';
+      case ConnectivityResult.mobile:   return 'Mobile';
+      case ConnectivityResult.ethernet: return 'LAN';
+      default:                          return 'Offline';
+    }
   }
 
   @override
   void dispose() {
+    _telTimer?.cancel();
     _sosCtrl.dispose();
     super.dispose();
   }
@@ -100,42 +126,54 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
       Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const ChildDishaScreen()));
       return;
     }
-    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-      content: Text('${s.label} — coming soon'),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgElevated,
-    ));
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthController>();
-    final child = auth.child;
+    final auth       = context.watch<AuthController>();
+    final child      = auth.child;
     final childColor = child != null ? _childHex(child.color) : AppColors.cyan;
-    final safe = MediaQuery.of(context).padding;
+    final safe       = MediaQuery.of(context).padding;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, safe.bottom + 80),
-          children: [
-            _buildGreetingRow(child?.name ?? widget.childName ?? 'there', child?.emoji ?? '👋'),
-            const SizedBox(height: 16),
-            _buildIdentityCard(child, childColor),
-            const SizedBox(height: 16),
-            _buildSosButton(),
-            const SizedBox(height: 16),
-            _buildSectionGrid(context),
-            const SizedBox(height: 16),
-            _buildGoalsCard(),
-          ],
-        ),
+      body: Stack(
+        children: [
+          // Ambient glow
+          Positioned(
+            top: -50, left: 0, right: 0,
+            child: Container(
+              height: 220,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  colors: [childColor.withValues(alpha: 0.09), Colors.transparent],
+                  radius: 0.9,
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(16, 12, 16, safe.bottom + 80),
+              children: [
+                _buildGreetingRow(child?.name ?? widget.childName ?? 'there', child?.emoji ?? '👋'),
+                const SizedBox(height: 16),
+                _buildIdentityCard(child, childColor),
+                const SizedBox(height: 14),
+                _buildSosButton(),
+                const SizedBox(height: 14),
+                _buildSectionGrid(context),
+                const SizedBox(height: 14),
+                _buildGoalsCard(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // 1 · Greeting row ──────────────────────────────────────────────────────────
+  // 1 · Greeting ──────────────────────────────────────────────────────────────
 
   Widget _buildGreetingRow(String name, String emoji) {
     return Row(
@@ -150,57 +188,60 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
                 style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.3, height: 1.1)),
           ],
         ),
-        // "PROTECTED" badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            color: const Color(0xFF10B981).withValues(alpha: 0.15),
-            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+            borderRadius: BorderRadius.circular(99),
+            color: const Color(0xFF10B981).withValues(alpha: 0.12),
+            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.28)),
+            boxShadow: [BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.15), blurRadius: 12)],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.asset('assets/icons/shield_check.svg', width: 13, height: 13,
-                  colorFilter: const ColorFilter.mode(Color(0xFF10B981), BlendMode.srcIn)),
-              const SizedBox(width: 5),
-              const Text('PROTECTED',
-                  style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-            ],
-          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            SvgPicture.asset('assets/icons/alphaguard_logo_mono.svg', width: 13, height: 13,
+                colorFilter: const ColorFilter.mode(Color(0xFF10B981), BlendMode.srcIn)),
+            const SizedBox(width: 5),
+            const Text('PROTECTED',
+                style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+          ]),
         ),
       ],
     );
   }
 
-  // 2 · Identity + status card ────────────────────────────────────────────────
+  // 2 · Identity card ─────────────────────────────────────────────────────────
 
   Widget _buildIdentityCard(dynamic child, Color childColor) {
-    final name = child?.name as String? ?? widget.childName ?? 'Me';
-    final age = child?.age as int?;
-    final grade = (child?.grade as String?) ?? '—';
+    final name   = child?.name as String? ?? widget.childName ?? 'Me';
+    final age    = child?.age as int?;
+    final grade  = (child?.grade as String?) ?? '—';
     final school = (child?.school as String?) ?? '—';
-    final emoji = (child?.emoji as String?) ?? '👦';
+    final emoji  = (child?.emoji as String?) ?? '👦';
 
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.20)),
-        gradient: LinearGradient(
-          colors: [const Color(0xFF10B981).withValues(alpha: 0.08), Colors.transparent],
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-        ),
-      ),
+      decoration: AppColors.glassCard(accent: const Color(0xFF10B981), radius: 26, borderAlpha: 0.18, fillAlpha: 0.05),
       child: Stack(
         children: [
-          // Glow blob
           Positioned(
-            top: -40, right: -40,
+            top: -45, right: -45,
             child: Container(
-              width: 160, height: 160,
+              width: 170, height: 170,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF10B981).withValues(alpha: 0.10),
+                color: const Color(0xFF10B981).withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              height: 55,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.white.withValues(alpha: 0.06), Colors.transparent],
+                ),
               ),
             ),
           ),
@@ -208,15 +249,15 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Profile row
                 Row(
                   children: [
                     Container(
-                      width: 56, height: 56,
+                      width: 58, height: 58,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(18),
                         color: childColor.withValues(alpha: 0.15),
-                        border: Border.all(color: childColor.withValues(alpha: 0.33)),
+                        border: Border.all(color: childColor.withValues(alpha: 0.40), width: 1.5),
+                        boxShadow: [BoxShadow(color: childColor.withValues(alpha: 0.22), blurRadius: 14)],
                       ),
                       child: Center(child: Text(emoji, style: const TextStyle(fontSize: 28))),
                     ),
@@ -229,7 +270,7 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
                             '${name}${age != null ? ', $age' : ''}',
                             style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.2),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           Text(
                             '$grade · $school',
                             style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600),
@@ -241,28 +282,44 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Telemetry 3-grid
                 Row(children: [
-                  Expanded(child: _ChildTelCell(icon: Icons.battery_5_bar_rounded, label: '—', sub: 'Battery', color: const Color(0xFF22D3EE))),
-                  const SizedBox(width: 8),
-                  Expanded(child: _ChildTelCell(icon: Icons.wifi_rounded, label: '—', sub: 'Network', color: const Color(0xFF22D3EE))),
+                  Expanded(child: _ChildTelCell(
+                    icon: _charging ? Icons.battery_charging_full_rounded : Icons.battery_5_bar_rounded,
+                    label: _batteryLevel != null ? '$_batteryLevel%' : '—',
+                    sub: _charging ? 'Charging' : 'Battery',
+                    color: _batteryLevel != null && _batteryLevel! < 20 ? const Color(0xFFEF4444) : const Color(0xFF22D3EE),
+                  )),
                   const SizedBox(width: 8),
                   Expanded(child: _ChildTelCell(
-                    icon: Icons.shield_rounded, label: 'Safe', sub: 'Status', color: const Color(0xFF10B981),
+                    icon: _networkLabel == 'Wi-Fi' ? Icons.wifi_rounded : Icons.signal_cellular_alt_rounded,
+                    label: _networkLabel,
+                    sub: 'Network',
+                    color: _networkLabel == 'Offline' ? const Color(0xFF94A3B8) : const Color(0xFF22D3EE),
+                  )),
+                  const SizedBox(width: 8),
+                  Expanded(child: const _ChildTelCell(
+                    icon: Icons.shield_rounded, label: 'Safe', sub: 'Status', color: Color(0xFF10B981),
                   )),
                 ]),
-                const SizedBox(height: 16),
-                // "Location shared" row
-                Row(children: [
-                  const Icon(Icons.location_on_rounded, size: 13, color: Color(0xFF34D399)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Location is shared with ${context.read<AuthController>().parent?.name ?? 'your parent'}',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.07),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.15)),
                   ),
-                ]),
+                  child: Row(children: [
+                    const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFF34D399)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Location is shared with ${context.read<AuthController>().parent?.name ?? 'your parent'}',
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ]),
+                ),
               ],
             ),
           ),
@@ -271,7 +328,7 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
     );
   }
 
-  // 3 · Full-width SOS button ─────────────────────────────────────────────────
+  // 3 · SOS ──────────────────────────────────────────────────────────────────
 
   Widget _buildSosButton() {
     return GestureDetector(
@@ -282,38 +339,58 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.30)),
-          gradient: const LinearGradient(
-            colors: [Color(0x33991B1B), Color(0x1A7F1D1D)],
-            begin: Alignment.centerLeft, end: Alignment.centerRight,
-          ),
+          color: const Color(0xFFEF4444).withValues(alpha: 0.06),
+          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.35), width: 1.5),
+          boxShadow: [
+            BoxShadow(color: const Color(0xFFEF4444).withValues(alpha: 0.15), blurRadius: 24),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.22), blurRadius: 12, offset: const Offset(0, 4)),
+          ],
         ),
         child: Row(
           children: [
             SizedBox(
-              width: 48, height: 48,
+              width: 52, height: 52,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Pulsing glow ring
                   AnimatedBuilder(
                     animation: _sosAnim,
                     builder: (_, __) => Container(
-                      width: 56, height: 56,
+                      width: 60, height: 60,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFEF4444).withValues(alpha: _sosAnim.value * 0.30),
+                        color: const Color(0xFFEF4444).withValues(alpha: _sosAnim.value * 0.22),
                       ),
                     ),
                   ),
                   Container(
-                    width: 48, height: 48,
+                    width: 52, height: 52,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFEF4444).withValues(alpha: 0.20),
-                      border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.40)),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [BoxShadow(color: const Color(0xFFEF4444).withValues(alpha: 0.40), blurRadius: 16)],
                     ),
-                    child: const Icon(Icons.crisis_alert_rounded, size: 24, color: Color(0xFFFCA5A5)),
+                    child: Stack(alignment: Alignment.center, children: [
+                      Positioned(
+                        top: 0, left: 0, right: 0,
+                        child: Container(
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.white.withValues(alpha: 0.25), Colors.transparent],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.crisis_alert_rounded, size: 26, color: Colors.white),
+                    ]),
                   ),
                 ],
               ),
@@ -323,31 +400,48 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Emergency SOS', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
-                  SizedBox(height: 2),
+                  Text('Emergency SOS',
+                      style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.2)),
+                  SizedBox(height: 3),
                   Text('Tap if you need help right now',
-                      style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      style: TextStyle(color: Color(0xFFFCA5A5), fontSize: 13, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFF87171)),
+            Container(
+              width: 34, height: 34,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(11),
+                color: const Color(0xFFEF4444).withValues(alpha: 0.14),
+              ),
+              child: const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFF87171)),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // 4 · Section grid ──────────────────────────────────────────────────────────
+  // 4 · Section grid ─────────────────────────────────────────────────────────
 
   Widget _buildSectionGrid(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 10),
-          child: Text('MY ALPHAGUARD',
+        Row(children: [
+          Container(
+            width: 3, height: 14,
+            decoration: BoxDecoration(
+              color: AppColors.cyan,
+              borderRadius: BorderRadius.circular(99),
+              boxShadow: [BoxShadow(color: AppColors.cyan.withValues(alpha: 0.55), blurRadius: 8)],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Text('MY ALPHAGUARD',
               style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.4)),
-        ),
+        ]),
+        const SizedBox(height: 10),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -357,66 +451,38 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
           itemCount: _SECTIONS.length,
           itemBuilder: (_, i) {
             final s = _SECTIONS[i];
-            return GestureDetector(
-              onTap: () => _onSection(context, s),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-                  color: AppColors.bgElevated,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: s.accent.withValues(alpha: 0.12),
-                        border: Border.all(color: s.accent.withValues(alpha: 0.23)),
-                      ),
-                      child: Icon(s.icon, size: 19, color: s.accent),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(s.label, style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 11, fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ),
-            );
+            return _SectionTile(s: s, onTap: () => _onSection(context, s));
           },
         ),
       ],
     );
   }
 
-  // 5 · Goals snapshot card ───────────────────────────────────────────────────
+  // 5 · Goals card ───────────────────────────────────────────────────────────
 
   Widget _buildGoalsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        color: AppColors.bgElevated,
-      ),
+      decoration: AppColors.glassCard(accent: const Color(0xFFF59E0B), radius: 22, borderAlpha: 0.14, fillAlpha: 0.04),
       child: Row(
         children: [
           Container(
-            width: 44, height: 44,
+            width: 46, height: 46,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.30)),
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.28)),
+              boxShadow: [BoxShadow(color: const Color(0xFFF59E0B).withValues(alpha: 0.18), blurRadius: 10)],
             ),
-            child: const Icon(Icons.track_changes_rounded, size: 20, color: Color(0xFFF59E0B)),
+            child: const Icon(Icons.track_changes_rounded, size: 21, color: Color(0xFFF59E0B)),
           ),
           const SizedBox(width: 14),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Study goals', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-                SizedBox(height: 2),
+                Text('Study goals', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14.5)),
+                SizedBox(height: 3),
                 Text('0 of 0 done today', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
               ],
             ),
@@ -425,15 +491,89 @@ class _ChildDashboardState extends State<ChildDashboard> with SingleTickerProvid
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => ChildGoalsScreen(childId: widget.childId)),
             ),
-            child: const Row(children: [
-              Text('Open', style: TextStyle(color: Color(0xFF34D399), fontSize: 12.5, fontWeight: FontWeight.w700)),
-              Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF34D399)),
-            ]),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFF34D399).withValues(alpha: 0.12),
+                border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.24)),
+              ),
+              child: const Row(children: [
+                Text('Open', style: TextStyle(color: Color(0xFF34D399), fontSize: 12.5, fontWeight: FontWeight.w700)),
+                Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF34D399)),
+              ]),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+// ── Section tile (clay pill) ──────────────────────────────────────────────────
+
+class _SectionTile extends StatefulWidget {
+  const _SectionTile({required this.s, required this.onTap});
+  final _Sec s;
+  final VoidCallback onTap;
+  @override
+  State<_SectionTile> createState() => _SectionTileState();
+}
+
+class _SectionTileState extends State<_SectionTile> {
+  bool _pressed = false;
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTapDown:   (_) => setState(() => _pressed = true),
+    onTapUp:     (_) { setState(() => _pressed = false); widget.onTap(); },
+    onTapCancel: () => setState(() => _pressed = false),
+    child: AnimatedScale(
+      scale: _pressed ? 0.93 : 1.0,
+      duration: const Duration(milliseconds: 110),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: widget.s.accent.withValues(alpha: 0.07),
+          border: Border.all(color: widget.s.accent.withValues(alpha: 0.20)),
+          boxShadow: [BoxShadow(color: widget.s.accent.withValues(alpha: 0.10), blurRadius: 12)],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 46, height: 46,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: widget.s.accent.withValues(alpha: 0.14),
+                border: Border.all(color: widget.s.accent.withValues(alpha: 0.28)),
+                boxShadow: [BoxShadow(color: widget.s.accent.withValues(alpha: 0.22), blurRadius: 10)],
+              ),
+              child: Stack(alignment: Alignment.center, children: [
+                Positioned(
+                  top: 0, left: 0, right: 0,
+                  child: Container(
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.white.withValues(alpha: 0.18), Colors.transparent],
+                      ),
+                    ),
+                  ),
+                ),
+                Icon(widget.s.icon, size: 21, color: widget.s.accent),
+              ]),
+            ),
+            const SizedBox(height: 8),
+            Text(widget.s.label,
+                style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 11.5, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 // ── Telemetry cell ────────────────────────────────────────────────────────────
@@ -449,12 +589,12 @@ class _ChildTelCell extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(16),
-      color: Colors.black.withValues(alpha: 0.20),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      color: color.withValues(alpha: 0.07),
+      border: Border.all(color: color.withValues(alpha: 0.18)),
     ),
     child: Column(children: [
       Icon(icon, size: 16, color: color),
-      const SizedBox(height: 4),
+      const SizedBox(height: 5),
       Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis),
       const SizedBox(height: 2),
       Text(sub, style: const TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w700)),

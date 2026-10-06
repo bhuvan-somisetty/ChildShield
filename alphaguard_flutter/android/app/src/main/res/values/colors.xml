@@ -3,4 +3,5 @@
     <!-- AlphaGuard brand background — matches AppColors.bg (#030307). Used by
          launch_background.xml to prevent a white flash before Flutter renders. -->
     <color name="ag_bg">#030307</color>
+	<color name="ic_launcher_background">#030B1A</color>
 </resources>

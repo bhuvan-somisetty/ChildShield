@@ -68,21 +68,15 @@ const ParentShell = () => {
   const t = useT();
   if (!isConnected()) return <Navigate to="/connect" replace />;
   // Immersive routes hide the app chrome (header, bottom nav, DISHA bubble).
+  // The providers below stay mounted across this toggle so the realtime socket
+  // and child state are NOT torn down (and re-established, leaking listeners)
+  // every time the user enters/leaves the Voice AI screen.
   const immersive = loc.pathname === '/app/ai/voice';
-
-  if (immersive) {
-    return (
-      <ChildProvider>
-        <RealtimeProvider>
-          <Outlet />
-        </RealtimeProvider>
-      </ChildProvider>
-    );
-  }
 
   return (
     <ChildProvider>
       <RealtimeProvider>
+      {immersive ? <Outlet /> : (
       <div className="relative ag-min-h-screen w-full flex flex-col items-center overflow-hidden" style={{ background: 'var(--ag-bg)' }}>
         <div className="absolute inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#06070f] via-[#030307] to-[#02030a]" />
 
@@ -114,6 +108,7 @@ const ParentShell = () => {
           </div>
         </nav>
       </div>
+      )}
       </RealtimeProvider>
     </ChildProvider>
   );

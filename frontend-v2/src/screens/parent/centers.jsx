@@ -457,6 +457,9 @@ export const DeleteAccount = () => {
     try {
       const { ok } = await api.verifyPin(pin);
       if (!ok) { setErr('Incorrect Security PIN.'); setBusy(false); return; }
+      // Log the formal erasure request (auditable, survives the deletion) before
+      // performing the immediate hard-delete of the account + all data.
+      try { await api.requestDeletion({ scope: 'account', reason: 'user-initiated account deletion' }); } catch { /* non-blocking audit */ }
       await api.deleteAccount();
       logout(); // clears token, sockets, pairing + all ag_* local storage
       setStep('done');

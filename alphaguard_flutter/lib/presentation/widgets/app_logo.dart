@@ -34,10 +34,9 @@ class AppLogo extends StatelessWidget {
           ),
           child: Center(
             child: SvgPicture.asset(
-              'assets/icons/shield.svg',
-              width: size * 0.50,
-              height: size * 0.50,
-              colorFilter: const ColorFilter.mode(Color(0xFF22D3EE), BlendMode.srcIn),
+              'assets/icons/alphaguard_logo.svg',
+              width: size * 0.62,
+              height: size * 0.62,
             ),
           ),
         ),

@@ -3,11 +3,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/models/child.dart';
+import '../../services/socket/socket_service.dart';
 import '../../state/family_controller.dart';
 import '../screens/app_management_screen.dart';
 import '../screens/approvals_center_screen.dart';
@@ -22,12 +22,6 @@ Color _hex(String hex) {
   return Color(int.parse('FF$h', radix: 16));
 }
 
-Color _riskColor(String r) {
-  if (r == 'Low') return const Color(0xFF10B981);
-  if (r == 'Medium') return const Color(0xFFF59E0B);
-  return const Color(0xFFEF4444);
-}
-
 String _ago(int? tsMs) {
   if (tsMs == null) return '—';
   final s = math.max(0, (DateTime.now().millisecondsSinceEpoch - tsMs) ~/ 1000);
@@ -36,14 +30,6 @@ String _ago(int? tsMs) {
   final m = s ~/ 60;
   if (m < 60) return '${m}m ago';
   return '${m ~/ 60}h ago';
-}
-
-String _fmtMins(int m) {
-  if (m <= 0) return '0m';
-  final h = m ~/ 60;
-  final rem = m % 60;
-  if (h == 0) return '${rem}m';
-  return '${h}h ${rem}m';
 }
 
 class _Quick {
@@ -55,13 +41,13 @@ class _Quick {
 }
 
 const _QUICK = [
-  _Quick(label: 'App\nManagement', icon: Icons.grid_view_rounded, accent: Color(0xFF06B6D4), route: '_app-mgmt'),
-  _Quick(label: 'Controls', icon: Icons.tune_rounded, accent: Color(0xFF3B82F6), route: '_controls'),
-  _Quick(label: 'SOS\nCenter', icon: Icons.crisis_alert_rounded, accent: Color(0xFFEF4444), route: '_sos'),
-  _Quick(label: 'AI\nAssistant', icon: Icons.auto_awesome_rounded, accent: Color(0xFFA855F7), route: '_disha'),
+  _Quick(label: 'App\nManagement', icon: Icons.grid_view_rounded,   accent: Color(0xFF06B6D4), route: '_app-mgmt'),
+  _Quick(label: 'Controls',        icon: Icons.tune_rounded,         accent: Color(0xFF3B82F6), route: '_controls'),
+  _Quick(label: 'SOS\nCenter',     icon: Icons.crisis_alert_rounded, accent: Color(0xFFEF4444), route: '_sos'),
+  _Quick(label: 'AI\nAssistant',   icon: Icons.auto_awesome_rounded, accent: Color(0xFFA855F7), route: '_disha'),
 ];
 
-// ── HomeScreen ─────────────────────────────────────────────────────────────────
+// ── HomeScreen ────────────────────────────────────────────────────────────────
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -70,34 +56,34 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  late final AnimationController _safetyCtrl = AnimationController(
-    vsync: this, duration: const Duration(milliseconds: 1200),
-  );
-  late final AnimationController _stCtrl = AnimationController(
-    vsync: this, duration: const Duration(milliseconds: 1100),
-  );
-  late final AnimationController _locCtrl = AnimationController(
-    vsync: this, duration: const Duration(milliseconds: 2600),
-  );
+  late final AnimationController _locCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
+  late final AnimationController _enter   = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+  late final Animation<double>   _fadeIn  = CurvedAnimation(parent: _enter, curve: Curves.easeOut);
 
   Timer? _ticker;
+  Map<String, dynamic>? _liveBattery;
+  void Function()? _batUnsub;
 
   @override
   void initState() {
     super.initState();
-    _safetyCtrl.forward();
-    _stCtrl.forward();
     _locCtrl.repeat();
-    _ticker = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (mounted) setState(() {});
+    _enter.forward();
+    _ticker = Timer.periodic(const Duration(seconds: 5), (_) { if (mounted) setState(() {}); });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _batUnsub = context.read<SocketService>().on('battery:update', (data) {
+        if (!mounted) return;
+        setState(() => _liveBattery = data as Map<String, dynamic>?);
+      });
     });
   }
 
   @override
   void dispose() {
-    _safetyCtrl.dispose();
-    _stCtrl.dispose();
+    _batUnsub?.call();
     _locCtrl.dispose();
+    _enter.dispose();
     _ticker?.cancel();
     super.dispose();
   }
@@ -123,11 +109,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const ApprovalsCenterScreen()));
       return;
     }
-    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-      content: Text('${q.label.replaceAll('\n', ' ')} — coming soon'),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgElevated,
-    ));
   }
 
   @override
@@ -137,35 +118,47 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: familyCtrl.loading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.cyan))
-                : child == null
-                    ? _buildNoChild()
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                        children: [
-                          _buildChildStatusCard(child),
-                          const SizedBox(height: 16),
-                          _buildSafetyScoreCard(),
-                          const SizedBox(height: 16),
-                          _buildQuickActions(context),
-                          const SizedBox(height: 16),
-                          _buildFamilySafety(context),
-                          const SizedBox(height: 16),
-                          _buildScreenTime(),
-                          const SizedBox(height: 16),
-                          _buildLocationPreview(child),
-                          const SizedBox(height: 16),
-                          _buildEmergencyStatus(context),
-                          const SizedBox(height: 16),
-                          _buildRecentAlerts(),
-                          const SizedBox(height: 16),
-                          _buildAiRecommendations(),
-                        ],
-                      ),
+          Positioned(
+            top: -60, left: 0, right: 0,
+            child: Container(
+              height: 250,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  colors: [
+                    (child != null ? _hex(child.color) : AppColors.blue).withValues(alpha: 0.08),
+                    Colors.transparent,
+                  ],
+                  radius: 0.9,
+                ),
+              ),
+            ),
+          ),
+          FadeTransition(
+            opacity: _fadeIn,
+            child: Column(
+              children: [
+                Expanded(
+                  child: familyCtrl.loading
+                      ? const Center(child: CircularProgressIndicator(color: AppColors.cyan, strokeWidth: 2))
+                      : child == null
+                          ? _buildNoChild()
+                          : ListView(
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+                              children: [
+                                _buildChildStatusCard(child),
+                                const SizedBox(height: 14),
+                                _buildBentoRow(context, child),
+                                const SizedBox(height: 14),
+                                _buildLocationPreview(child),
+                                const SizedBox(height: 14),
+                                _buildBottomBento(context),
+                              ],
+                            ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -175,43 +168,62 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildNoChild() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(36),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset('assets/icons/shield.svg', width: 48, height: 48,
-                colorFilter: const ColorFilter.mode(AppColors.textMuted, BlendMode.srcIn)),
-            const SizedBox(height: 16),
-            const Text('No child connected', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 16)),
+            Container(
+              width: 72, height: 72,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                color: AppColors.blue.withValues(alpha: 0.10),
+                border: Border.all(color: AppColors.blue.withValues(alpha: 0.22)),
+              ),
+              child: const Icon(Icons.link_off_rounded, color: AppColors.blue, size: 30),
+            ),
+            const SizedBox(height: 18),
+            const Text('No child connected', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 17)),
             const SizedBox(height: 8),
             const Text('Pair a child device to see live data here.', textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 13.5, height: 1.55)),
           ],
         ),
       ),
     );
   }
 
-  // 1 · Child Status Card ─────────────────────────────────────────────────────
-
   Widget _buildChildStatusCard(Child child) {
-    final cc = _hex(child.color);
+    final batLevel    = (_liveBattery?['level'] as int?) ?? child.batteryLevel;
+    final batCharging = (_liveBattery?['charging'] as bool?) ?? child.batteryCharging;
+    final lastAt      = (_liveBattery?['at'] as int?) ?? child.lastSeenAt;
+    final batLabel    = batLevel != null ? '$batLevel%' : '—';
+    final batIcon     = batCharging ? Icons.battery_charging_full_rounded : Icons.battery_5_bar_rounded;
+    final batColor    = batLevel != null && batLevel < 20 ? AppColors.danger : const Color(0xFF22D3EE);
+    final cc          = _hex(child.color);
+
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        gradient: LinearGradient(
-          colors: [Colors.white.withValues(alpha: 0.06), Colors.transparent],
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-        ),
-      ),
+      decoration: AppColors.glassCard(accent: cc, radius: 26, borderAlpha: 0.18, fillAlpha: 0.06),
       child: Stack(
         children: [
           Positioned(
-            top: -40, right: -40,
+            top: -50, right: -50,
             child: Container(
-              width: 160, height: 160,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: cc.withValues(alpha: 0.10)),
+              width: 180, height: 180,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: cc.withValues(alpha: 0.09)),
+            ),
+          ),
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              height: 60,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.white.withValues(alpha: 0.06), Colors.transparent],
+                ),
+              ),
             ),
           ),
           Padding(
@@ -220,17 +232,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               children: [
                 Row(
                   children: [
-                    // Emoji avatar + online dot
                     SizedBox(
-                      width: 68, height: 68,
+                      width: 70, height: 70,
                       child: Stack(
                         children: [
                           Container(
-                            width: 64, height: 64,
+                            width: 66, height: 66,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: cc.withValues(alpha: 0.15),
-                              border: Border.all(color: cc.withValues(alpha: 0.33)),
+                              border: Border.all(color: cc.withValues(alpha: 0.40), width: 2),
+                              boxShadow: [BoxShadow(color: cc.withValues(alpha: 0.25), blurRadius: 16)],
                             ),
                             child: Center(child: Text(child.emoji, style: const TextStyle(fontSize: 30))),
                           ),
@@ -241,56 +253,79 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: child.online ? const Color(0xFF34D399) : const Color(0xFF475569),
-                                border: Border.all(color: AppColors.bg, width: 3),
+                                border: Border.all(color: AppColors.bg, width: 2.5),
+                                boxShadow: child.online
+                                    ? [BoxShadow(color: const Color(0xFF34D399).withValues(alpha: 0.50), blurRadius: 8)]
+                                    : [],
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '${child.name}${child.age != null ? ', ${child.age}' : ''}',
-                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                            style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900, letterSpacing: -0.3),
                           ),
-                          const SizedBox(height: 4),
-                          Row(children: [
-                            Container(width: 7, height: 7, decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: child.online ? const Color(0xFF34D399) : const Color(0xFF475569),
-                            )),
-                            const SizedBox(width: 5),
-                            Text(
-                              child.online ? 'Online' : 'Offline',
-                              style: TextStyle(
-                                color: child.online ? const Color(0xFF34D399) : const Color(0xFF475569),
-                                fontSize: 12.5, fontWeight: FontWeight.w700,
+                          const SizedBox(height: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(99),
+                              color: child.online
+                                  ? const Color(0xFF34D399).withValues(alpha: 0.14)
+                                  : const Color(0xFF475569).withValues(alpha: 0.20),
+                              border: Border.all(
+                                color: child.online
+                                    ? const Color(0xFF34D399).withValues(alpha: 0.28)
+                                    : const Color(0xFF475569).withValues(alpha: 0.20),
                               ),
                             ),
-                          ]),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Container(
+                                width: 6, height: 6,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: child.online ? const Color(0xFF34D399) : const Color(0xFF475569),
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                child.online ? 'Online' : 'Offline',
+                                style: TextStyle(
+                                  color: child.online ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
+                                  fontSize: 11.5, fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ]),
+                          ),
                         ],
                       ),
                     ),
-                    // Message + Call buttons (right column)
                     Column(children: [
-                      _IconBtn(icon: Icons.message_rounded, accent: const Color(0xFF06B6D4), onTap: () {}),
+                      _GlassIconBtn(icon: Icons.message_rounded,  accent: const Color(0xFF06B6D4), onTap: () {}),
                       const SizedBox(height: 8),
-                      _IconBtn(icon: Icons.phone_rounded, accent: const Color(0xFF10B981), onTap: () {}),
+                      _GlassIconBtn(icon: Icons.phone_rounded,    accent: const Color(0xFF10B981), onTap: () {}),
                     ]),
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Telemetry 3-grid
                 Row(children: [
-                  Expanded(child: _TelCell(icon: Icons.battery_5_bar_rounded, label: '—', sub: 'Battery', color: const Color(0xFF22D3EE))),
+                  Expanded(child: _TelCell(icon: batIcon, label: batLabel, sub: batCharging ? 'Charging' : 'Battery', color: batColor)),
                   const SizedBox(width: 8),
-                  Expanded(child: _TelCell(icon: Icons.wifi_rounded, label: '—', sub: 'Network', color: const Color(0xFF22D3EE))),
+                  Expanded(child: _TelCell(
+                    icon: child.online ? Icons.wifi_rounded : Icons.wifi_off_rounded,
+                    label: child.online ? 'Online' : 'Offline',
+                    sub: 'Network',
+                    color: child.online ? const Color(0xFF22D3EE) : const Color(0xFF94A3B8),
+                  )),
                   const SizedBox(width: 8),
-                  Expanded(child: _TelCell(icon: Icons.refresh_rounded, label: _ago(null), sub: 'Last update', color: const Color(0xFF22D3EE))),
+                  Expanded(child: _TelCell(icon: Icons.sync_rounded, label: _ago(lastAt), sub: 'Last sync', color: const Color(0xFF22D3EE))),
                 ]),
               ],
             ),
@@ -300,250 +335,84 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 2 · Safety Score Ring ─────────────────────────────────────────────────────
-
-  Widget _buildSafetyScoreCard() {
-    const score = 85;
-    const risk = 'Low';
-    const trend = -3;
-    final rc = _riskColor(risk);
-    return _DashCard(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 84, height: 84,
-              child: AnimatedBuilder(
-                animation: _safetyCtrl,
-                builder: (_, __) => CustomPaint(
-                  painter: _RingPainter(
-                    progress: _safetyCtrl.value * (score / 100),
-                    trackColor: Colors.white.withValues(alpha: 0.08),
-                    arcColor: rc, strokeWidth: 8, radius: 34,
-                  ),
-                  child: Center(child: Text('$score', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900))),
-                ),
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('SAFETY SCORE', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.4)),
-                  const SizedBox(height: 4),
-                  Text('$risk Risk', style: TextStyle(color: rc, fontSize: 17, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    Icon(
-                      trend <= 0 ? Icons.trending_down_rounded : Icons.trending_up_rounded,
-                      size: 14,
-                      color: trend <= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${trend.abs()}% this week',
-                      style: TextStyle(
-                        color: trend <= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                        fontSize: 12, fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ]),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 3 · Quick Actions ─────────────────────────────────────────────────────────
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Column(
+  Widget _buildBentoRow(BuildContext context, Child child) {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _DashLabel('Quick Actions'),
-        const SizedBox(height: 10),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.80,
+        Expanded(
+          flex: 5,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: AppColors.glassCard(accent: AppColors.success, radius: 22, borderAlpha: 0.14, fillAlpha: 0.04),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(11),
+                      color: AppColors.success.withValues(alpha: 0.14),
+                      border: Border.all(color: AppColors.success.withValues(alpha: 0.28)),
+                    ),
+                    child: const Icon(Icons.shield_rounded, size: 18, color: AppColors.success),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(99),
+                      color: AppColors.success.withValues(alpha: 0.10),
+                    ),
+                    child: const Text('SAFE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.success, letterSpacing: 1)),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                const Text('Safety\nScore', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, height: 1.3)),
+                const SizedBox(height: 4),
+                const Text('—', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                const SizedBox(height: 2),
+                const Text('Active soon', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+              ],
+            ),
           ),
-          itemCount: _QUICK.length,
-          itemBuilder: (_, i) {
-            final q = _QUICK[i];
-            return GestureDetector(
-              onTap: () => _quickTap(context, q),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-                  color: AppColors.bgElevated,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40, height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: q.accent.withValues(alpha: 0.12),
-                        border: Border.all(color: q.accent.withValues(alpha: 0.23)),
-                      ),
-                      child: Icon(q.icon, size: 18, color: q.accent),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(q.label, textAlign: TextAlign.center,
-                          style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 10, fontWeight: FontWeight.w700, height: 1.15)),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 7,
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1.05,
+            ),
+            itemCount: _QUICK.length,
+            itemBuilder: (_, i) {
+              final q = _QUICK[i];
+              return _QuickTile(q: q, onTap: () => _quickTap(context, q));
+            },
+          ),
         ),
       ],
     );
   }
-
-  // 4 · Family Safety 2×2 ─────────────────────────────────────────────────────
-
-  Widget _buildFamilySafety(BuildContext context) {
-    final cells = [
-      _SafeData(icon: Icons.access_time_rounded, accent: const Color(0xFF06B6D4), label: 'REMAINING TODAY', value: 'Unlimited'),
-      _SafeData(icon: Icons.shield_rounded, accent: const Color(0xFF10B981), label: 'SAFE ZONE', value: 'Inside Home'),
-      _SafeData(icon: Icons.bedtime_rounded, accent: const Color(0xFF6366F1), label: 'NIGHT RESTRICTION', value: 'Off'),
-      _SafeData(icon: Icons.lock_rounded, accent: const Color(0xFFEF4444), label: 'APPS RESTRICTED', value: '0 apps'),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _DashLabel('Family Safety'),
-        const SizedBox(height: 10),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5,
-          ),
-          itemCount: cells.length,
-          itemBuilder: (_, i) {
-            final s = cells[i];
-            return GestureDetector(
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('${s.label} — coming in Phase 6'),
-                behavior: SnackBarBehavior.floating, backgroundColor: AppColors.bgElevated,
-              )),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                  color: AppColors.bgElevated,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Container(
-                        width: 32, height: 32,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: s.accent.withValues(alpha: 0.12),
-                        ),
-                        child: Icon(s.icon, size: 15, color: s.accent),
-                      ),
-                      const Spacer(),
-                      Icon(Icons.chevron_right_rounded, size: 15, color: Colors.white.withValues(alpha: 0.25)),
-                    ]),
-                    const Spacer(),
-                    Text(s.label, style: const TextStyle(color: AppColors.textMuted, fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-                    const SizedBox(height: 2),
-                    Text(s.value, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  // 5 · Screen Time Ring ──────────────────────────────────────────────────────
-
-  Widget _buildScreenTime() {
-    const pct = 0.0;
-    return GestureDetector(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Screen Time — coming in Phase 6'),
-        behavior: SnackBarBehavior.floating, backgroundColor: AppColors.bgElevated,
-      )),
-      child: _DashCard(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 72, height: 72,
-                child: AnimatedBuilder(
-                  animation: _stCtrl,
-                  builder: (_, __) => CustomPaint(
-                    painter: _RingPainter(
-                      progress: _stCtrl.value * pct,
-                      trackColor: Colors.white.withValues(alpha: 0.08),
-                      arcColor: const Color(0xFF06B6D4), strokeWidth: 7, radius: 30,
-                    ),
-                    child: const Center(child: Text('0%', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900))),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Icon(Icons.access_time_rounded, size: 13, color: Color(0xFF22D3EE)),
-                      SizedBox(width: 6),
-                      Text('SCREEN TIME', style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1)),
-                    ]),
-                    SizedBox(height: 4),
-                    Row(children: [
-                      Text('0m', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                      Text(' / Unlimited', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
-                    ]),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 6 · Location Preview ──────────────────────────────────────────────────────
 
   Widget _buildLocationPreview(Child child) {
     final cc = _hex(child.color);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _DashLabel('Location'),
-        const SizedBox(height: 10),
-        _DashCard(
-          child: SizedBox(
-            height: 150,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(22),
+        const _SectionLabel('Location'),
+        const SizedBox(height: 8),
+        Container(
+          decoration: AppColors.glassCard(accent: cc, radius: 22),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: SizedBox(
+              height: 155,
               child: Stack(
                 children: [
                   Positioned.fill(child: CustomPaint(painter: _GridPainter())),
@@ -551,8 +420,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: RadialGradient(
-                          center: const Alignment(0, -0.1), radius: 0.6,
-                          colors: [cc.withValues(alpha: 0.13), Colors.transparent],
+                          center: const Alignment(0, -0.1), radius: 0.65,
+                          colors: [cc.withValues(alpha: 0.14), Colors.transparent],
                         ),
                       ),
                     ),
@@ -560,53 +429,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   Center(
                     child: AnimatedBuilder(
                       animation: _locCtrl,
-                      builder: (_, inner) {
-                        final t = _locCtrl.value;
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Transform.scale(
-                              scale: 1.0 + t,
-                              child: Container(
-                                width: 40, height: 40,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: cc.withValues(alpha: (1.0 - t).clamp(0.0, 0.5))),
-                                ),
+                      builder: (_, inner) => Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Transform.scale(
+                            scale: 1.0 + _locCtrl.value,
+                            child: Container(
+                              width: 44, height: 44,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: cc.withValues(alpha: (1.0 - _locCtrl.value).clamp(0.0, 0.5))),
                               ),
                             ),
-                            inner!,
-                          ],
-                        );
-                      },
+                          ),
+                          inner!,
+                        ],
+                      ),
                       child: Container(
-                        width: 40, height: 40,
+                        width: 44, height: 44,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: cc.withValues(alpha: 0.20),
+                          color: cc.withValues(alpha: 0.22),
                           border: Border.all(color: cc, width: 2),
+                          boxShadow: [BoxShadow(color: cc.withValues(alpha: 0.35), blurRadius: 12)],
                         ),
-                        child: Center(child: Text(child.emoji, style: const TextStyle(fontSize: 18))),
+                        child: Center(child: Text(child.emoji, style: const TextStyle(fontSize: 19))),
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom: 12, left: 12, right: 12,
+                    bottom: 10, left: 10, right: 10,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: Colors.black.withValues(alpha: 0.50),
+                        color: Colors.black.withValues(alpha: 0.55),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
                       ),
                       child: Row(children: [
                         Container(
-                          width: 32, height: 32,
+                          width: 30, height: 30,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(9),
+                            color: AppColors.success.withValues(alpha: 0.14),
                           ),
-                          child: const Icon(Icons.location_on_rounded, size: 15, color: Color(0xFF34D399)),
+                          child: const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFF34D399)),
                         ),
                         const SizedBox(width: 10),
                         const Expanded(
@@ -630,89 +497,136 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 7 · Emergency Status ──────────────────────────────────────────────────────
-
-  Widget _buildEmergencyStatus(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SosScreen())),
-      child: _DashCard(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(children: [
-            Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
-              ),
-              child: const Icon(Icons.check_circle_rounded, size: 20, color: Color(0xFF10B981)),
-            ),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Emergency Status', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-                  SizedBox(height: 2),
-                  Text('All Clear', style: TextStyle(color: Color(0xFF10B981), fontSize: 12.5, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textMuted),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  // 8 · Recent Alerts ─────────────────────────────────────────────────────────
-
-  Widget _buildRecentAlerts() {
+  Widget _buildBottomBento(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(children: [
-          const _DashLabel('Recent Alerts'),
-          const Spacer(),
-          const Row(children: [
-            Text('View All', style: TextStyle(color: AppColors.cyan, fontSize: 12, fontWeight: FontWeight.w700)),
-            Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.cyan),
-          ]),
-        ]),
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SosScreen())),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: AppColors.glassCard(accent: AppColors.danger, radius: 20, borderAlpha: 0.18, fillAlpha: 0.04),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 38, height: 38,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.danger.withValues(alpha: 0.14),
+                          border: Border.all(color: AppColors.danger.withValues(alpha: 0.28)),
+                        ),
+                        child: const Icon(Icons.shield_outlined, size: 18, color: AppColors.danger),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('Emergency', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13.5)),
+                      const SizedBox(height: 2),
+                      const Text('No active SOS', style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      const Row(children: [
+                        Text('Open', style: TextStyle(color: AppColors.danger, fontSize: 11, fontWeight: FontWeight.w700)),
+                        Icon(Icons.chevron_right_rounded, size: 13, color: AppColors.danger),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: AppColors.glassCard(accent: AppColors.warning, radius: 20, borderAlpha: 0.12, fillAlpha: 0.04),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Container(
+                        width: 38, height: 38,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.warning.withValues(alpha: 0.14),
+                          border: Border.all(color: AppColors.warning.withValues(alpha: 0.25)),
+                        ),
+                        child: const Icon(Icons.notifications_none_rounded, size: 18, color: AppColors.warning),
+                      ),
+                      const Spacer(),
+                      const Text('View All', style: TextStyle(color: AppColors.cyan, fontSize: 10, fontWeight: FontWeight.w700)),
+                    ]),
+                    const SizedBox(height: 12),
+                    const Text('Recent\nAlerts', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13.5, height: 1.3)),
+                    const SizedBox(height: 4),
+                    const Text('No alerts', style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 10),
-        _DashCard(
-          child: const Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(children: [
-              Icon(Icons.notifications_none_rounded, size: 32, color: AppColors.textMuted),
-              SizedBox(height: 8),
-              Text('No recent alerts', style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
-            ]),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            color: AppColors.violet.withValues(alpha: 0.05),
+            border: Border.all(color: AppColors.violet.withValues(alpha: 0.18)),
+            boxShadow: [
+              BoxShadow(color: AppColors.violet.withValues(alpha: 0.08), blurRadius: 24),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 5)),
+            ],
           ),
-        ),
-      ],
-    );
-  }
-
-  // 9 · AI Recommendations ────────────────────────────────────────────────────
-
-  Widget _buildAiRecommendations() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _DashLabel('AI Recommendations'),
-        const SizedBox(height: 10),
-        _DashCard(
-          child: const Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(children: [
-              Icon(Icons.auto_awesome_rounded, size: 28, color: AppColors.textMuted),
-              SizedBox(height: 8),
-              Text('No recommendations yet', style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
-              SizedBox(height: 4),
-              Text('Check back after your child has been active for a day.',
-                  textAlign: TextAlign.center, style: TextStyle(color: AppColors.textMuted, fontSize: 11.5)),
-            ]),
+          child: Row(
+            children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFA855F7), Color(0xFF06B6D4)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [BoxShadow(color: AppColors.violet.withValues(alpha: 0.35), blurRadius: 14)],
+                ),
+                child: Stack(alignment: Alignment.center, children: [
+                  Positioned(
+                    top: 0, left: 0, right: 0,
+                    child: Container(
+                      height: 22,
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.white.withValues(alpha: 0.22), Colors.transparent],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.auto_awesome_rounded, size: 22, color: Colors.white),
+                ]),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI RECOMMENDATIONS',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.violet, letterSpacing: 1.2),
+                    ),
+                    SizedBox(height: 3),
+                    Text('No recommendations yet', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                    SizedBox(height: 2),
+                    Text('Available after child device is active for a day.', style: TextStyle(color: AppColors.textMuted, fontSize: 11.5, height: 1.45)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -720,30 +634,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-// ── Shared layout atoms ───────────────────────────────────────────────────────
+// ── Shared atoms ──────────────────────────────────────────────────────────────
 
-class _DashCard extends StatelessWidget {
-  const _DashCard({required this.child});
-  final Widget child;
-  @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      color: AppColors.bgElevated,
-    ),
-    child: child,
-  );
-}
-
-class _DashLabel extends StatelessWidget {
-  const _DashLabel(this.text);
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
   final String text;
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 4, bottom: 2),
-    child: Text(text.toUpperCase(),
-        style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.4)),
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        width: 3, height: 14,
+        decoration: BoxDecoration(
+          color: AppColors.cyan,
+          borderRadius: BorderRadius.circular(99),
+          boxShadow: [BoxShadow(color: AppColors.cyan.withValues(alpha: 0.55), blurRadius: 8)],
+        ),
+      ),
+      const SizedBox(width: 8),
+      Text(
+        text.toUpperCase(),
+        style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.4),
+      ),
+    ],
   );
 }
 
@@ -758,21 +670,21 @@ class _TelCell extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(16),
-      color: Colors.black.withValues(alpha: 0.20),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      color: color.withValues(alpha: 0.06),
+      border: Border.all(color: color.withValues(alpha: 0.16)),
     ),
     child: Column(children: [
       Icon(icon, size: 16, color: color),
-      const SizedBox(height: 4),
-      Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis),
+      const SizedBox(height: 5),
+      Text(label, style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w900), overflow: TextOverflow.ellipsis),
       const SizedBox(height: 2),
       Text(sub, style: const TextStyle(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w700)),
     ]),
   );
 }
 
-class _IconBtn extends StatelessWidget {
-  const _IconBtn({required this.icon, required this.accent, required this.onTap});
+class _GlassIconBtn extends StatelessWidget {
+  const _GlassIconBtn({required this.icon, required this.accent, required this.onTap});
   final IconData icon;
   final Color accent;
   final VoidCallback onTap;
@@ -783,60 +695,109 @@ class _IconBtn extends StatelessWidget {
       width: 44, height: 44,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: accent.withValues(alpha: 0.15),
-        border: Border.all(color: accent.withValues(alpha: 0.30)),
+        color: accent.withValues(alpha: 0.12),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+        boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.15), blurRadius: 10)],
       ),
       child: Icon(icon, size: 19, color: accent),
     ),
   );
 }
 
-class _SafeData {
-  const _SafeData({required this.icon, required this.accent, required this.label, required this.value});
-  final IconData icon;
-  final Color accent;
-  final String label;
-  final String value;
+class _QuickTile extends StatefulWidget {
+  const _QuickTile({required this.q, required this.onTap});
+  final _Quick q;
+  final VoidCallback onTap;
+  @override
+  State<_QuickTile> createState() => _QuickTileState();
 }
 
-// ── Custom painters ───────────────────────────────────────────────────────────
-
-class _RingPainter extends CustomPainter {
-  const _RingPainter({
-    required this.progress, required this.trackColor,
-    required this.arcColor, required this.strokeWidth, required this.radius,
-  });
-  final double progress;
-  final Color trackColor;
-  final Color arcColor;
-  final double strokeWidth;
-  final double radius;
-
+class _QuickTileState extends State<_QuickTile> {
+  bool _pressed = false;
   @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2, cy = size.height / 2;
-    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    paint.color = trackColor;
-    canvas.drawArc(rect, 0, 2 * math.pi, false, paint);
-    paint.color = arcColor;
-    canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * progress.clamp(0.0, 1.0), false, paint);
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter o) => o.progress != progress || o.arcColor != arcColor;
+  Widget build(BuildContext context) => GestureDetector(
+    onTapDown:   (_) => setState(() => _pressed = true),
+    onTapUp:     (_) { setState(() => _pressed = false); widget.onTap(); },
+    onTapCancel: () => setState(() => _pressed = false),
+    child: AnimatedScale(
+      scale: _pressed ? 0.94 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: widget.q.accent.withValues(alpha: 0.06),
+          border: Border.all(color: widget.q.accent.withValues(alpha: 0.18)),
+          boxShadow: [BoxShadow(color: widget.q.accent.withValues(alpha: 0.08), blurRadius: 12)],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 42, height: 42,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(13),
+                color: widget.q.accent.withValues(alpha: 0.14),
+                border: Border.all(color: widget.q.accent.withValues(alpha: 0.28)),
+                boxShadow: [BoxShadow(color: widget.q.accent.withValues(alpha: 0.20), blurRadius: 10)],
+              ),
+              child: Stack(alignment: Alignment.center, children: [
+                Positioned(
+                  top: 0, left: 0, right: 0,
+                  child: Container(
+                    height: 18,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.white.withValues(alpha: 0.15), Colors.transparent],
+                      ),
+                    ),
+                  ),
+                ),
+                Icon(widget.q.icon, size: 19, color: widget.q.accent),
+              ]),
+            ),
+            const SizedBox(height: 7),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Text(
+                widget.q.label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 10, fontWeight: FontWeight.w700, height: 1.2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
+// Compatibility aliases (these classes may be referenced elsewhere)
+class _DashCard extends StatelessWidget {
+  const _DashCard({required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: AppColors.glassCard(radius: 22),
+    child: child,
+  );
+}
+
+class _DashLabel extends StatelessWidget {
+  const _DashLabel(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => _SectionLabel(text);
+}
+
+// Kept for the location map background
 class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const step = 28.0;
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.14)
-      ..strokeWidth = 0.5;
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.10)..strokeWidth = 0.5;
     for (double x = 0; x <= size.width; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
@@ -844,7 +805,6 @@ class _GridPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
-
   @override
   bool shouldRepaint(_GridPainter _) => false;
 }

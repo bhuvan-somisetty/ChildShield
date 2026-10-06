@@ -31,6 +31,11 @@ export const api = {
   googleAuth: (code) => req('POST', '/auth/google', { code }),
   me: () => req('GET', '/me'),
   deleteAccount: () => req('DELETE', '/me'),
+  // legal / consent (versioned, server-gated)
+  legalVersion: () => req('GET', '/legal/version'),
+  consentStatus: () => req('GET', '/consent/status'),
+  acceptConsent: (acceptedDocs) => req('POST', '/consent', { acceptedDocs, method: 'onboarding' }),
+  requestDeletion: (data) => req('POST', '/data-deletion', data || {}),
   createChild: (data) => req('POST', '/children', data),
   listChildren: () => req('GET', '/children'),
   claimPairing: (code, platform) => req('POST', '/pair/claim', { code, platform }),
@@ -59,6 +64,11 @@ export const api = {
   addCategory: (name, color) => req('POST', '/task-categories', { name, color }),
   taskComments: (id) => req('GET', `/tasks/${id}/comments`),
   commentTask: (id, body) => req('POST', `/tasks/${id}/comments`, { body }),
+  // Photo proof + parent approval
+  uploadProof: (id, kind, dataUrl, name) => req('POST', `/tasks/${id}/proof`, { kind, dataUrl, name }),
+  taskProofs: (id) => req('GET', `/tasks/${id}/proof`),
+  approveTask: (id) => req('POST', `/tasks/${id}/approve`, {}),
+  rejectTask: (id, comment) => req('POST', `/tasks/${id}/reject`, { comment }),
   createRecurring: (data) => req('POST', '/recurring', data),
   listRecurring: (childId) => req('GET', childId ? `/recurring?childId=${encodeURIComponent(childId)}` : '/recurring'),
   deleteRecurring: (id) => req('DELETE', `/recurring/${id}`),
@@ -84,6 +94,10 @@ export const api = {
   listFeatures: () => req('GET', '/feature-requests'),
   announcements: () => req('GET', '/announcements'),
   changelog: () => req('GET', '/changelog'),
+  // app lifecycle / update system
+  appVersion: (version) => req('GET', `/app/version${version ? `?version=${encodeURIComponent(version)}` : ''}`),
+  adminGetAppVersion: () => req('GET', '/admin/app-version'),
+  adminSetAppVersion: (data) => req('PUT', '/admin/app-version', data),
   rateApp: (stars, feedback) => req('POST', '/ratings', { stars, feedback }),
   // admin
   adminTickets: () => req('GET', '/admin/support/tickets'),

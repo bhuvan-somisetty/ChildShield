@@ -4,6 +4,7 @@ import { Mail, Lock, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { Screen, Button, Input, Brand } from '../components/ui';
 import { api, setToken } from '../lib/agClient';
 import { signInWithGoogle } from '../lib/google';
+import { markFirstLogin } from '../lib/lifecycle';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -32,6 +33,7 @@ const Login = () => {
     try {
       const { token } = await api.loginParent(email.trim().toLowerCase(), password);
       setToken(token);
+      markFirstLogin();
       navigate('/setup');
     } catch (err) {
       setError(err.message === 'Invalid credentials' ? 'Incorrect email or password.' : 'Login failed. Please try again.');
@@ -47,6 +49,7 @@ const Login = () => {
     setGoogleBusy(true);
     try {
       await signInWithGoogle();
+      markFirstLogin();
       navigate('/setup');
     } catch (err) {
       if (err.message === 'popup_closed' || err.message === 'access_denied') { /* user cancelled */ }

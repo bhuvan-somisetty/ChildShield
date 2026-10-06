@@ -9,15 +9,16 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../state/auth_controller.dart';
 
-/// 6-section onboarding carousel — matches frontend-v2 /onboarding.
-/// Sections: how · parentGuide · parentFeatures · childGuide · childFeatures · privacy
+// 6-section onboarding carousel.
+// Sections: how · parentGuide · parentFeatures · childGuide · childFeatures · privacy
+
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-// ── Data model ────────────────────────────────────────────────────────────────
+// ── Data model ───────────────────────────────────────────────────────────────
 
 class _Section {
   const _Section({required this.id, required this.accent, required this.build});
@@ -26,12 +27,14 @@ class _Section {
   final Widget Function(BuildContext) build;
 }
 
-// ── Section builders ──────────────────────────────────────────────────────────
+// ── Section builders ─────────────────────────────────────────────────────────
 
 Widget _sectionHow(BuildContext ctx) => _SectionLayout(
+  accent: const Color(0xFF06B6D4),
   art: const _RadarArt(accent: Color(0xFF06B6D4)),
   title: 'How AlphaGuard Works',
   sub: 'A shared, transparent space for families — safety for parents, growth for children.',
+  chipLabel: 'ALPHAGUARD AI',
   content: const Column(children: [
     _StepRow(n: 1, icon: Icons.link_outlined, title: 'Pair the two devices', sub: 'A secure 6-digit code connects parent and child.', accent: Color(0xFF06B6D4)),
     SizedBox(height: 10),
@@ -42,6 +45,7 @@ Widget _sectionHow(BuildContext ctx) => _SectionLayout(
 );
 
 Widget _sectionParentGuide(BuildContext ctx) => _SectionLayout(
+  accent: const Color(0xFF3B82F6),
   art: const _AnalyticsArt(accent: Color(0xFF3B82F6)),
   title: 'Parent Guide',
   sub: 'Set up your family\'s safety in a few simple steps.',
@@ -63,6 +67,7 @@ Widget _sectionParentGuide(BuildContext ctx) => _SectionLayout(
 );
 
 Widget _sectionParentFeatures(BuildContext ctx) => _SectionLayout(
+  accent: const Color(0xFF6366F1),
   art: const _SosArt(accent: Color(0xFF6366F1)),
   title: 'What Parents Can Do',
   sub: 'Powerful, transparent tools for everyday family safety.',
@@ -82,6 +87,7 @@ Widget _sectionParentFeatures(BuildContext ctx) => _SectionLayout(
 );
 
 Widget _sectionChildGuide(BuildContext ctx) => _SectionLayout(
+  accent: const Color(0xFF10B981),
   art: const _AiScanArt(accent: Color(0xFF10B981)),
   title: 'Child Guide',
   sub: 'Connect, complete tasks, and earn rewards.',
@@ -101,6 +107,7 @@ Widget _sectionChildGuide(BuildContext ctx) => _SectionLayout(
 );
 
 Widget _sectionChildFeatures(BuildContext ctx) => _SectionLayout(
+  accent: const Color(0xFFA855F7),
   art: const _SecurityGlowArt(accent: Color(0xFFA855F7)),
   title: 'What Children Can Do',
   sub: 'Stay on track and have fun building good habits.',
@@ -118,6 +125,7 @@ Widget _sectionChildFeatures(BuildContext ctx) => _SectionLayout(
 );
 
 Widget _sectionPrivacy(BuildContext ctx) => _SectionLayout(
+  accent: const Color(0xFF2563EB),
   art: const _PrivacyArt(accent: Color(0xFF2563EB)),
   title: 'Privacy & Safety',
   sub: 'Safety and transparency are at the heart of AlphaGuard.',
@@ -130,9 +138,11 @@ Widget _sectionPrivacy(BuildContext ctx) => _SectionLayout(
       const _CommitRow(icon: Icons.visibility_outlined, title: 'Child-safety focused', sub: 'Monitoring is transparent — never covert.', accent: Color(0xFFA855F7)),
       const SizedBox(height: 10),
       const _CommitRow(icon: Icons.block_outlined, title: 'No unauthorized sharing', sub: 'No ads to children. No data sold or rented.', accent: Color(0xFFF59E0B)),
-      const SizedBox(height: 18),
-      const Text('READ OUR POLICIES',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5)),
+      const SizedBox(height: 20),
+      const Text(
+        'READ OUR POLICIES',
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5),
+      ),
       const SizedBox(height: 10),
       for (final item in [
         ('Terms of Service',    Icons.description_outlined,  '/support/terms'),
@@ -142,19 +152,23 @@ Widget _sectionPrivacy(BuildContext ctx) => _SectionLayout(
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: GestureDetector(
-            onTap: () => ctx.go(item.$3),
+            onTap: () => ctx.push(item.$3),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0B0C14),
+                color: AppColors.cyan.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.18)),
+                boxShadow: [
+                  BoxShadow(color: AppColors.cyan.withValues(alpha: 0.08), blurRadius: 10),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 8, offset: const Offset(0, 3)),
+                ],
               ),
               child: Row(children: [
                 Icon(item.$2, color: AppColors.cyan, size: 16),
                 const SizedBox(width: 12),
                 Expanded(child: Text(item.$1, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white))),
-                const Icon(Icons.chevron_right, color: Color(0xFF475569), size: 16),
+                Icon(Icons.chevron_right, color: AppColors.cyan.withValues(alpha: 0.50), size: 16),
               ]),
             ),
           ),
@@ -172,12 +186,12 @@ Widget _sectionPrivacy(BuildContext ctx) => _SectionLayout(
 // ── Sections list ─────────────────────────────────────────────────────────────
 
 final _sections = <_Section>[
-  _Section(id: 'how',           accent: const Color(0xFF06B6D4), build: _sectionHow),
-  _Section(id: 'parentGuide',   accent: const Color(0xFF3B82F6), build: _sectionParentGuide),
-  _Section(id: 'parentFeatures',accent: const Color(0xFF6366F1), build: _sectionParentFeatures),
-  _Section(id: 'childGuide',    accent: const Color(0xFF10B981), build: _sectionChildGuide),
-  _Section(id: 'childFeatures', accent: const Color(0xFFA855F7), build: _sectionChildFeatures),
-  _Section(id: 'privacy',       accent: const Color(0xFF2563EB), build: _sectionPrivacy),
+  _Section(id: 'how',            accent: const Color(0xFF06B6D4), build: _sectionHow),
+  _Section(id: 'parentGuide',    accent: const Color(0xFF3B82F6), build: _sectionParentGuide),
+  _Section(id: 'parentFeatures', accent: const Color(0xFF6366F1), build: _sectionParentFeatures),
+  _Section(id: 'childGuide',     accent: const Color(0xFF10B981), build: _sectionChildGuide),
+  _Section(id: 'childFeatures',  accent: const Color(0xFFA855F7), build: _sectionChildFeatures),
+  _Section(id: 'privacy',        accent: const Color(0xFF2563EB), build: _sectionPrivacy),
 ];
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -205,7 +219,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
 
   Future<void> _finish() async {
     await context.read<AuthController>().completeOnboarding();
-    if (mounted) context.go('/role');
+    if (mounted) context.push('/role');
   }
 
   void _next() {
@@ -216,7 +230,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   }
 
   void _prev() {
-    if (_i == 0) { context.go('/welcome'); return; }
+    if (_i == 0) { context.pop(); return; }
     setState(() => _i--);
     _pc.animateToPage(_i, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
     _slide.forward(from: 0);
@@ -229,96 +243,221 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: Stack(
-        children: [
-          // Ambient glow — extends behind status bar
-          Positioned(
-            top: -60, left: 0, right: 0,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              height: 260,
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  colors: [section.accent.withValues(alpha: 0.14), Colors.transparent],
-                ),
-              ),
-            ),
-          ),
-          ResponsiveShell(
+      body: ResponsiveShell(
             child: Column(
               children: [
-                // Progress + skip row — compact, close to the top
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(child: _ProgressPill(count: _sections.length, active: _i, color: section.accent)),
-                      const SizedBox(width: 12),
-                      GestureDetector(
-                        onTap: _finish,
-                        child: const Text('Skip', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
-                      ),
-                    ],
-                  ),
+                // ── Glass progress bar ──────────────────────────────────────
+                _GlassProgressBar(
+                  count: _sections.length,
+                  active: _i,
+                  color: section.accent,
+                  onSkip: _finish,
                 ),
-                // Scrollable section content
+                const SizedBox(height: 8),
+                // ── Scrollable section content ──────────────────────────────
+                // ColoredBox is OUTSIDE FadeTransition so the solid dark
+                // background is always opaque — fade only affects content.
+                // ClipRect prevents card BoxShadow from bleeding outside the
+                // PageView bounds during scrolling.
                 Expanded(
-                  child: PageView.builder(
-                    controller: _pc,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _sections.length,
-                    onPageChanged: (i) => setState(() => _i = i),
-                    itemBuilder: (ctx, i) => FadeTransition(
-                      opacity: _fadeIn,
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _sections[i].build(ctx),
+                  child: ColoredBox(
+                    color: AppColors.bg,
+                    child: ClipRect(
+                      child: PageView.builder(
+                        controller: _pc,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _sections.length,
+                        onPageChanged: (i) => setState(() => _i = i),
+                        itemBuilder: (ctx, i) => FadeTransition(
+                          opacity: _fadeIn,
+                          child: SingleChildScrollView(
+                            clipBehavior: Clip.hardEdge,
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _sections[i].build(ctx),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                // Footer: prev + next
+                const SizedBox(height: 10),
+                // ── Bottom navigation ───────────────────────────────────────
                 Row(
                   children: [
+                    // Back — clay squircle
                     GestureDetector(
                       onTap: _prev,
                       child: Container(
-                        width: 52, height: 52,
+                        width: 58, height: 58,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(99),
-                          color: Colors.white.withValues(alpha: 0.05),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+                          borderRadius: BorderRadius.circular(18),
+                          color: const Color(0xFF141B2E),
+                          boxShadow: [
+                            BoxShadow(color: Colors.white.withValues(alpha: 0.07), blurRadius: 1, offset: const Offset(0, -1)),
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.55), blurRadius: 12, offset: const Offset(0, 6), spreadRadius: -2),
+                          ],
                         ),
-                        child: const Icon(Icons.chevron_left, color: Color(0xFFCBD5E1), size: 22),
+                        child: Stack(alignment: Alignment.center, children: [
+                          Positioned(
+                            top: 0, left: 0, right: 0,
+                            child: Container(
+                              height: 26,
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                                  colors: [Colors.white.withValues(alpha: 0.08), Colors.transparent],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const Icon(Icons.chevron_left_rounded, color: Color(0xFF94A3B8), size: 26),
+                        ]),
                       ),
                     ),
                     const SizedBox(width: 12),
+                    // Next / Get Started — clay gradient pill
                     Expanded(
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        child: ElevatedButton.icon(
-                          onPressed: _next,
-                          icon: const Icon(Icons.chevron_right, size: 18),
-                          label: Text(
-                            _last ? 'Get Started' : 'Next',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        height: 58,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              section.accent,
+                              Color.lerp(section.accent, const Color(0xFF06B6D4), 0.40)!,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: section.accent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(color: Colors.white.withValues(alpha: 0.12), blurRadius: 1, offset: const Offset(0, -1)),
+                            BoxShadow(color: section.accent.withValues(alpha: 0.50), blurRadius: 22, offset: const Offset(0, 8), spreadRadius: -4),
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.40), blurRadius: 10, offset: const Offset(0, 6), spreadRadius: -2),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _next,
+                            borderRadius: BorderRadius.circular(18),
+                            child: Stack(alignment: Alignment.center, children: [
+                              Positioned(
+                                top: 0, left: 0, right: 0,
+                                child: Container(
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                                      colors: [Colors.white.withValues(alpha: 0.18), Colors.transparent],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    _last ? 'Get Started' : 'Next',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    _last ? Icons.rocket_launch_rounded : Icons.arrow_forward_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                            ]),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: safe.bottom + 10),
+                SizedBox(height: safe.bottom + 12),
               ],
+            ),
+      ),
+    );
+  }
+}
+
+// ── Glass progress bar ────────────────────────────────────────────────────────
+
+class _GlassProgressBar extends StatelessWidget {
+  const _GlassProgressBar({
+    required this.count,
+    required this.active,
+    required this.color,
+    required this.onSkip,
+  });
+  final int count;
+  final int active;
+  final Color color;
+  final VoidCallback onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+      child: Row(
+        children: [
+          // Animated pill track
+          Expanded(
+            child: Row(
+              children: List.generate(count, (i) {
+                final isActive = i == active;
+                final isPast = i < active;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.only(right: 5),
+                  height: 4,
+                  width: isActive ? 22 : isPast ? 10 : 6,
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? color
+                        : isPast
+                            ? color.withValues(alpha: 0.40)
+                            : Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Step counter
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              '${active + 1}/$count',
+              key: ValueKey(active),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: color.withValues(alpha: 0.80),
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Skip
+          GestureDetector(
+            onTap: onSkip,
+            child: const Text(
+              'Skip',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF4A5568)),
             ),
           ),
         ],
@@ -327,50 +466,102 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
   }
 }
 
-// ── Progress pill ─────────────────────────────────────────────────────────────
-
-class _ProgressPill extends StatelessWidget {
-  const _ProgressPill({required this.count, required this.active, required this.color});
-  final int count;
-  final int active;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: List.generate(count, (i) {
-      final isActive = i == active;
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        margin: const EdgeInsets.only(right: 5),
-        height: 6,
-        width: isActive ? 24 : 6,
-        decoration: BoxDecoration(
-          color: isActive ? color : Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(99),
-        ),
-      );
-    }),
-  );
-}
-
 // ── Section scaffold ──────────────────────────────────────────────────────────
 
 class _SectionLayout extends StatelessWidget {
-  const _SectionLayout({required this.art, required this.title, required this.sub, required this.content});
+  const _SectionLayout({
+    required this.art,
+    required this.title,
+    required this.sub,
+    required this.content,
+    required this.accent,
+    this.chipLabel,
+  });
   final Widget art;
   final String title;
   final String sub;
   final Widget content;
+  final Color accent;
+  final String? chipLabel;
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Center(child: art),
-      const SizedBox(height: 14),
-      Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, height: 1.2)),
-      const SizedBox(height: 6),
-      Text(sub, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF94A3B8), height: 1.55)),
+      // Hero art card — clay stage
+      Container(
+        width: double.infinity,
+        height: 216,
+        decoration: BoxDecoration(
+          color: const Color(0xFF080D18),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.55), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -6),
+            BoxShadow(color: accent.withValues(alpha: 0.12), blurRadius: 20, spreadRadius: -12),
+          ],
+        ),
+        child: Stack(children: [
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                  colors: [Colors.white.withValues(alpha: 0.10), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+          Center(child: art),
+        ]),
+      ),
+      const SizedBox(height: 18),
+      // Brand chip (optional)
+      if (chipLabel != null) ...[
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: accent.withValues(alpha: 0.12),
+            border: Border.all(color: accent.withValues(alpha: 0.30), width: 0.8),
+          ),
+          child: Text(
+            chipLabel!,
+            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: accent, letterSpacing: 1.2),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+      // Gradient title
+      ShaderMask(
+        shaderCallback: (b) => LinearGradient(
+          colors: [Colors.white, accent.withValues(alpha: 0.85)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(b),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            height: 1.15,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ),
+      const SizedBox(height: 7),
+      Text(
+        sub,
+        style: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF7A8899),
+          height: 1.55,
+        ),
+      ),
       const SizedBox(height: 18),
       content,
     ],
@@ -379,8 +570,8 @@ class _SectionLayout extends StatelessWidget {
 
 // ── UI primitives ─────────────────────────────────────────────────────────────
 
-class _IconTile extends StatelessWidget {
-  const _IconTile({required this.icon, required this.accent, this.size = 42});
+class _IconBubble extends StatelessWidget {
+  const _IconBubble({required this.icon, required this.accent, this.size = 42});
   final IconData icon;
   final Color accent;
   final double size;
@@ -389,11 +580,20 @@ class _IconTile extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: size, height: size,
     decoration: BoxDecoration(
-      color: accent.withValues(alpha: 0.10),
-      borderRadius: BorderRadius.circular(size * 0.3),
-      border: Border.all(color: accent.withValues(alpha: 0.25)),
+      borderRadius: BorderRadius.circular(size * 0.30),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft, end: Alignment.bottomRight,
+        colors: [accent.withValues(alpha: 0.24), accent.withValues(alpha: 0.08)],
+      ),
+      border: Border.all(color: accent.withValues(alpha: 0.15), width: 0.5),
+      boxShadow: [
+        BoxShadow(color: accent.withValues(alpha: 0.18), blurRadius: 8, spreadRadius: -4),
+        BoxShadow(color: Colors.black.withValues(alpha: 0.30), blurRadius: 6, offset: const Offset(1, 3), spreadRadius: -2),
+      ],
     ),
-    child: Icon(icon, color: accent, size: size * 0.45),
+    child: Icon(icon, color: accent, size: size * 0.46,
+      shadows: [Shadow(color: accent.withValues(alpha: 0.50), blurRadius: 6)],
+    ),
   );
 }
 
@@ -407,32 +607,48 @@ class _StepRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(12),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     decoration: BoxDecoration(
-      color: const Color(0xFF0B0C14),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft, end: Alignment.bottomRight,
+        colors: [const Color(0xFF0D1627), const Color(0xFF070C16)],
+      ),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.07), width: 0.5),
+      boxShadow: [
+        BoxShadow(color: Colors.black.withValues(alpha: 0.50), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -4),
+        BoxShadow(color: accent.withValues(alpha: 0.06), blurRadius: 12, spreadRadius: -6),
+      ],
     ),
     child: Row(
       children: [
         Stack(clipBehavior: Clip.none, children: [
-          _IconTile(icon: icon, accent: accent),
+          _IconBubble(icon: icon, accent: accent, size: 42),
           Positioned(
             top: -6, left: -6,
             child: Container(
-              width: 20, height: 20,
-              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-              child: Center(child: Text('$n', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF06070F)))),
+              width: 19, height: 19,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  colors: [accent, Color.lerp(accent, Colors.white, 0.15)!],
+                ),
+                boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.55), blurRadius: 6)],
+              ),
+              child: Center(
+                child: Text('$n', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white)),
+              ),
             ),
           ),
         ]),
         const SizedBox(width: 14),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white, height: 1.3)),
+            Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white, height: 1.3)),
             if (sub != null) ...[
-              const SizedBox(height: 2),
-              Text(sub!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+              const SizedBox(height: 3),
+              Text(sub!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF7A8899), height: 1.4)),
             ],
           ]),
         ),
@@ -453,16 +669,28 @@ class _FeatureTile extends StatelessWidget {
     return SizedBox(
       width: w,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         decoration: BoxDecoration(
-          color: const Color(0xFF0B0C14),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            colors: [const Color(0xFF0D1627), const Color(0xFF070C16)],
+          ),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.07), width: 0.5),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.48), blurRadius: 14, offset: const Offset(0, 6), spreadRadius: -4),
+            BoxShadow(color: accent.withValues(alpha: 0.06), blurRadius: 10, spreadRadius: -6),
+          ],
         ),
         child: Row(children: [
-          _IconTile(icon: icon, accent: accent, size: 34),
-          const SizedBox(width: 10),
-          Flexible(child: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white, height: 1.3))),
+          _IconBubble(icon: icon, accent: accent, size: 34),
+          const SizedBox(width: 9),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white, height: 1.3),
+            ),
+          ),
         ]),
       ),
     );
@@ -478,20 +706,28 @@ class _CommitRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     decoration: BoxDecoration(
-      color: const Color(0xFF0B0C14),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft, end: Alignment.bottomRight,
+        colors: [const Color(0xFF0D1627), const Color(0xFF070C16)],
+      ),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.07), width: 0.5),
+      boxShadow: [
+        BoxShadow(color: Colors.black.withValues(alpha: 0.50), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -4),
+        BoxShadow(color: accent.withValues(alpha: 0.06), blurRadius: 12, spreadRadius: -6),
+      ],
     ),
     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _IconTile(icon: icon, accent: accent, size: 38),
+      _IconBubble(icon: icon, accent: accent, size: 40),
       const SizedBox(width: 12),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white)),
           const SizedBox(height: 3),
-          Text(sub, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B), height: 1.45)),
+          Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white)),
+          const SizedBox(height: 4),
+          Text(sub, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF7A8899), height: 1.45)),
         ]),
       ),
     ]),
@@ -499,10 +735,10 @@ class _CommitRow extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ANIMATIONS — Phase 8: per-section hero illustrations
+// ANIMATIONS — per-section hero illustrations (unchanged)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ── Section 1: Radar art (live location pulse + expanding radar rings) ────────
+// ── Section 1: Radar art ─────────────────────────────────────────────────────
 
 class _RadarArt extends StatefulWidget {
   const _RadarArt({required this.accent});
@@ -568,31 +804,19 @@ class _RadarPainter extends CustomPainter {
 
     drawRing(r1); drawRing(r2); drawRing(r3);
 
-    // Center shield icon simulation (circle)
+    canvas.drawCircle(Offset(cx, cy), 18, Paint()..color = accent.withValues(alpha: 0.20));
     canvas.drawCircle(
       Offset(cx, cy), 18,
-      Paint()..color = accent.withValues(alpha: 0.20),
+      Paint()..color = accent.withValues(alpha: 0.60)..style = PaintingStyle.stroke..strokeWidth = 1.5,
     );
-    canvas.drawCircle(
-      Offset(cx, cy), 18,
-      Paint()
-        ..color = accent.withValues(alpha: 0.60)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
-
-    // Pulsing location dot on top of shield
-    canvas.drawCircle(
-      Offset(cx, cy - 2), 5,
-      Paint()..color = accent.withValues(alpha: pulseOp),
-    );
+    canvas.drawCircle(Offset(cx, cy - 2), 5, Paint()..color = accent.withValues(alpha: pulseOp));
   }
 
   @override
   bool shouldRepaint(_RadarPainter o) => true;
 }
 
-// ── Section 2: Analytics art (animated usage bars) ────────────────────────────
+// ── Section 2: Analytics art ─────────────────────────────────────────────────
 
 class _AnalyticsArt extends StatefulWidget {
   const _AnalyticsArt({required this.accent});
@@ -615,16 +839,9 @@ class _AnalyticsArtState extends State<_AnalyticsArt> with SingleTickerProviderS
     width: 160, height: 100,
     child: AnimatedBuilder(
       animation: _c,
-      builder: (_, __) {
-        return CustomPaint(
-          painter: _AnalyticsPainter(
-            accent: widget.accent,
-            t: _c.value,
-            base: _baseH,
-            peak: _peakH,
-          ),
-        );
-      },
+      builder: (_, __) => CustomPaint(
+        painter: _AnalyticsPainter(accent: widget.accent, t: _c.value, base: _baseH, peak: _peakH),
+      ),
     ),
   );
 }
@@ -642,10 +859,8 @@ class _AnalyticsPainter extends CustomPainter {
     final gap = (size.width - barCount * barW) / (barCount + 1);
     const maxH = 72.0;
 
-    // Baseline
     canvas.drawLine(
-      Offset(0, size.height - 2),
-      Offset(size.width, size.height - 2),
+      Offset(0, size.height - 2), Offset(size.width, size.height - 2),
       Paint()..color = Colors.white.withValues(alpha: 0.10)..strokeWidth = 1,
     );
 
@@ -655,11 +870,7 @@ class _AnalyticsPainter extends CustomPainter {
       final h = (base[i] + (peak[i] - base[i]) * curve) * maxH;
       final x = gap + i * (barW + gap);
       final y = size.height - 2 - h;
-      final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(x, y, barW, h),
-        const Radius.circular(4),
-      );
-      // Gradient fill
+      final rect = RRect.fromRectAndRadius(Rect.fromLTWH(x, y, barW, h), const Radius.circular(4));
       final paint = Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter, end: Alignment.bottomCenter,
@@ -668,7 +879,6 @@ class _AnalyticsPainter extends CustomPainter {
       canvas.drawRRect(rect, paint);
     }
 
-    // Trend line
     final linePaint = Paint()
       ..color = accent.withValues(alpha: 0.55)
       ..strokeWidth = 1.5
@@ -687,7 +897,7 @@ class _AnalyticsPainter extends CustomPainter {
   bool shouldRepaint(_AnalyticsPainter o) => true;
 }
 
-// ── Section 3: SOS art (pulsing emergency rings) ─────────────────────────────
+// ── Section 3: SOS art ───────────────────────────────────────────────────────
 
 class _SosArt extends StatefulWidget {
   const _SosArt({required this.accent});
@@ -712,7 +922,6 @@ class _SosArtState extends State<_SosArt> with TickerProviderStateMixin {
     builder: (_, __) => SizedBox(
       width: 130, height: 120,
       child: Stack(alignment: Alignment.center, children: [
-        // Ring 1
         Opacity(
           opacity: (1 - _p1.value).clamp(0.0, 0.6),
           child: Container(
@@ -723,7 +932,6 @@ class _SosArtState extends State<_SosArt> with TickerProviderStateMixin {
             ),
           ),
         ),
-        // Ring 2
         Opacity(
           opacity: (1 - _p2.value).clamp(0.0, 0.6),
           child: Container(
@@ -734,7 +942,6 @@ class _SosArtState extends State<_SosArt> with TickerProviderStateMixin {
             ),
           ),
         ),
-        // SOS button
         Opacity(
           opacity: _btnOp.value,
           child: Container(
@@ -754,7 +961,7 @@ class _SosArtState extends State<_SosArt> with TickerProviderStateMixin {
   );
 }
 
-// ── Section 4: AI scan art (rotating monitor indicators) ─────────────────────
+// ── Section 4: AI scan art ────────────────────────────────────────────────────
 
 class _AiScanArt extends StatefulWidget {
   const _AiScanArt({required this.accent});
@@ -777,7 +984,6 @@ class _AiScanArtState extends State<_AiScanArt> with TickerProviderStateMixin {
     builder: (_, __) => SizedBox(
       width: 140, height: 120,
       child: Stack(alignment: Alignment.center, children: [
-        // Outer rotating dashed ring
         Transform.rotate(
           angle: _rotate.value * 2 * math.pi,
           child: Container(
@@ -792,22 +998,6 @@ class _AiScanArtState extends State<_AiScanArt> with TickerProviderStateMixin {
             ),
           ),
         ),
-        // Orbit dots
-        for (final angle in [0.0, math.pi / 2, math.pi, 3 * math.pi / 2])
-          Transform.translate(
-            offset: Offset(
-              52 * math.cos(_rotate.value * 2 * math.pi + angle),
-              52 * math.sin(_rotate.value * 2 * math.pi + angle),
-            ),
-            child: Container(
-              width: 8, height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.accent.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-        // Center shield
         Container(
           width: 62, height: 62,
           decoration: BoxDecoration(
@@ -818,16 +1008,11 @@ class _AiScanArtState extends State<_AiScanArt> with TickerProviderStateMixin {
           ),
           child: Icon(Icons.shield_outlined, color: widget.accent, size: 30),
         ),
-        // Scan line
         Positioned(
           top: 20 + _scan.value * 70,
           left: 20, right: 20,
-          child: Container(
-            height: 1.5,
-            color: widget.accent.withValues(alpha: 0.6),
-          ),
+          child: Container(height: 1.5, color: widget.accent.withValues(alpha: 0.6)),
         ),
-        // Blinking indicator dot
         Positioned(
           top: 8, right: 18,
           child: Container(
@@ -843,7 +1028,7 @@ class _AiScanArtState extends State<_AiScanArt> with TickerProviderStateMixin {
   );
 }
 
-// ── Section 5: Security glow art (shield with pulsing glow) ──────────────────
+// ── Section 5: Security glow art ─────────────────────────────────────────────
 
 class _SecurityGlowArt extends StatefulWidget {
   const _SecurityGlowArt({required this.accent});
@@ -867,7 +1052,6 @@ class _SecurityGlowArtState extends State<_SecurityGlowArt> with TickerProviderS
     builder: (_, __) => SizedBox(
       width: 130, height: 120,
       child: Stack(alignment: Alignment.center, children: [
-        // Glow ring
         Container(
           width: 100, height: 100,
           decoration: BoxDecoration(
@@ -876,7 +1060,6 @@ class _SecurityGlowArtState extends State<_SecurityGlowArt> with TickerProviderS
             boxShadow: [BoxShadow(color: widget.accent.withValues(alpha: _glowOp.value * 1.5), blurRadius: 40)],
           ),
         ),
-        // Floating shield card
         Transform.translate(
           offset: Offset(0, _floatY.value),
           child: Container(
@@ -888,89 +1071,45 @@ class _SecurityGlowArtState extends State<_SecurityGlowArt> with TickerProviderS
               boxShadow: [BoxShadow(color: widget.accent.withValues(alpha: 0.35), blurRadius: 20)],
             ),
             child: Center(
-              child: SvgPicture.asset('assets/icons/shield.svg', width: 36, height: 36,
-                  colorFilter: ColorFilter.mode(widget.accent, BlendMode.srcIn)),
+              child: SvgPicture.asset('assets/icons/alphaguard_logo.svg', width: 44, height: 44),
             ),
           ),
         ),
-        // Orbiting checkmarks
-        for (final a in [0.3, 2.3, 4.3])
-          Transform.translate(
-            offset: Offset(46 * math.cos(a), 46 * math.sin(a)),
-            child: Container(
-              width: 18, height: 18,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.accent.withValues(alpha: 0.25),
-                border: Border.all(color: widget.accent.withValues(alpha: 0.55)),
-              ),
-              child: Icon(Icons.check, color: widget.accent, size: 10),
-            ),
-          ),
       ]),
     ),
   );
 }
 
-// ── Section 6: Privacy art (orbiting shield — retained from original) ─────────
+// ── Section 6: Privacy art ────────────────────────────────────────────────────
 
-class _PrivacyArt extends StatefulWidget {
+class _PrivacyArt extends StatelessWidget {
   const _PrivacyArt({required this.accent});
   final Color accent;
-  @override
-  State<_PrivacyArt> createState() => _PrivacyArtState();
-}
-
-class _PrivacyArtState extends State<_PrivacyArt> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
-  @override
-  void dispose() { _c.dispose(); super.dispose(); }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _c,
-    builder: (_, __) => SizedBox(
-      width: 120, height: 120,
-      child: Stack(alignment: Alignment.center, children: [
-        Container(
-          width: 100, height: 100,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: widget.accent.withValues(alpha: 0.10),
-            boxShadow: [BoxShadow(color: widget.accent.withValues(alpha: 0.20), blurRadius: 30)],
-          ),
+  Widget build(BuildContext context) => SizedBox(
+    width: 120, height: 120,
+    child: Stack(alignment: Alignment.center, children: [
+      Container(
+        width: 100, height: 100,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: accent.withValues(alpha: 0.10),
+          boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.20), blurRadius: 30)],
         ),
-        Container(
-          width: 64, height: 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              colors: [widget.accent.withValues(alpha: 0.30), widget.accent.withValues(alpha: 0.10)],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: widget.accent.withValues(alpha: 0.40)),
+      ),
+      Container(
+        width: 64, height: 64,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [accent.withValues(alpha: 0.30), accent.withValues(alpha: 0.10)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
           ),
-          child: Icon(Icons.lock_outlined, color: widget.accent, size: 30),
+          border: Border.all(color: accent.withValues(alpha: 0.40)),
         ),
-        Transform.translate(
-          offset: Offset(
-            44 * math.cos(_c.value * 2 * math.pi),
-            44 * math.sin(_c.value * 2 * math.pi),
-          ),
-          child: Container(
-            width: 20, height: 20,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: widget.accent.withValues(alpha: 0.25),
-              border: Border.all(color: widget.accent.withValues(alpha: 0.6)),
-            ),
-            child: Center(
-              child: SvgPicture.asset('assets/icons/shield_check.svg', width: 10, height: 10,
-                  colorFilter: ColorFilter.mode(widget.accent, BlendMode.srcIn)),
-            ),
-          ),
-        ),
-      ]),
-    ),
+        child: Icon(Icons.lock_outlined, color: accent, size: 30),
+      ),
+    ]),
   );
 }

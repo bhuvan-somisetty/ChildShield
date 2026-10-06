@@ -43,3 +43,24 @@ out/
 .next/
 
 .vercel
+
+# Local-only: internal reports, backups, design source files
+frontend-backup/
+AlphaGuard_Brand_Kit/
+AlphaGuard_AI_PRD.pdf
+ANDROID_ENFORCEMENT_PLAN.md
+ai agent image.jpeg
+backend-v2/SECURITY_AUDIT_REPORT.md
+launch-readiness/*
+!launch-readiness/API_DOCUMENTATION.md
+alphaguard_flutter/screenshots/
+alphaguard_flutter/screenshots*.png
+alphaguard_flutter/*_PARITY*.md
+alphaguard_flutter/*_REPORT.md
+alphaguard_flutter/*_PLAN.md
+alphaguard_flutter/*_CHECKLIST.md
+alphaguard_flutter/PARITY_PROGRESS.md
+alphaguard_flutter/docs/*
+!alphaguard_flutter/docs/BUILD_INSTRUCTIONS.md
+!alphaguard_flutter/docs/ARCHITECTURE_REPORT.md
+!alphaguard_flutter/docs/PRODUCTION_SIGNING.md

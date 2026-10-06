@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../services/location/android_agent_bridge.dart';
 import '../../../services/location/child_location_service.dart';
 import '../../../services/push/push_service.dart';
+import '../../../services/socket/socket_service.dart';
+import '../../../services/telemetry/child_battery_service.dart';
 import '../../../state/auth_controller.dart';
 import '../achievements/achievements_screen.dart';
 import 'android_agent_onboarding_screen.dart';
@@ -29,6 +31,10 @@ class ChildShell extends StatefulWidget {
 class _ChildShellState extends State<ChildShell> {
   int _index = 0; // 0=Home, 1=Tasks, 2=Rewards, 3=Achievements
   ChildLocationService? _location;
+  ChildBatteryService? _battery;
+  void Function()? _disconnectUnsub;
+  void Function()? _ringUnsub;
+  void Function()? _flashUnsub;
 
   @override
   void initState() {
@@ -37,13 +43,34 @@ class _ChildShellState extends State<ChildShell> {
       if (!mounted) return;
       context.read<PushService>().registerForUser();
       _location = context.read<ChildLocationService>()..start();
+      _battery = context.read<ChildBatteryService>()..start();
+
+      // Parent remote controls.
+      _ringUnsub = context.read<SocketService>().on('device:ring', (_) {
+        AndroidAgentBridge.ringDevice();
+      });
+      _flashUnsub = context.read<SocketService>().on('device:flashlight', (data) {
+        final on = (data as Map<String, dynamic>?)?['on'] as bool? ?? true;
+        AndroidAgentBridge.toggleFlashlight(on: on);
+      });
+
+      // P2: If parent removes this child, clear local session immediately.
+      _disconnectUnsub = context.read<SocketService>().on('pair:disconnect', (_) async {
+        // ignore: avoid_print
+        print('[PAIR] RECEIVED pair:disconnect — clearing child session');
+        if (!mounted) return;
+        await context.read<AuthController>().logout();
+      });
 
       final status = await AndroidAgentBridge.getTrackingStatus();
+      // Skip when native bridge isn't live — unknown() returns all 'denied',
+      // which would block the child at permission slides that can't be granted.
+      final bridgeActive = status.deviceManufacturer != 'unknown';
       final hasFine = status.locationPermission == 'granted';
       final hasBg = status.backgroundLocationPermission == 'granted';
       final hasUsage = status.usageAccessPermission == 'granted';
 
-      if ((!hasFine || !hasBg || !hasUsage) && mounted) {
+      if (bridgeActive && (!hasFine || !hasBg || !hasUsage) && mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const AndroidAgentOnboardingScreen()),
         );
@@ -53,16 +80,20 @@ class _ChildShellState extends State<ChildShell> {
 
   @override
   void dispose() {
+    _disconnectUnsub?.call();
+    _ringUnsub?.call();
+    _flashUnsub?.call();
     _location?.stop();
+    _battery?.stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.read<AuthController>();
+    final auth = context.watch<AuthController>();
     final childId = auth.child?.id;
-    final childName = auth.child?.name;
-    final pairingId = auth.pairingId;
+    final rawName = auth.child?.name;
+    final childName = (rawName == null || rawName == 'My Child') ? null : rawName;
 
     if (childId == null) {
       return const Scaffold(

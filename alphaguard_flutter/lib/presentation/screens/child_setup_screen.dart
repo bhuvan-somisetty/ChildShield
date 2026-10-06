@@ -54,14 +54,13 @@ class _ChildSetupScreenState extends State<ChildSetupScreen>
       if (_gender == null) return;
       _goStep(1);
     } else {
-      // Save locally (passed via go_router extra or SharedPreferences later)
-      context.go('/pair', extra: {'gender': _gender, 'name': _nameCtrl.text.trim()});
+      context.push('/pair', extra: {'gender': _gender, 'name': _nameCtrl.text.trim()});
     }
   }
 
   void _back() {
     if (_step == 0) {
-      context.go('/role');
+      context.pop();
     } else {
       _goStep(0);
     }

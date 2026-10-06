@@ -119,10 +119,10 @@ const Login = () => {
         className="w-full flex flex-col"
       >
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-12">
-          <BrandMark variant="stacked" className="mb-8" />
-          <h1 className="text-[28px] font-black text-white tracking-tight leading-tight">Welcome back</h1>
-          <p className="text-slate-500 text-[14px] font-semibold mt-2.5">Log in to your parent dashboard</p>
+        <div className="flex flex-col items-center text-center mb-8">
+          <BrandMark variant="stacked" className="mb-6" />
+          <h1 className="text-[26px] font-black text-white tracking-tight leading-tight">Welcome back</h1>
+          <p className="text-slate-500 text-[13px] font-semibold mt-2">Log in to your parent dashboard</p>
         </div>
 
         {error && (
@@ -132,7 +132,7 @@ const Login = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-4">
           <input type="text" style={{ display: 'none' }} autoComplete="username" tabIndex="-1" readOnly />
           <input type="password" style={{ display: 'none' }} autoComplete="current-password" tabIndex="-1" readOnly />
 
@@ -163,7 +163,7 @@ const Login = () => {
         </form>
 
         {/* Divider */}
-        <div className="flex items-center gap-3 my-8">
+        <div className="flex items-center gap-3 my-6">
           <div className="flex-1 h-px bg-white/[0.07]" />
           <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or continue with</span>
           <div className="flex-1 h-px bg-white/[0.07]" />
@@ -177,7 +177,7 @@ const Login = () => {
           <span>Continue with Google</span>
         </button>
 
-        <p className="text-center text-[13px] text-slate-400 mt-9 font-semibold">
+        <p className="text-center text-[13px] text-slate-400 mt-7 font-semibold">
           Don&apos;t have an account?{' '}
           <Link to="/signup" className="text-cyan-400 font-extrabold hover:underline">Create one</Link>
         </p>

@@ -8,14 +8,24 @@ import attachSockets from './sockets.js';
 import { startZoneScheduler } from './services.js';
 import { startRecurringScheduler } from './productivity.js';
 import { initDB } from './db.js';
+import { corsOptions, corsOrigins, securityHeaders } from './security.js';
 
 export function createServer() {
   const app = express();
-  app.use(cors());
-  app.use(express.json({ limit: '1mb' }));
+  // Trust the platform proxy (Render) so req.ip / x-forwarded-for is the real
+  // client, which the rate limiter keys on.
+  app.set('trust proxy', 1);
+  app.use(securityHeaders);
+  app.use(cors(corsOptions()));
+  // 5MB accommodates base64 photo-proof images; ordinary JSON bodies are tiny.
+  app.use(express.json({ limit: '5mb' }));
 
   const server = http.createServer(app);
-  const io = new Server(server, { cors: { origin: '*' } });
+  // Socket.IO honours the same origin allowlist; falls back to reflect-in-dev.
+  const allow = corsOrigins();
+  const io = new Server(server, {
+    cors: { origin: allow.length ? allow : (process.env.NODE_ENV === 'production' ? false : '*') },
+  });
 
   app.get('/health', (_req, res) => res.json({ ok: true, service: 'alphaguard-backend-v2', time: Date.now() }));
   app.use('/api', buildRoutes(io));

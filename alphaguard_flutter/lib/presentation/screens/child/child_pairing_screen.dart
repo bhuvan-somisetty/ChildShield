@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/responsive/responsive.dart';
@@ -24,6 +25,11 @@ class _ChildPairingScreenState extends State<ChildPairingScreen> {
   bool _scanning = false;
   String? _scanError;
   bool _torchOn = false;
+  bool _cameraPermissionDenied = false;
+  // Name/gender passed from ChildSetupScreen via GoRouter extra
+  String? _childName;
+  String? _childGender;
+  bool _extraRead = false;
   final _scannerController = MobileScannerController(
     detectionSpeed: DetectionSpeed.normal,
     facing: CameraFacing.back,
@@ -52,13 +58,19 @@ class _ChildPairingScreenState extends State<ChildPairingScreen> {
     // Small delay so the user can see the scanned code before connecting
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) {
-        context.read<AuthController>().claimChild(raw);
+        context.read<AuthController>().claimChild(raw, name: _childName, gender: _childGender);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_extraRead) {
+      final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+      _childName = extra?['name'] as String?;
+      _childGender = extra?['gender'] as String?;
+      _extraRead = true;
+    }
     final auth = context.watch<AuthController>();
     final valid = _code.text.trim().length == 6;
 
@@ -66,7 +78,7 @@ class _ChildPairingScreenState extends State<ChildPairingScreen> {
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        leading: BackButton(onPressed: () => context.go('/role')),
+        leading: BackButton(onPressed: () => context.pop()),
         actions: _useQr
             ? [
                 IconButton(
@@ -112,9 +124,15 @@ class _ChildPairingScreenState extends State<ChildPairingScreen> {
                             setState(() { _useQr = false; _scanError = null; });
                           })),
                       Expanded(child: _ModeBtn(label: 'Scan QR', icon: Icons.qr_code_scanner,
-                          active: _useQr, onTap: () {
-                            setState(() { _useQr = true; _scanError = null; _scanning = false; });
-                            _scannerController.start();
+                          active: _useQr, onTap: () async {
+                            final status = await Permission.camera.request();
+                            if (!mounted) return;
+                            if (status.isPermanentlyDenied || status.isDenied) {
+                              setState(() { _useQr = true; _cameraPermissionDenied = true; _scanError = null; _scanning = false; });
+                            } else {
+                              setState(() { _useQr = true; _cameraPermissionDenied = false; _scanError = null; _scanning = false; });
+                              // MobileScanner widget auto-starts when built — no manual start needed
+                            }
                           })),
                     ]),
                   ),
@@ -164,7 +182,7 @@ class _ChildPairingScreenState extends State<ChildPairingScreen> {
           label: 'Connect',
           icon: Icons.link,
           loading: auth.busy,
-          onPressed: valid ? () => auth.claimChild(_code.text.trim()) : null,
+          onPressed: valid ? () => auth.claimChild(_code.text.trim(), name: _childName, gender: _childGender) : null,
         ),
         const SizedBox(height: 16),
         const Text('Ask your parent to open AlphaGuard → Connect a Child Device to get the code.',
@@ -177,6 +195,7 @@ class _ChildPairingScreenState extends State<ChildPairingScreen> {
   // ── QR scanner ───────────────────────────────────────────────────────────────
 
   Widget _buildQrScanner(AuthController auth) {
+    if (_cameraPermissionDenied) return _buildCameraPermissionDenied();
     return Column(
       key: const ValueKey('qr'),
       children: [
@@ -234,6 +253,61 @@ class _ChildPairingScreenState extends State<ChildPairingScreen> {
           ),
         ] else
           const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildCameraPermissionDenied() {
+    return Column(
+      key: const ValueKey('cam_denied'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: AppColors.danger.withValues(alpha: 0.10),
+            border: Border.all(color: AppColors.danger.withValues(alpha: 0.30)),
+          ),
+          child: Column(children: [
+            const Icon(Icons.no_photography_outlined, color: AppColors.danger, size: 44),
+            const SizedBox(height: 14),
+            const Text('Camera Permission Required',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 8),
+            const Text(
+              'AlphaGuard needs camera access to scan the pairing QR code.\n\nPlease allow camera access in Settings.',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => openAppSettings(),
+              icon: const Icon(Icons.settings_outlined, size: 16),
+              label: const Text('Open Settings', style: TextStyle(fontWeight: FontWeight.w800)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.cyan,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () async {
+                final status = await Permission.camera.request();
+                if (!mounted) return;
+                if (status.isGranted) {
+                  setState(() => _cameraPermissionDenied = false);
+                  // MobileScanner widget auto-starts when newly inserted — no manual start needed
+                }
+              },
+              child: const Text('Try Again', style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.w700)),
+            ),
+          ]),
+        ),
       ],
     );
   }

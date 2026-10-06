@@ -153,10 +153,10 @@ const Signup = () => {
         className="w-full flex flex-col"
       >
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-9">
-          <BrandMark variant="stacked" className="mb-7" />
-          <h1 className="text-[28px] font-black text-white tracking-tight leading-tight">Create your account</h1>
-          <div className="flex flex-col items-center gap-2.5 mt-4">
+        <div className="flex flex-col items-center text-center mb-7">
+          <BrandMark variant="stacked" className="mb-5" />
+          <h1 className="text-[26px] font-black text-white tracking-tight leading-tight">Create your account</h1>
+          <div className="flex flex-col items-center gap-2 mt-3.5">
             <ProgressDots count={3} active={step - 1} />
             <span className="text-[11px] text-slate-500 font-bold uppercase tracking-[0.12em]">
               Step {step} of 3 · {STEP_LABELS[step - 1]}
@@ -178,7 +178,7 @@ const Signup = () => {
               initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }}
               transition={{ duration: 0.25 }}
               onSubmit={handleIdentity}
-              className="flex flex-col gap-5"
+              className="flex flex-col gap-4"
             >
               <TextField label="Full Name" icon={User} value={form.fullName} onChange={set('fullName')} placeholder="Jane Doe" required autoFocus />
               <TextField label="Email Address" icon={Mail} type="email" value={form.email} onChange={set('email')} placeholder="parent@domain.com" required />
@@ -189,7 +189,7 @@ const Signup = () => {
               initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.25 }}
               onSubmit={handleSecurity}
-              className="flex flex-col gap-5"
+              className="flex flex-col gap-4"
             >
               <TextField label="Create Password" icon={Lock} type="password" value={form.password} onChange={set('password')} placeholder="At least 6 characters" required autoFocus
                 hint={!form.password ? 'Use 6+ characters' : undefined}
@@ -219,7 +219,7 @@ const Signup = () => {
               initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.25 }}
               onSubmit={(e) => { e.preventDefault(); handleCreate({ withChild: true }); }}
-              className="flex flex-col gap-5"
+              className="flex flex-col gap-4"
             >
               <div className="flex items-start gap-2.5 p-4 bg-cyan-500/[0.06] border border-cyan-500/15 rounded-2xl">
                 <Baby size={16} className="text-cyan-400 flex-shrink-0 mt-0.5" />
@@ -254,7 +254,7 @@ const Signup = () => {
         {/* OAuth — only on first step to keep later steps focused */}
         {step === 1 && (
           <>
-            <div className="flex items-center gap-3 my-8">
+            <div className="flex items-center gap-3 my-6">
               <div className="flex-1 h-px bg-white/[0.07]" />
               <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.15em]">or sign up with</span>
               <div className="flex-1 h-px bg-white/[0.07]" />
@@ -269,7 +269,7 @@ const Signup = () => {
           </>
         )}
 
-        <p className="text-center text-[13px] text-slate-400 mt-9 font-semibold">
+        <p className="text-center text-[13px] text-slate-400 mt-7 font-semibold">
           Already registered?{' '}
           <Link to="/login" className="text-indigo-400 font-extrabold hover:underline">Sign in</Link>
         </p>

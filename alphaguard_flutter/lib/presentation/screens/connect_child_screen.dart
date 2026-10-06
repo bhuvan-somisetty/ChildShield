@@ -9,11 +9,15 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../services/socket/socket_service.dart';
+import '../../state/auth_controller.dart';
 import '../../state/family_controller.dart';
 
 /// ConnectChild — mandatory step shown to the parent after ParentSetup.
 /// The dashboard (/home) is inaccessible until at least one child device pairs.
 /// Displays a 6-digit code AND a scannable QR code. Polls every 3 s.
+/// Codes expire after 3 minutes — a countdown is shown and a single button
+/// regenerates both code and QR.
 class ConnectChildScreen extends StatefulWidget {
   const ConnectChildScreen({super.key});
   @override
@@ -30,6 +34,14 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
   bool _regening = false;
   String? _error;
   bool _showQr = false;
+  String? _pairedChildName;
+  void Function()? _socketUnsub;
+
+  // Expiration countdown — 3 minutes (180 s)
+  static const _expirySeconds = 180;
+  int _secondsLeft = _expirySeconds;
+  bool _expired = false;
+  Timer? _expiryTimer;
 
   Timer? _pollTimer;
 
@@ -45,12 +57,27 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
   void initState() {
     super.initState();
     _initCode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Use socket event data directly — no extra API round-trip needed.
+      _socketUnsub = context.read<SocketService>().on('pair:active', (data) {
+        // ignore: avoid_print
+        print('[PAIR] SOCKET RECEIVED pair:active: $data');
+        final childData = (data as Map<String, dynamic>?)?['child'] as Map<String, dynamic>?;
+        final name = childData?['name'] as String?;
+        _onPairActive(name);
+      });
+      // ignore: avoid_print
+      print('[PAIR] SOCKET CONNECTED — listening for pair:active');
+    });
   }
 
   @override
   void dispose() {
+    _socketUnsub?.call();
     _pulse.dispose();
     _pollTimer?.cancel();
+    _expiryTimer?.cancel();
     super.dispose();
   }
 
@@ -62,6 +89,7 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
       if (parts.length == 2) {
         if (mounted) setState(() { _childId = parts[0]; _code = parts[1]; _loading = false; });
         _startPolling();
+        _startExpiryCountdown();
         return;
       }
     }
@@ -70,7 +98,8 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
 
   Future<void> _createCode() async {
     if (!mounted) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() { _loading = true; _error = null; _expired = false; });
+    _expiryTimer?.cancel();
     try {
       final fc = context.read<FamilyController>();
       final r = await fc.createChildWithPairing({
@@ -84,6 +113,7 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
       await prefs.setString(_prefKey, '$childId:$code');
       if (mounted) setState(() { _code = code; _childId = childId; _loading = false; });
       _startPolling();
+      _startExpiryCountdown();
     } catch (e) {
       if (mounted) setState(() {
         _error = 'Could not generate a pairing code. Check your connection and retry.';
@@ -95,8 +125,9 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
   Future<void> _regenerate() async {
     if (_regening) return;
     final childId = _childId;
-    setState(() { _regening = true; _code = ''; _error = null; });
+    setState(() { _regening = true; _code = ''; _error = null; _expired = false; });
     _pollTimer?.cancel();
+    _expiryTimer?.cancel();
     try {
       final fc = context.read<FamilyController>();
       if (childId == null) { await _createCode(); return; }
@@ -108,6 +139,7 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
       await prefs.setString(_prefKey, '${child['id']}:$code');
       if (mounted) setState(() { _code = code; _childId = child['id'] as String; });
       _startPolling();
+      _startExpiryCountdown();
     } catch (e) {
       if (mounted) setState(() { _error = 'Could not regenerate code.'; });
     } finally {
@@ -115,9 +147,48 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
     }
   }
 
+  void _startExpiryCountdown() {
+    _expiryTimer?.cancel();
+    if (mounted) setState(() { _secondsLeft = _expirySeconds; _expired = false; });
+    _expiryTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _secondsLeft--;
+        if (_secondsLeft <= 0) {
+          _expired = true;
+          _expiryTimer?.cancel();
+          _pollTimer?.cancel();
+        }
+      });
+    });
+  }
+
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _checkPairing());
+  }
+
+  Future<void> _onPairActive(String? childName) async {
+    if (!mounted || _connected) return;
+    // ignore: avoid_print
+    print('[PAIR] PARENT UPDATED — child connected: $childName');
+    _pollTimer?.cancel();
+    _expiryTimer?.cancel();
+    _socketUnsub?.call();
+    _socketUnsub = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefKey);
+    await context.read<AuthController>().markParentPaired();
+    // Pre-load family data so parent dashboard has child on first render.
+    if (mounted) await context.read<FamilyController>().load();
+    if (!mounted) return;
+    setState(() {
+      _connected = true;
+      _pairedChildName = childName;
+    });
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) context.go('/home');
+    });
   }
 
   Future<void> _checkPairing() async {
@@ -125,16 +196,12 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
     try {
       final fc = context.read<FamilyController>();
       await fc.load();
-      final active = fc.children.any((c) =>
-          c.pairingStatus == 'active' || c.pairingStatus == 'claimed');
-      if (active && mounted) {
-        _pollTimer?.cancel();
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove(_prefKey);
-        setState(() => _connected = true);
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) context.go('/home');
-        });
+      final paired = fc.children.where((c) =>
+          c.pairingStatus == 'active' || c.pairingStatus == 'claimed').toList();
+      if (paired.isNotEmpty) {
+        // ignore: avoid_print
+        print('[PAIR] PAIR ACTIVATED — detected via polling');
+        await _onPairActive(paired.first.name);
       }
     } catch (_) {}
   }
@@ -147,6 +214,12 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
     });
   }
 
+  String get _countdownLabel {
+    final m = _secondsLeft ~/ 60;
+    final s = _secondsLeft % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,7 +230,6 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
           child: Column(
             children: [
               const SizedBox(height: 16),
-              // Header — no close/skip; dashboard requires a connected child
               Row(children: [
                 Container(
                   width: 38, height: 38,
@@ -202,8 +274,7 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
             border: Border.all(color: const Color(0x4D3B82F6)),
           ),
           child: Center(
-            child: SvgPicture.asset('assets/icons/shield.svg', width: 36, height: 36,
-                colorFilter: const ColorFilter.mode(Color(0xFF22D3EE), BlendMode.srcIn)),
+            child: SvgPicture.asset('assets/icons/alphaguard_logo.svg', width: 44, height: 44),
           ),
         ),
         const SizedBox(height: 22),
@@ -217,6 +288,8 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
         if (_loading)
           const Padding(padding: EdgeInsets.symmetric(vertical: 24),
               child: CircularProgressIndicator(color: AppColors.cyan))
+        else if (_expired)
+          _buildExpiredState()
         else if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -250,49 +323,36 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
           ),
         ],
         const SizedBox(height: 28),
-        AnimatedBuilder(
-          animation: _pulseOp,
-          builder: (_, __) => Opacity(
-            opacity: _pulseOp.value,
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Container(width: 8, height: 8,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.cyan)),
-              const SizedBox(width: 8),
-              const Text('Waiting for child to connect…',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
-            ]),
+        if (!_expired && !_loading) ...[
+          AnimatedBuilder(
+            animation: _pulseOp,
+            builder: (_, __) => Opacity(
+              opacity: _pulseOp.value,
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Container(width: 8, height: 8,
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.cyan)),
+                const SizedBox(width: 8),
+                const Text('Waiting for child to connect…',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600)),
+              ]),
+            ),
           ),
-        ),
-        const SizedBox(height: 32),
-        _InstructionStep(n: 1, text: "Open AlphaGuard on your child's device"),
-        const SizedBox(height: 10),
-        _InstructionStep(n: 2, text: 'Select "Child" on the role screen'),
-        const SizedBox(height: 10),
-        _InstructionStep(n: 3, text: 'Tap "Scan QR" or "Enter Code" and pair with the code above'),
-        const SizedBox(height: 32),
-        Row(children: [
-          Expanded(
+          const SizedBox(height: 32),
+          _InstructionStep(n: 1, text: "Open AlphaGuard on your child's device"),
+          const SizedBox(height: 10),
+          _InstructionStep(n: 2, text: 'Select "Child" on the role screen'),
+          const SizedBox(height: 10),
+          _InstructionStep(n: 3, text: 'Tap "Scan QR" or "Enter Code" and pair with the code above'),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: _regening ? null : _regenerate,
               icon: _regening
                   ? const SizedBox(width: 14, height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textMuted))
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cyan))
                   : const Icon(Icons.refresh, size: 16),
-              label: const Text('New Code', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textMuted,
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _copyCode,
-              icon: const Icon(Icons.share_outlined, size: 16),
-              label: const Text('Share Code', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+              label: const Text('Generate New Code & QR', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.cyan,
                 side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.35)),
@@ -301,8 +361,59 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
               ),
             ),
           ),
-        ]),
+        ],
       ],
+    );
+  }
+
+  Widget _buildCountdown() {
+    final urgent = _secondsLeft <= 60;
+    final color = urgent ? AppColors.danger : AppColors.textMuted;
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Icon(Icons.timer_outlined, color: color, size: 14),
+      const SizedBox(width: 5),
+      Text(
+        'Code expires in $_countdownLabel',
+        style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w700),
+      ),
+    ]);
+  }
+
+  Widget _buildExpiredState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: AppColors.danger.withValues(alpha: 0.10),
+            border: Border.all(color: AppColors.danger.withValues(alpha: 0.30)),
+          ),
+          child: Column(children: [
+            const Icon(Icons.timer_off_outlined, color: AppColors.danger, size: 36),
+            const SizedBox(height: 12),
+            const Text('Pairing code expired',
+                style: TextStyle(color: AppColors.danger, fontSize: 16, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            const Text('Generate a new code to continue.',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 13), textAlign: TextAlign.center),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: _regenerate,
+          icon: const Icon(Icons.refresh, size: 16),
+          label: const Text('Generate New Code', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.cyan,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+      ]),
     );
   }
 
@@ -333,28 +444,6 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
               if (i < digits.length - 1 && i != 2) const SizedBox(width: 6),
             ],
           ]),
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: _code.isEmpty ? null : _copyCode,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: (_copied ? const Color(0xFF10B981) : AppColors.cyan).withValues(alpha: 0.15),
-              border: Border.all(color: (_copied ? const Color(0xFF10B981) : AppColors.cyan).withValues(alpha: 0.35)),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(_copied ? Icons.check : Icons.copy_outlined,
-                  color: _copied ? const Color(0xFF10B981) : AppColors.cyan, size: 16),
-              const SizedBox(width: 6),
-              Text(_copied ? 'Copied!' : 'Copy code',
-                  style: TextStyle(
-                      color: _copied ? const Color(0xFF10B981) : AppColors.cyan,
-                      fontWeight: FontWeight.w700, fontSize: 13)),
-            ]),
-          ),
         ),
       ],
     );
@@ -393,6 +482,9 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
   }
 
   Widget _buildSuccess() {
+    final name = (_pairedChildName != null && _pairedChildName!.isNotEmpty && _pairedChildName != 'My Child')
+        ? _pairedChildName!
+        : 'Child';
     return Column(children: [
       const SizedBox(height: 40),
       Container(
@@ -406,12 +498,27 @@ class _ConnectChildScreenState extends State<ConnectChildScreen>
         child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981), size: 50),
       ),
       const SizedBox(height: 24),
-      const Text('Child Device Connected!', textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
-      const SizedBox(height: 12),
-      const Text('Taking you to the dashboard…',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+      Text('$name Connected Successfully!', textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
+      const SizedBox(height: 10),
+      Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: AppColors.cyan.withValues(alpha: 0.08),
+          border: Border.all(color: AppColors.cyan.withValues(alpha: 0.25)),
+        ),
+        child: const Text(
+          'Complete permissions on the child device to activate protection.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
+        ),
+      ),
       const SizedBox(height: 24),
+      const Text('Taking you to the dashboard…',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+      const SizedBox(height: 16),
       const CircularProgressIndicator(color: Color(0xFF10B981)),
     ]);
   }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import Splash from './screens/Splash';
 import Welcome from './screens/Welcome';
 import Onboarding from './screens/Onboarding';
 import RoleSelection from './screens/RoleSelection';
@@ -16,6 +17,10 @@ import ChatCenter from './screens/parent/ChatCenter';
 import DetectionCenter from './screens/parent/DetectionCenter';
 import UserManual from './screens/parent/UserManual';
 import ChildPairing from './screens/ChildPairing';
+import Consent from './screens/Consent';
+import PublicLegal from './screens/PublicLegal';
+import ConsentGate from './components/ConsentGate';
+import UpdateGate from './components/UpdateGate';
 import ConnectChild from './screens/parent/ConnectChild';
 import ChildConnected from './screens/child/ChildConnected';
 import ChildActivation from './screens/child/ChildActivation';
@@ -58,8 +63,8 @@ const App = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname.startsWith('/app') ? '/app' : location.pathname}>
-        {/* Entry */}
-        <Route path="/" element={<Navigate to="/welcome" replace />} />
+        {/* Entry — branded splash decides destination (auth / onboarding / login) */}
+        <Route path="/" element={<Splash />} />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/role" element={<RoleSelection />} />
@@ -68,6 +73,12 @@ const App = () => {
         <Route path="/forgot" element={<ForgotPassword />} />
         <Route path="/child-setup" element={<ChildSetup />} />
         <Route path="/pairing" element={<ChildPairing />} />
+
+        {/* Public policy reader (footer + onboarding links) */}
+        <Route path="/legal/:slug" element={<PublicLegal />} />
+
+        {/* Mandatory legal consent (parent token required; gates the dashboard) */}
+        <Route path="/consent" element={<Consent />} />
 
         {/* Parent setup wizard (permissions, contacts, PIN) */}
         <Route path="/setup" element={<ParentSetup />} />
@@ -97,7 +108,7 @@ const App = () => {
         </Route>
 
         {/* Parent Platform (requires login; ParentShell additionally locks until a child is connected) */}
-        <Route path="/app" element={<RequireAuth role="parent"><ParentShell /></RequireAuth>}>
+        <Route path="/app" element={<RequireAuth role="parent"><UpdateGate><ConsentGate><ParentShell /></ConsentGate></UpdateGate></RequireAuth>}>
           <Route index element={<Navigate to="/app/home" replace />} />
           <Route path="home" element={<DashboardV2 />} />
           <Route path="tasks" element={<TasksCenter />} />

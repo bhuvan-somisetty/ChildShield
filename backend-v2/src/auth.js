@@ -4,7 +4,15 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const SECRET = process.env.AG_JWT_SECRET || 'alphaguard-dev-secret-change-me';
+// The signing secret MUST come from the environment in production. A weak or
+// shared default would let anyone forge tokens for any family/role — a total
+// authentication bypass — so we refuse to boot with the dev fallback when
+// NODE_ENV=production. Locally (dev/test) a stable fallback keeps DX simple.
+const DEV_FALLBACK = 'alphaguard-dev-secret-change-me';
+const SECRET = process.env.AG_JWT_SECRET || DEV_FALLBACK;
+if (process.env.NODE_ENV === 'production' && (!process.env.AG_JWT_SECRET || SECRET === DEV_FALLBACK || SECRET.length < 32)) {
+  throw new Error('AG_JWT_SECRET must be set to a strong (>=32 char) random value in production');
+}
 const EXPIRES = '30d';
 
 export const hashPassword = (pw) => bcrypt.hash(pw, 10);

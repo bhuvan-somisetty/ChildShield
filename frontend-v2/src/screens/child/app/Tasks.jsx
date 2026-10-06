@@ -1,7 +1,25 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, StickyNote, ListChecks, X, Target } from 'lucide-react';
+import { Plus, Trash2, StickyNote, ListChecks, X, Target, Camera, Loader2, Clock, AlertCircle } from 'lucide-react';
 import { MessageCircle, Send } from 'lucide-react';
+
+// Downscale + compress a captured image to a small JPEG data-URL so proof
+// uploads stay well under the server limit.
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 1280; let { width, height } = img;
+      if (width > max || height > max) { const r = Math.min(max / width, max / height); width = Math.round(width * r); height = Math.round(height * r); }
+      const c = document.createElement('canvas'); c.width = width; c.height = height;
+      c.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = reject; img.src = reader.result;
+  };
+  reader.onerror = reject; reader.readAsDataURL(file);
+});
 import { useTasks, STATE_META, CATEGORY_COLOR, CATEGORIES } from '../../../lib/useTasks';
 import { useLiveList, TARGET_STATUS } from '../../../lib/useGrowth';
 import { ensureSession } from '../../../lib/session';
@@ -113,6 +131,18 @@ const ChildTasks = () => {
 
   const del = useCallback(async (id) => { await api.deleteTask(id); setTasks((prev) => prev.filter((t) => t.id !== id)); }, [setTasks]);
 
+  const [busyProof, setBusyProof] = useState(null);
+  const uploadProof = useCallback(async (taskId, file) => {
+    if (!file) return;
+    setBusyProof(taskId);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const { task } = await api.uploadProof(taskId, 'photo', dataUrl, file.name);
+      if (task) setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    } catch { /* ignore — child can retry */ }
+    finally { setBusyProof(null); }
+  }, [setTasks]);
+
   const done = tasks.filter((t) => t.completionState === 'completed').length;
 
   return (
@@ -157,8 +187,19 @@ const ChildTasks = () => {
                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                     {t.category && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md" style={{ background: `${CATEGORY_COLOR[t.category] || '#64748b'}1a`, color: CATEGORY_COLOR[t.category] || '#94a3b8' }}>{t.category}</span>}
                     <span className="text-slate-600 text-[10.5px] font-bold">{t.source === 'parent' ? 'From parent' : 'By you'}</span>
+                    {t.approvalStatus === 'pending' && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-300 inline-flex items-center gap-1"><Clock size={10} /> Pending approval</span>}
+                    {t.approvalStatus === 'approved' && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300">Approved ✓</span>}
+                    {t.approvalStatus === 'rejected' && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-rose-500/15 text-rose-300 inline-flex items-center gap-1"><AlertCircle size={10} /> Needs changes</span>}
+                    {t.requireProof && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-cyan-500/12 text-cyan-300">📷 Proof {t.proofCount > 0 ? `(${t.proofCount})` : 'needed'}</span>}
                   </div>
+                  {t.approvalStatus === 'rejected' && t.approvalComment && <p className="text-rose-300/80 text-[11.5px] font-semibold mt-1 leading-snug">“{t.approvalComment}”</p>}
                 </div>
+                {t.requireProof && (
+                  <label aria-label="Add photo proof" className="ag-tap w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center flex-shrink-0 cursor-pointer">
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => uploadProof(t.id, e.target.files && e.target.files[0])} />
+                    {busyProof === t.id ? <Loader2 size={14} className="text-emerald-400 animate-spin" /> : <Camera size={14} className="text-emerald-400" />}
+                  </label>
+                )}
                 <button onClick={() => setCommentsId(t.id)} aria-label="Chat" className="ag-tap w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center flex-shrink-0"><MessageCircle size={14} className="text-cyan-400" /></button>
                 {t.source === 'child' && (
                   <button onClick={() => del(t.id)} aria-label="Delete" className="ag-tap w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center flex-shrink-0"><Trash2 size={14} className="text-slate-400" /></button>

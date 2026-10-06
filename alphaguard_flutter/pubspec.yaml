@@ -57,6 +57,21 @@ dependencies:
   # QR code scanning (child pairing screen — scan parent's QR with camera)
   mobile_scanner: ^6.0.0
 
+  # Native OS share sheet
+  share_plus: ^10.1.3
+
+  # Camera / app-settings permission handling
+  permission_handler: ^11.3.1
+
+  # Device telemetry (battery level + charging state on child device)
+  battery_plus: ^4.0.1
+
+  # Native dialer / SMS launch (emergency contacts)
+  url_launcher: ^6.3.0
+
+  # Network connectivity type detection (Wi-Fi vs Mobile)
+  connectivity_plus: ^6.0.5
+
   # Misc
   cupertino_icons: ^1.0.8
 
@@ -78,8 +93,21 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  adaptive_icon_background: "assets/icon/app_icon_background.png"
+  min_sdk_android: 21
+  web:
+    generate: false
 
 flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+    # assets/icon/ excluded: launcher PNGs are build-time only (flutter_launcher_icons
+    # copies them into res/mipmap-*). Bundling them in the APK wastes ~430 KB.

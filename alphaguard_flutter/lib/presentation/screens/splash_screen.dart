@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/api/api_client.dart';
 
 /// Branded launch screen — matches frontend-v2 /splash exactly.
 /// Ambient blue glow, scale+fade entrance, floating shield, loading dots.
@@ -25,6 +26,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void initState() {
     super.initState();
     _enter.forward();
+    ApiClient.warmup(); // wake Render backend during splash so Login/Signup is instant
   }
 
   @override
@@ -97,10 +99,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           ),
                           child: Center(
                             child: SvgPicture.asset(
-                              'assets/icons/shield_check.svg',
-                              width: logoSz * 0.46,
-                              height: logoSz * 0.46,
-                              colorFilter: const ColorFilter.mode(Color(0xFF22D3EE), BlendMode.srcIn),
+                              'assets/icons/alphaguard_logo.svg',
+                              width: logoSz * 0.62,
+                              height: logoSz * 0.62,
                             ),
                           ),
                         ),

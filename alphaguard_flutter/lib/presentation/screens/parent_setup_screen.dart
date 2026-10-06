@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../state/auth_controller.dart';
 
-/// ParentSetup — 5-step wizard shown to new parents after first login.
-/// Matches frontend-v2 /setup: welcome → location → notifications → contacts → complete.
+/// ParentSetup â€” 5-step wizard shown to new parents after first login.
+/// Matches frontend-v2 /setup: welcome â†’ location â†’ notifications â†’ contacts â†’ complete.
 class ParentSetupScreen extends StatefulWidget {
   const ParentSetupScreen({super.key});
   @override
@@ -51,8 +53,13 @@ class _ParentSetupScreenState extends State<ParentSetupScreen>
     if (_step < _totalSteps - 1) {
       _goToStep(_step + 1);
     } else {
-      context.go('/connect');
+      _completeSetup();
     }
+  }
+
+  Future<void> _completeSetup() async {
+    await context.read<AuthController>().markParentSetupDone();
+    if (mounted) context.go('/connect');
   }
 
   void _back() {
@@ -69,9 +76,9 @@ class _ParentSetupScreenState extends State<ParentSetupScreen>
       body: Column(
         children: [
           SizedBox(height: safe.top + 12),
-          // ── Progress bar ────────────────────────────────────────────────
+          // â”€â”€ Progress bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           _ProgressBar(step: _step, total: _totalSteps),
-          // ── Step content ────────────────────────────────────────────────
+          // â”€â”€ Step content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Expanded(
             child: AnimatedBuilder(
               animation: _slideAnim,
@@ -85,7 +92,7 @@ class _ParentSetupScreenState extends State<ParentSetupScreen>
               child: _buildStep(context),
             ),
           ),
-          // ── Actions ──────────────────────────────────────────────────────
+          // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Padding(
             padding: EdgeInsets.fromLTRB(24, 12, 24, safe.bottom + 24),
             child: _buildActions(context),
@@ -149,7 +156,7 @@ class _ParentSetupScreenState extends State<ParentSetupScreen>
   }
 }
 
-// ── Progress bar ──────────────────────────────────────────────────────────────
+// â”€â”€ Progress bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ProgressBar extends StatelessWidget {
   const _ProgressBar({required this.step, required this.total});
@@ -187,7 +194,7 @@ class _ProgressBar extends StatelessWidget {
   }
 }
 
-// ── Step 0: Welcome ───────────────────────────────────────────────────────────
+// â”€â”€ Step 0: Welcome â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _StepWelcome extends StatelessWidget {
   @override
@@ -213,9 +220,8 @@ class _StepWelcome extends StatelessWidget {
               ),
               child: Center(
                 child: SvgPicture.asset(
-                  'assets/icons/shield.svg',
-                  width: 44, height: 44,
-                  colorFilter: const ColorFilter.mode(Color(0xFF22D3EE), BlendMode.srcIn),
+                  'assets/icons/alphaguard_logo.svg',
+                  width: 52, height: 52,
                 ),
               ),
             ),
@@ -244,7 +250,7 @@ class _StepWelcome extends StatelessWidget {
   }
 }
 
-// ── Step 1: Location ──────────────────────────────────────────────────────────
+// â”€â”€ Step 1: Location â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _StepLocation extends StatelessWidget {
   @override
@@ -272,7 +278,7 @@ class _StepLocation extends StatelessWidget {
   }
 }
 
-// ── Step 2: Notifications ─────────────────────────────────────────────────────
+// â”€â”€ Step 2: Notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _StepNotifications extends StatelessWidget {
   @override
@@ -302,7 +308,7 @@ class _StepNotifications extends StatelessWidget {
   }
 }
 
-// ── Step 3: Emergency Contacts ────────────────────────────────────────────────
+// â”€â”€ Step 3: Emergency Contacts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _Contact {
   String name, relationship, phone, email;
@@ -442,7 +448,7 @@ class _Field extends StatelessWidget {
   }
 }
 
-// ── Step 4: Complete ──────────────────────────────────────────────────────────
+// â”€â”€ Step 4: Complete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _StepComplete extends StatelessWidget {
   @override
@@ -483,7 +489,7 @@ class _StepComplete extends StatelessWidget {
   }
 }
 
-// ── Shared widgets ────────────────────────────────────────────────────────────
+// â”€â”€ Shared widgets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PermissionHero extends StatelessWidget {
   const _PermissionHero({required this.icon, required this.color, required this.label});

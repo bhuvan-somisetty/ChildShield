@@ -5,7 +5,7 @@
 import { setToken, disconnectRealtime } from './agClient';
 import { closeSession } from './session';
 
-const AUTH_KEYS = ['ag_api_token', 'ag_child_token', 'ag_pairing', 'ag_connected', 'ag_parent_creds'];
+const AUTH_KEYS = ['ag_api_token', 'ag_child_token', 'ag_pairing', 'ag_connected', 'ag_parent_creds', 'ag_consent_v'];
 
 export function logout() {
   setToken(''); // clears ag_api_token via agClient

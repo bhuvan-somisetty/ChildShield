@@ -42,8 +42,16 @@ const Welcome = () => {
         </p>
       </div>
 
-      {/* Spacer to anchor copy toward optical center above the CTA */}
-      <div aria-hidden className="h-4" />
+      {/* Legal footer — store-ready, readable without an account */}
+      <div className="w-full flex flex-col items-center gap-2 pt-2">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11.5px] font-semibold text-slate-500">
+          {[['Privacy', '/legal/privacy'], ['Terms', '/legal/terms'], ['Child Safety', '/legal/child-safety'], ['Data Deletion', '/legal/data-deletion']].map(([label, to]) => (
+            <button key={label} onClick={() => navigate(to)} className="ag-tap hover:text-white transition-colors">{label}</button>
+          ))}
+          <a href="mailto:support@alphaguard.ai" className="ag-tap hover:text-white transition-colors">Support</a>
+        </div>
+        <p className="text-slate-600 text-[10.5px] font-bold">© 2026 AlphaGuard AI, Inc.</p>
+      </div>
     </Screen>
   );
 };

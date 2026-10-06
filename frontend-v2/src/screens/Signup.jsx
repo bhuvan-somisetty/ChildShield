@@ -5,6 +5,7 @@ import { User, Mail, Lock, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck,
 import { Screen, Button, Input, Brand, Progress, Modal } from '../components/ui';
 import { api, setToken } from '../lib/agClient';
 import { signInWithGoogle } from '../lib/google';
+import { markFirstLogin } from '../lib/lifecycle';
 import { useStepHistory } from '../lib/useStepHistory';
 
 const GoogleIcon = () => (
@@ -136,6 +137,7 @@ const Signup = () => {
         const { token } = await api.registerParent(f.email.trim().toLowerCase(), f.pass, f.name.trim(), pin);
         setToken(token);
       }
+      markFirstLogin();
       setDone(true);
     } catch (err) {
       setError(err.message === 'Email already registered'
@@ -159,7 +161,7 @@ const Signup = () => {
   /* ── Success ──────────────────────────────────────────────────────────── */
   if (done) {
     return (
-      <Screen align="center" glow="#10b981" footer={<Button iconRight={ChevronRight} onClick={() => navigate('/setup')}>Continue Setup</Button>}>
+      <Screen align="center" glow="#10b981" footer={<Button iconRight={ChevronRight} onClick={() => navigate('/consent?next=/setup')}>Continue Setup</Button>}>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 20 }} className="flex flex-col items-center text-center">
           <div className="flex items-center justify-center w-24 h-24 rounded-full bg-emerald-500/10 border border-emerald-500/30 shadow-[0_0_60px_rgba(16,185,129,0.35)] mb-7">
             <CheckCircle2 size={52} className="text-emerald-400" />

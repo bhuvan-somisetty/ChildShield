@@ -43,6 +43,16 @@ class ApiClient {
   void setToken(String? token) => _token = token;
   String? get token => _token;
 
+  /// Fire-and-forget GET /health to wake the Render free-tier backend during splash,
+  /// so it is ready by the time the user reaches Login/Signup.
+  static void warmup() {
+    Dio(BaseOptions(
+      baseUrl: Env.apiBase,
+      connectTimeout: const Duration(seconds: 90),
+      receiveTimeout: const Duration(seconds: 90),
+    )).get('/health').then((_) {}).catchError((_) {});
+  }
+
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) =>
       _send(() => _dio.get(path, queryParameters: query));
 

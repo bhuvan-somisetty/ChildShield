@@ -9,18 +9,20 @@ class LifecycleService {
   LifecycleService(this._prefs);
   final SharedPreferences _prefs;
 
-  static const _kInstalled       = 'ag_installed_at';
-  static const _kOnboarded       = 'ag_onboarded';
-  static const _kOnboardingBuild = 'ag_onboarding_build'; // stamp written by markOnboarded()
-  static const _kFirstLogin      = 'ag_first_login_at';
-  static const _kAppVersion      = 'ag_app_version';
-  static const _kSeenWhatsNew    = 'ag_seen_whatsnew';
-  static const _kUpdateDismissed = 'ag_update_dismissed';
+  static const _kInstalled         = 'ag_installed_at';
+  static const _kOnboarded         = 'ag_onboarded';
+  static const _kOnboardingBuild   = 'ag_onboarding_build';
+  static const _kFirstLogin        = 'ag_first_login_at';
+  static const _kAppVersion        = 'ag_app_version';
+  static const _kSeenWhatsNew      = 'ag_seen_whatsnew';
+  static const _kUpdateDismissed   = 'ag_update_dismissed';
+  static const _kParentSetupDone   = 'ag_parent_setup_done';
+  static const _kParentPaired      = 'ag_parent_paired';
 
   /// Bump this string whenever onboarding MUST be re-shown to existing users
   /// (new T&C acceptance, major flow change, etc.).  Any device whose stored
   /// _kOnboardingBuild differs from this value is treated as not-yet-onboarded.
-  static const String _onboardingBuild = '2.1';
+  static const String _onboardingBuild = '2.2';
 
   static Future<LifecycleService> create() async =>
       LifecycleService(await SharedPreferences.getInstance());
@@ -72,6 +74,10 @@ class LifecycleService {
   Future<void> markOnboarded() async {
     await _prefs.setBool(_kOnboarded, true);
     await _prefs.setString(_kOnboardingBuild, _onboardingBuild);
+    // Reset hasEverAuthenticated so the router never routes to /login
+    // until the user actually authenticates after this onboarding session.
+    // _persist() will call markFirstLogin() again on successful login/register.
+    await _prefs.remove(_kFirstLogin);
   }
 
   /// Dev/QA helper — clears the onboarding flag so the full flow runs again.
@@ -81,6 +87,10 @@ class LifecycleService {
   }
 
   // ── First login ──────────────────────────────────────────────────────────
+
+  /// True after the user has successfully authenticated at least once on this device.
+  /// Survives logout so returning users go straight to login (not welcome/onboarding).
+  bool get hasEverAuthenticated => _prefs.containsKey(_kFirstLogin);
 
   Future<void> markFirstLogin() async {
     if (!_prefs.containsKey(_kFirstLogin)) {
@@ -105,6 +115,27 @@ class LifecycleService {
 
   bool updateDismissed(String v) => _prefs.getString(_kUpdateDismissed) == v;
   Future<void> dismissUpdate(String v) => _prefs.setString(_kUpdateDismissed, v);
+
+  // ── Parent onboarding gates ──────────────────────────────────────────────
+
+  bool get hasParentSetupDone => _prefs.getBool(_kParentSetupDone) ?? false;
+  Future<void> markParentSetupDone() => _prefs.setBool(_kParentSetupDone, true);
+
+  bool get hasParentPaired => _prefs.getBool(_kParentPaired) ?? false;
+  Future<void> markParentPaired() => _prefs.setBool(_kParentPaired, true);
+
+  // ── Child permission-wizard progress ────────────────────────────────────
+
+  static const _kChildOnboardingStep = 'ag_child_onboarding_step';
+  static const _kChildPaired = 'ag_child_paired';
+
+  /// Last completed permission-wizard stage index (0 = not started).
+  int get childOnboardingStep => _prefs.getInt(_kChildOnboardingStep) ?? 0;
+  Future<void> saveChildOnboardingStep(int step) => _prefs.setInt(_kChildOnboardingStep, step);
+
+  bool get isChildPaired => _prefs.getBool(_kChildPaired) ?? false;
+  Future<void> markChildPaired() => _prefs.setBool(_kChildPaired, true);
+  Future<void> clearChildPaired() => _prefs.remove(_kChildPaired);
 
   // ── Semver compare ───────────────────────────────────────────────────────
 

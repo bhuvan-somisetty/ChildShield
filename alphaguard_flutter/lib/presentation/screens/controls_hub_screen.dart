@@ -28,12 +28,6 @@ class _ControlsHubScreenState extends State<ControlsHubScreen> {
     _ProtRow(key: 'tamper', title: 'Tamper Alerts', sub: 'Notify if device admin is revoked', icon: Icons.notification_important_rounded),
   ];
 
-  static const _sessionDevices = [
-    _Device(name: 'Pixel 8 Pro', status: 'This device · Active', isActive: true),
-    _Device(name: 'iPad Air', status: 'Last active 2h ago', isActive: false),
-    _Device(name: 'Chrome · Mac', status: 'Last active yesterday', isActive: false),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,11 +40,7 @@ class _ControlsHubScreenState extends State<ControlsHubScreen> {
             const SizedBox(height: 24),
             _buildProtectionStatus(),
             const SizedBox(height: 20),
-            _buildPinSection(context),
-            const SizedBox(height: 20),
             _buildLoginSection(),
-            const SizedBox(height: 20),
-            _buildSessionsSection(),
             const SizedBox(height: 20),
             _buildAppProtection(),
             const SizedBox(height: 20),
@@ -130,37 +120,6 @@ class _ControlsHubScreenState extends State<ControlsHubScreen> {
     );
   }
 
-  Widget _buildPinSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label('Security PIN'),
-        const SizedBox(height: 10),
-        _Card(
-          child: Column(
-            children: [
-              _Row(
-                icon: Icons.key_rounded,
-                iconColor: const Color(0xFF06B6D4),
-                title: 'Change Security PIN',
-                sub: 'Update your 6-digit parent PIN',
-                onTap: () => _showSnack(context, 'PIN management coming in Phase 6'),
-              ),
-              _divider(),
-              _Row(
-                icon: Icons.lock_reset_rounded,
-                iconColor: const Color(0xFF06B6D4),
-                title: 'Reset PIN via Email',
-                sub: 'Send reset link to your email',
-                onTap: () => _showSnack(context, 'PIN reset coming in Phase 6'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildLoginSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,57 +147,6 @@ class _ControlsHubScreenState extends State<ControlsHubScreen> {
                 onChanged: (v) => setState(() => _loginAlerts = v),
               ),
             ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSessionsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label('Trusted Devices · Active Sessions'),
-        const SizedBox(height: 10),
-        _Card(
-          child: Column(
-            children: _sessionDevices.map((d) {
-              final isFirst = _sessionDevices.first == d;
-              return Column(
-                children: [
-                  if (!isFirst) _divider(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36, height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: .06),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.devices_rounded, color: Color(0xFFCBD5E1), size: 16),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(d.name, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                              Text(d.status, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
-                        if (d.isActive)
-                          const Text('ACTIVE', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.w900))
-                        else
-                          const Text('Revoke', style: TextStyle(color: Color(0xFFF43F5E), fontSize: 12, fontWeight: FontWeight.w700)),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
           ),
         ),
       ],
@@ -324,14 +232,6 @@ class _ControlsHubScreenState extends State<ControlsHubScreen> {
     );
   }
 
-  void _showSnack(BuildContext ctx, String msg) {
-    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.bgElevated,
-    ));
-  }
-
   Widget _label(String text) => Text(
     text.toUpperCase(),
     style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 2.0),
@@ -357,49 +257,6 @@ class _Card extends StatelessWidget {
         border: Border.all(color: borderColor ?? Colors.white.withValues(alpha: .07)),
       ),
       child: ClipRRect(borderRadius: BorderRadius.circular(22), child: child),
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  const _Row({required this.icon, required this.iconColor, required this.title, this.sub, this.onTap});
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String? sub;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 17),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                  if (sub != null)
-                    Text(sub!, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF475569), size: 17),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -473,9 +330,4 @@ class _ProtRow {
   final IconData icon;
 }
 
-class _Device {
-  const _Device({required this.name, required this.status, required this.isActive});
-  final String name;
-  final String status;
-  final bool isActive;
-}
+

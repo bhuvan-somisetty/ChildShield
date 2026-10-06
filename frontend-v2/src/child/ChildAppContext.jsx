@@ -14,6 +14,7 @@ export const useChildApp = () => useContext(ChildAppContext);
 
 const load = (k, fallback) => { try { const v = localStorage.getItem(k); return v ? { ...fallback, ...JSON.parse(v) } : fallback; } catch { return fallback; } };
 const loadArr = (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* quota / private mode */ } };
 
 export const ChildAppProvider = ({ children }) => {
   const [profile, setProfile] = useState(() => load('ag_child_profile', DEFAULT_CHILD));
@@ -66,10 +67,10 @@ export const ChildAppProvider = ({ children }) => {
   const emitRequest = useCallback((r) => { if (sockRef.current) sockRef.current.emit('request:create', r); }, []);
   const onParentMessage = useCallback((cb) => { const s = sockRef.current; if (!s) return () => {}; const h = (m) => { if (m.from === 'parent') cb(m); }; s.on('chat:message', h); return () => s.off('chat:message', h); }, []);
 
-  useEffect(() => { localStorage.setItem('ag_child_contacts', JSON.stringify(contacts)); }, [contacts]);
-  useEffect(() => { localStorage.setItem('ag_child_goals', JSON.stringify(goals)); }, [goals]);
+  useEffect(() => { save('ag_child_contacts', contacts); }, [contacts]);
+  useEffect(() => { save('ag_child_goals', goals); }, [goals]);
 
-  const updateProfile = useCallback((patch) => setProfile((p) => { const n = { ...p, ...patch }; localStorage.setItem('ag_child_profile', JSON.stringify(n)); return n; }), []);
+  const updateProfile = useCallback((patch) => setProfile((p) => { const n = { ...p, ...patch }; save('ag_child_profile', n); return n; }), []);
   const addContact = useCallback((c) => setContacts((p) => [...p, { ...c, id: Date.now() }]), []);
   const removeContact = useCallback((id) => setContacts((p) => p.filter((c) => c.id !== id)), []);
   const toggleGoal = useCallback((id) => setGoals((p) => p.map((g) => (g.id === id ? { ...g, done: !g.done } : g))), []);

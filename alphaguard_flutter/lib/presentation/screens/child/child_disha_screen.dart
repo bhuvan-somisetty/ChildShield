@@ -143,28 +143,7 @@ class _ChildDishaScreenState extends State<ChildDishaScreen> with TickerProvider
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Voice mode coming soon'),
-              behavior: SnackBarBehavior.floating,
-            )),
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFA855F7), Color(0xFF6366F1)]),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.mic_rounded, color: Colors.white, size: 14),
-                  SizedBox(width: 5),
-                  Text('Speak', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-                ],
-              ),
-            ),
-          ),
+          // Voice mode: hidden until backend TTS/STT integration is complete.
         ],
       ),
     );

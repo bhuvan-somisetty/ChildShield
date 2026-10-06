@@ -25,6 +25,7 @@ import 'presentation/screens/settings/device_registry_screen.dart';
 import 'presentation/screens/settings/notification_inbox_screen.dart';
 import 'presentation/screens/settings/notification_preferences_screen.dart';
 import 'presentation/screens/support/child_safety_policy_screen.dart';
+import 'presentation/screens/support/data_deletion_screen.dart';
 import 'presentation/screens/support/legal_consent_screen.dart';
 import 'presentation/screens/support/privacy_policy_screen.dart';
 import 'presentation/screens/support/terms_conditions_screen.dart';
@@ -81,6 +82,7 @@ GoRouter buildRouter(AuthController auth) {
       GoRoute(path: '/notification-settings', builder: (_, __) => const NotificationPreferencesScreen()),
       GoRoute(path: '/settings/account', builder: (_, __) => const AccountSettingsScreen()),
       GoRoute(path: '/support/privacy', builder: (_, __) => const PrivacyPolicyScreen()),
+      GoRoute(path: '/support/data-deletion', builder: (_, __) => const DataDeletionScreen()),
       GoRoute(path: '/support/terms', builder: (_, __) => const TermsConditionsScreen()),
       GoRoute(path: '/support/consent', builder: (_, __) => const LegalConsentScreen()),
       GoRoute(path: '/support/manual', builder: (_, __) => const UserManualScreen()),
@@ -107,16 +109,48 @@ GoRouter buildRouter(AuthController auth) {
       }
 
       if (status == AuthStatus.unauthenticated) {
-        // First-time user → show welcome → onboarding → role selection flow.
-        if (!auth.isOnboarded) {
-          const flow = {'/welcome', '/onboarding', '/role'};
+        // New user (never completed onboarding) OR user who completed onboarding
+        // but has never authenticated → show welcome → onboarding → role flow.
+        // BUG #3 FIX: guard on hasEverAuthenticated so a user who swiped through
+        // onboarding but didn't register is NOT sent to /login on the next cold open.
+        if (!auth.isOnboarded || !auth.hasEverAuthenticated) {
+          // BUG #1 FIX: include support/policy routes so tapping a policy link
+          // from the onboarding privacy section is allowed (not redirected to /welcome).
+          const flow = {
+            '/welcome', '/onboarding', '/role',
+            '/login', '/signup', '/child-setup', '/pair',
+            '/support/privacy', '/support/terms', '/support/child-safety', '/support/consent', '/support/manual', '/support/data-deletion',
+          };
           if (flow.contains(loc)) return null;
           return '/welcome';
         }
-        // Returning user (already onboarded) → auth screens or child setup.
-        const authScreens = {'/login', '/signup', '/pair', '/forgot', '/role', '/child-setup'};
+        // Post-logout: restart the full onboarding flow from /welcome so the
+        // Android back-stack is: Role ← Onboarding ← Welcome ← Exit app.
+        if (auth.postLogout) {
+          const postLogoutFlow = {
+            '/welcome', '/onboarding', '/role',
+            '/login', '/signup', '/child-setup', '/pair', '/forgot',
+            '/support/privacy', '/support/terms', '/support/child-safety', '/support/consent', '/support/manual', '/support/data-deletion',
+          };
+          if (postLogoutFlow.contains(loc)) return null;
+          return '/welcome';
+        }
+        // Returning user cold-start (onboarded AND has previously authenticated) → role selection.
+        // BUG #2 FIX: include /onboarding so back-navigation from /role doesn't loop
+        // (role back → /onboarding, which is now allowed for returning users too).
+        const authScreens = {
+          '/login', '/signup', '/pair', '/forgot', '/role', '/child-setup', '/onboarding',
+          '/support/privacy', '/support/terms', '/support/child-safety', '/support/consent', '/support/manual', '/support/data-deletion',
+        };
         if (authScreens.contains(loc)) return null;
-        return '/login';
+        return '/role';
+      }
+
+      // Authenticated parent must complete setup → pair flow before dashboard.
+      if (auth.isParent && !auth.hasParentPaired) {
+        const parentFlow = {'/setup', '/connect'};
+        if (parentFlow.contains(loc)) return null;
+        return auth.hasParentSetupDone ? '/connect' : '/setup';
       }
 
       // Authenticated — allow home and all deep-link routes.
@@ -124,7 +158,7 @@ GoRouter buildRouter(AuthController auth) {
         '/home', '/notifications', '/notification-settings', '/sos', '/devices',
         '/tasks', '/rewards', '/chat', '/radar', '/profile',
         '/settings/account', '/support/privacy', '/support/terms',
-        '/support/consent', '/support/manual', '/support/child-safety', '/child/contacts',
+        '/support/consent', '/support/manual', '/support/child-safety', '/support/data-deletion', '/child/contacts',
         '/child/disha', '/controls', '/app-management', '/approvals',
         '/setup', '/connect', '/child-connected', '/child-activate',
       };

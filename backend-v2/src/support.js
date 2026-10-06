@@ -40,9 +40,13 @@ const publicAttachment = (a) => ({ id: a.id, ticketId: a.ticketId, commentId: a.
 const logTicket = (t, e) => history.insert({ ticketId: t.id, actorRole: e.actorRole, actorId: e.actorId || null, changeType: e.changeType, field: e.field || null, oldValue: e.oldValue ?? null, newValue: e.newValue ?? null, at: now() });
 const nextTicketNumber = () => tickets.all().reduce((m, t) => Math.max(m, t.ticketNumber || 0), 144) + 1; // human numbering starts at #145
 
+// Allow only raster images + PDF. SVG is deliberately excluded: an SVG can carry
+// inline <script>, so a `data:image/svg+xml` attachment rendered back in the
+// admin/user UI would be stored XSS.
+const ALLOWED_ATTACH = /^data:(image\/(png|jpe?g|gif|webp)|application\/pdf);/i;
 const saveAttachment = (io, { ticketId, familyId, commentId, att }) => {
   if (!att || !att.dataUrl) return null;
-  if (typeof att.dataUrl !== 'string' || att.dataUrl.length > ATTACH_MAX || !/^data:(image\/|application\/pdf)/.test(att.dataUrl)) return null;
+  if (typeof att.dataUrl !== 'string' || att.dataUrl.length > ATTACH_MAX || !ALLOWED_ATTACH.test(att.dataUrl)) return null;
   return attachments.insert({ ticketId, familyId, commentId: commentId || null, name: att.name || 'screenshot', mime: (att.dataUrl.match(/^data:([^;]+)/) || [])[1] || 'image/png', kind: att.dataUrl.startsWith('data:application/pdf') ? 'pdf' : 'image', dataUrl: att.dataUrl, at: now() });
 };
 

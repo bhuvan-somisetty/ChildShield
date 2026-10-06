@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, TrendingUp, Flame, Clock, Target as TargetIcon, ShieldCheck, Lightbulb } from 'lucide-react';
+import { Sparkles, TrendingUp, Flame, Clock, Target as TargetIcon, ShieldCheck, Lightbulb, CheckCircle2, Activity } from 'lucide-react';
 import { Card } from '../../components/ui';
 import { api } from '../../lib/agClient';
 
@@ -54,14 +54,36 @@ const AIReports = () => {
           <Card className="p-5" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(37,99,235,0.06))' }}>
             <p className="text-slate-300 text-[13.5px] font-medium leading-relaxed">{report.summary}</p>
           </Card>
+
+          {/* Family insights — derived from approval / discussion / consistency */}
+          {m.insights?.length > 0 && (
+            <Card className="p-4 flex flex-col gap-2.5">
+              <p className="text-violet-300 text-[12px] font-black uppercase tracking-wide inline-flex items-center gap-1.5"><Sparkles size={14} /> Family Insights</p>
+              {m.insights.map((it, i) => (
+                <div key={i} className="flex items-start gap-2.5"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" /><p className="text-slate-300 text-[13px] font-medium leading-relaxed">{it}</p></div>
+              ))}
+            </Card>
+          )}
+
           <div className="grid grid-cols-2 gap-2.5">
             <Metric icon={TrendingUp} label="Task Completion" value={`${m.taskCompletionPct}%`} color="#10b981" />
             <Metric icon={Flame} label="Study Streak" value={`${m.currentTaskStreak} days`} color="#f59e0b" />
-            <Metric icon={Clock} label="Most Productive" value={m.mostProductiveTime || 'N/A'} color="#06b6d4" />
+            {m.approval?.decisions > 0 && <Metric icon={CheckCircle2} label="Approval Rate" value={`${m.approval.approvalRate}%`} color="#22c55e" />}
+            {m.consistency && <Metric icon={Activity} label="Consistency" value={`${m.consistency.consistencyPct}%${m.consistency.delta > 0 ? ` ↑${m.consistency.delta}` : ''}`} color="#06b6d4" />}
             <Metric icon={TargetIcon} label="Avg Target" value={`${m.avgTargetProgress}%`} color="#6366f1" />
             <Metric icon={ShieldCheck} label="Risk Level" value={m.riskLevel} color={RISK_COLOR[m.riskLevel] || '#64748b'} />
-            <Metric icon={TrendingUp} label="Tasks Failed" value={`${m.taskFailurePct}%`} color="#f43f5e" />
           </div>
+
+          {(m.approval?.decisions > 0 || m.discussions?.totalMessages > 0) && (
+            <Card className="p-4 flex flex-col gap-2.5">
+              <p className="text-slate-400 text-[12px] font-bold uppercase tracking-wide">Verification &amp; Communication</p>
+              <div className="flex items-center justify-between"><span className="text-slate-400 text-[13px] font-medium">Tasks approved</span><span className="text-emerald-300 text-[13px] font-black">{m.approval.approved} / {m.approval.decisions}</span></div>
+              {m.approval.pendingApproval > 0 && <div className="flex items-center justify-between"><span className="text-slate-400 text-[13px] font-medium">Awaiting review</span><span className="text-amber-300 text-[13px] font-black">{m.approval.pendingApproval}</span></div>}
+              <div className="flex items-center justify-between"><span className="text-slate-400 text-[13px] font-medium">Task messages</span><span className="text-cyan-300 text-[13px] font-black">{m.discussions.totalMessages}</span></div>
+              <div className="flex items-center justify-between"><span className="text-slate-400 text-[13px] font-medium">Parent engagement</span><span className="text-white text-[13px] font-black capitalize">{m.parentEngagement?.level || 'low'}</span></div>
+              {m.discussions.mostDiscussed?.[0] && <div className="flex items-center justify-between"><span className="text-slate-400 text-[13px] font-medium">Most discussed</span><span className="text-white text-[13px] font-black">{m.discussions.mostDiscussed[0].category}</span></div>}
+            </Card>
+          )}
 
           {m.targets?.length > 0 && (
             <Card className="p-4 flex flex-col gap-3">

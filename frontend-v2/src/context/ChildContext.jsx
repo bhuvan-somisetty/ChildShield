@@ -20,8 +20,11 @@ const defaultSettings = (c) => ({
   night: { on: true, start: '22:00', end: '06:00', games: true, social: true, ent: true, edu: false, emergency: true },
 });
 
+// Guarded parse — corrupt ag_settings (partial write / tampering) must NOT throw
+// during provider init, which would white-screen the whole parent app.
+const safeParse = (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
 const loadSettings = () => {
-  const saved = JSON.parse(localStorage.getItem('ag_settings') || '{}');
+  const saved = safeParse('ag_settings', {});
   const init = {};
   CHILDREN.forEach((c) => {
     const d = defaultSettings(c); const s = saved[c.id] || {};
@@ -44,7 +47,7 @@ export const ChildProvider = ({ children }) => {
     const merged = { ...prev[id], ...patch };
     if (patch.night) merged.night = { ...prev[id].night, ...patch.night };
     const next = { ...prev, [id]: merged };
-    localStorage.setItem('ag_settings', JSON.stringify(next));
+    try { localStorage.setItem('ag_settings', JSON.stringify(next)); } catch { /* quota / private mode — keep in-memory */ }
     return next;
   });
 

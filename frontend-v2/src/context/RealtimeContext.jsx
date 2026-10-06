@@ -34,6 +34,8 @@ const K_CAPS = 'ag_captures_v1';
 const K_CHAT = 'ag_chat_v1';
 
 const loadJSON = (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
+// Guarded write — never let a quota/private-mode failure throw out of an effect.
+const saveJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* quota / private mode */ } };
 
 // Notifications — seed per child from the demo feed, carrying a lifecycle state.
 const seedNotifs = () => {
@@ -100,10 +102,10 @@ export const RealtimeProvider = ({ children }) => {
   const pairingRef = useRef(null);
   const liveRef = useRef(false); liveRef.current = live;
 
-  useEffect(() => { localStorage.setItem(K_NOTIFS, JSON.stringify(notifs)); }, [notifs]);
-  useEffect(() => { localStorage.setItem(K_REQS, JSON.stringify(requests)); }, [requests]);
-  useEffect(() => { localStorage.setItem(K_CAPS, JSON.stringify(captures)); }, [captures]);
-  useEffect(() => { localStorage.setItem(K_CHAT, JSON.stringify(chats)); }, [chats]);
+  useEffect(() => { saveJSON(K_NOTIFS, notifs); }, [notifs]);
+  useEffect(() => { saveJSON(K_REQS, requests); }, [requests]);
+  useEffect(() => { saveJSON(K_CAPS, captures); }, [captures]);
+  useEffect(() => { saveJSON(K_CHAT, chats); }, [chats]);
 
   /* ── Notifications ─────────────────────────────────────────────────────── */
   const addNotif = useCallback((childId, n) => setNotifs((p) => ({ ...p, [childId]: [{ id: nextId(), state: 'unread', time: 'Just now', date: 'Jun 12, 2026', childName: n.childName || '', ...n }, ...(p[childId] || [])] })), []);
@@ -201,46 +203,57 @@ export const RealtimeProvider = ({ children }) => {
   // running on the demo ticker/local stores. The single real child shows as Emma.
   useEffect(() => {
     let cancelled = false;
+    let boundSocket = null;
+    let boundHandlers = null;
     ensureSession('parent').then((sess) => {
       if (cancelled) return;
       const s = sess.socket; socketRef.current = s; pairingRef.current = sess.pairingId; setLive(true);
       const M = LIVE_CHILD;
-      s.on('battery:update', (b) => setTelemetry((p) => ({ ...p, [M]: { ...p[M], battery: { ...p[M].battery, level: b.level, charging: b.charging, updatedAt: Date.now() }, lastSyncAt: Date.now() } })));
-      s.on('presence', (pr) => setTelemetry((p) => ({ ...p, [M]: { ...p[M], online: pr.online, lastSyncAt: Date.now() } })));
-      s.on('location:update', (loc) => setTelemetry((p) => ({ ...p, [M]: { ...p[M], coords: { lat: loc.lat, lng: loc.lng }, locUpdatedAt: Date.now() } })));
-      s.on('sos:alert', (evt) => {
-        addNotif(M, { type: 'Emergency SOS', sub: 'Child triggered SOS', sev: 'critical', accent: '#ef4444', cat: 'Emergency', childName: 'Emma' });
-        // SOS carries the child's real location → surface it on the radar/emergency immediately.
-        if (evt && evt.location) setTelemetry((p) => ({ ...p, [M]: { ...p[M], coords: { lat: evt.location.lat, lng: evt.location.lng }, locUpdatedAt: Date.now() } }));
-      });
-      s.on('request:new', (r) => setRequests((prev) => (prev.some((x) => x.id === r.id) ? prev : [{ id: r.id, type: r.type, app: r.app, cat: r.category, color: '#16a34a', childId: M, childName: 'Emma', reason: r.reason, time: 'Just now', date: 'Jun 13, 2026', status: 'pending' }, ...prev])));
-      s.on('request:update', (r) => setRequests((prev) => prev.map((x) => (x.id === r.id ? { ...x, status: r.status, decidedAt: 'Just now' } : x))));
-      s.on('chat:message', (m) => { if (m.from === 'child') setChats((p) => ({ ...p, [M]: [...(p[M] || []), { id: m.id, from: 'child', text: m.text, at: m.at, status: 'read' }] })); });
-      s.on('chat:status', (st) => setChats((p) => ({ ...p, [M]: (p[M] || []).map((mm) => (mm.from === 'parent' && mm.status !== 'read' ? { ...mm, status: st.status } : mm)) })));
-      // ── Android enforcement events (uninstall/tamper arrive via security:alert) ──
-      s.on('screentime:locked', (d) => addNotif(M, { type: d.reason === 'screen_time' ? 'Daily Limit Reached' : 'Restricted App Blocked', sub: d.app || '', sev: 'medium', accent: '#f59e0b', cat: 'Screen Time', childName: 'Emma' }));
-      s.on('security:alert', (d) => {
-        // (5) Notification Center
-        addNotif(M, { type: secLabel(d.kind), sub: d.detail || d.kind, sev: d.risk === 'high' ? 'high' : 'medium', accent: '#ef4444', cat: 'Security Alerts', childName: 'Emma' });
-        // (7) Security Center (Detection Center live list)
-        setDetections((prev) => [{ id: d.id || `d${nextId()}`, kind: d.kind, app: secApp(d.kind, d.detail), type: secLabel(d.kind), risk: cap(d.risk || 'medium'), time: 'Just now', device: 'Pixel 7' }, ...prev].slice(0, 30));
-        // (6) Activity Timeline
-        addActivity(M, { type: (d.kind || '').startsWith('tamper') ? 'system' : 'uninstall', title: secLabel(d.kind), sub: d.detail || d.kind, sev: d.risk === 'high' ? 'critical' : 'medium' });
-      });
-      // ── Safe Zones (geofence events from the backend) ──
-      s.on('zones:update', (list) => setZones(Array.isArray(list) ? list : []));
-      s.on('zone:event', (evt) => {
-        const high = evt.type === 'missed' || evt.type === 'stayed' || evt.type === 'late';
-        setZoneEvents((prev) => [evt, ...prev].slice(0, 100));
-        addNotif(M, { type: zoneLabel(evt), sub: 'Safe zone alert', sev: high ? 'high' : 'low', accent: '#10b981', cat: 'Safe Zones', childName: 'Emma' });
-        addActivity(M, { type: 'zone', title: zoneLabel(evt), sub: evt.zoneType || 'Safe zone', sev: high ? 'high' : 'low' });
-      });
+      // Register every listener in a map so the cleanup can remove EXACTLY these
+      // handlers. The socket is shared/cached across the app (ensureSession), so
+      // failing to off them on unmount would stack duplicate handlers on every
+      // provider remount → duplicate notifications + a growing memory leak.
+      const handlers = {
+        'battery:update': (b) => setTelemetry((p) => ({ ...p, [M]: { ...p[M], battery: { ...p[M].battery, level: b.level, charging: b.charging, updatedAt: Date.now() }, lastSyncAt: Date.now() } })),
+        presence: (pr) => setTelemetry((p) => ({ ...p, [M]: { ...p[M], online: pr.online, lastSyncAt: Date.now() } })),
+        'location:update': (loc) => setTelemetry((p) => ({ ...p, [M]: { ...p[M], coords: { lat: loc.lat, lng: loc.lng }, locUpdatedAt: Date.now() } })),
+        'sos:alert': (evt) => {
+          addNotif(M, { type: 'Emergency SOS', sub: 'Child triggered SOS', sev: 'critical', accent: '#ef4444', cat: 'Emergency', childName: 'Emma' });
+          // SOS carries the child's real location → surface it on the radar/emergency immediately.
+          if (evt && evt.location) setTelemetry((p) => ({ ...p, [M]: { ...p[M], coords: { lat: evt.location.lat, lng: evt.location.lng }, locUpdatedAt: Date.now() } }));
+        },
+        'request:new': (r) => setRequests((prev) => (prev.some((x) => x.id === r.id) ? prev : [{ id: r.id, type: r.type, app: r.app, cat: r.category, color: '#16a34a', childId: M, childName: 'Emma', reason: r.reason, time: 'Just now', date: 'Jun 13, 2026', status: 'pending' }, ...prev])),
+        'request:update': (r) => setRequests((prev) => prev.map((x) => (x.id === r.id ? { ...x, status: r.status, decidedAt: 'Just now' } : x))),
+        'chat:message': (m) => { if (m.from === 'child') setChats((p) => ({ ...p, [M]: (p[M] || []).some((mm) => mm.id === m.id) ? p[M] : [...(p[M] || []), { id: m.id, from: 'child', text: m.text, at: m.at, status: 'read' }] })); },
+        'chat:status': (st) => setChats((p) => ({ ...p, [M]: (p[M] || []).map((mm) => (mm.from === 'parent' && mm.status !== 'read' ? { ...mm, status: st.status } : mm)) })),
+        // ── Android enforcement events (uninstall/tamper arrive via security:alert) ──
+        'screentime:locked': (d) => addNotif(M, { type: d.reason === 'screen_time' ? 'Daily Limit Reached' : 'Restricted App Blocked', sub: d.app || '', sev: 'medium', accent: '#f59e0b', cat: 'Screen Time', childName: 'Emma' }),
+        'security:alert': (d) => {
+          addNotif(M, { type: secLabel(d.kind), sub: d.detail || d.kind, sev: d.risk === 'high' ? 'high' : 'medium', accent: '#ef4444', cat: 'Security Alerts', childName: 'Emma' });
+          setDetections((prev) => [{ id: d.id || `d${nextId()}`, kind: d.kind, app: secApp(d.kind, d.detail), type: secLabel(d.kind), risk: cap(d.risk || 'medium'), time: 'Just now', device: 'Pixel 7' }, ...prev].slice(0, 30));
+          addActivity(M, { type: (d.kind || '').startsWith('tamper') ? 'system' : 'uninstall', title: secLabel(d.kind), sub: d.detail || d.kind, sev: d.risk === 'high' ? 'critical' : 'medium' });
+        },
+        // ── Safe Zones (geofence events from the backend) ──
+        'zones:update': (list) => setZones(Array.isArray(list) ? list : []),
+        'zone:event': (evt) => {
+          const high = evt.type === 'missed' || evt.type === 'stayed' || evt.type === 'late';
+          setZoneEvents((prev) => [evt, ...prev].slice(0, 100));
+          addNotif(M, { type: zoneLabel(evt), sub: 'Safe zone alert', sev: high ? 'high' : 'low', accent: '#10b981', cat: 'Safe Zones', childName: 'Emma' });
+          addActivity(M, { type: 'zone', title: zoneLabel(evt), sub: evt.zoneType || 'Safe zone', sev: high ? 'high' : 'low' });
+        },
+        disconnect: () => setLive(false),
+      };
+      Object.entries(handlers).forEach(([evt, fn]) => s.on(evt, fn));
+      boundSocket = s; boundHandlers = handlers;
       // Hydrate existing zones + history for the radar/manager display.
-      fetch(`${serverBase()}/api/zones`, { headers: { Authorization: `Bearer ${sess.token}` } }).then((res) => res.json()).then((d) => { if (d && d.zones) setZones(d.zones); }).catch(() => {});
-      fetch(`${serverBase()}/api/zone-events`, { headers: { Authorization: `Bearer ${sess.token}` } }).then((res) => res.json()).then((d) => { if (d && d.events) setZoneEvents(d.events); }).catch(() => {});
-      s.on('disconnect', () => setLive(false));
+      fetch(`${serverBase()}/api/zones`, { headers: { Authorization: `Bearer ${sess.token}` } }).then((res) => res.json()).then((d) => { if (!cancelled && d && d.zones) setZones(d.zones); }).catch(() => {});
+      fetch(`${serverBase()}/api/zone-events`, { headers: { Authorization: `Bearer ${sess.token}` } }).then((res) => res.json()).then((d) => { if (!cancelled && d && d.events) setZoneEvents(d.events); }).catch(() => {});
     }).catch(() => { /* backend offline → demo mode */ });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      // Detach exactly the handlers we attached so a remount can't duplicate them.
+      if (boundSocket && boundHandlers) Object.entries(boundHandlers).forEach(([evt, fn]) => boundSocket.off(evt, fn));
+    };
   }, []); // eslint-disable-line
 
   const value = {
