@@ -1,98 +1,146 @@
 <div align="center">
-  <img src="https://img.icons8.com/color/120/000000/shield.png" alt="ChildShield AI Logo">
-  <h1 align="center">Child Shield AI</h1>
+  <img src="https://img.icons8.com/color/120/000000/shield.png" alt="AlphaGuard AI logo">
+  <h1 align="center">AlphaGuard AI (Child Shield)</h1>
   <p align="center">
-    <strong>Premium Behavioral Intelligence & Biometric Parental Control Suite</strong>
+    <strong>Real-time family safety, screen-time control and AI insights for parents and children</strong>
   </p>
   <p align="center">
-    <a href="#demo"><img src="https://img.shields.io/badge/Status-V3_Final-10B981?style=for-the-badge" /></a>
-    <a href="#tech-stack"><img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" /></a>
-    <a href="#tech-stack"><img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" /></a>
-    <a href="#tech-stack"><img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" /></a>
+    <a href="https://alphaguard-v2.vercel.app/welcome"><img src="https://img.shields.io/badge/Live_Web_App-alphaguard--v2.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
+  </p>
+  <p align="center">
+    <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
+    <img src="https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+    <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
+    <img src="https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white" />
+    <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
   </p>
 </div>
 
 <hr />
 
-## 💡 The Solution
+## 🌐 Try It
 
-**Child Shield AI** is a professional-grade digital safety platform that goes beyond simple app blocking. By combining **Real-Time Behavioral Analytics** with **Advanced Face Guard Technology**, we provide parents with a comprehensive supervision ecosystem. 
+| Platform | Link |
+|---|---|
+| **Web app** (parent and child) | **https://alphaguard-v2.vercel.app/welcome** |
+| **Android app** (Flutter) | Build from `alphaguard_flutter/` (see [Running locally](#-running-locally)) |
+| **Backend API** | `https://alphaguard-backend-v2.onrender.com` (Render free tier, so the first request after idle can take ~30s) |
 
-Built with a high-end Dark Mode aesthetic, the platform translates complex usage patterns into actionable safety intelligence through a cross-platform mobile app and a powerful web dashboard.
-
----
-
-## ⚡ Core Features (V3 Implementation)
-
-### 1. Advanced Face Guard System
-Continuous identity verification using the device camera.
-* **Scan Lock UI**: Real-time visual feedback (Green Frame + Tick) when the authorized child is detected.
-* **Intelligent Enforcement**: Choose between *Alert*, *Pause Session*, or *Total Lock* upon identity mismatch or face absence.
-* **10-Second Grace Period**: Integrated warning system allows children to re-engage before security actions trigger.
-
-### 2. High-Fidelity Daily Analytics
-Startup-grade data visualization for long-term behavior tracking.
-* **7-Day Trend Analysis**: Interactive line charts showing weekly usage fluctuations.
-* **App-Specific Logging**: Granular tracking for exact minutes spent in specific apps (YouTube, Roblox, WhatsApp).
-* **Search Interception**: Dedicated feed for monitoring search queries with automated high-risk flagging.
-
-### 3. Safety Intelligence Dashboard
-Real-time parent overview with proactive alerting.
-* **Shield Intelligence Card**: AI-driven summary of current device safety status.
-* **Security Incident Banner**: High-priority red alerts for unauthorized access or usage limit breaches.
-* **30-Day History**: Rolling data retention for historical performance auditing.
-
-### 4. Cross-Platform Control Suite
-A robust **React Native (Expo)** mobile application for parents to monitor and manage child devices from anywhere in the world.
+Open the web app on a phone for the best experience. It is designed mobile-first and works like a native app.
 
 ---
 
-## 🎬 The "Live Demo" Simulation Mode
-The platform features a sophisticated **Telemetry Simulation Engine**. By enabling Demo Mode, the backend generates realistic, accelerated data streams:
-1. **Watch History Scenarios**: Mimics scrolling patterns and video consumption.
-2. **Search Events**: Injects simulated queries to test risk flagging.
-3. **Face Incidents**: Simulates unauthorized access attempts with captured base64 intruder snapshots.
+## 💡 What It Does
+
+AlphaGuard AI connects a **parent device** and a **child device** through a realtime backend. Parents set rules, track location and approve requests. Children get a friendly companion app with tasks, rewards, SOS and an AI buddy. Every change syncs instantly over Socket.IO.
+
+The same product ships as:
+- a **web app** (React 19 + Vite), deployed on Vercel
+- a **native Android app** (Flutter) that uses the same V2 backend unchanged
 
 ---
 
-## 🛠️ Architecture Overview
+## ⚡ Features
 
-*   **Mobile App**: React Native & Expo (Lucide Icons, Recharts)
-*   **Web Dashboard**: React (Vite-powered, Glassmorphism CSS)
-*   **Backend Engine**: Node.js & Express (Sequelize ORM, JWT Authentication)
-*   **Database**: SQLite (Production-ready relational schema)
+### 👨‍👩‍👧 Parent app
+- **Onboarding and setup**: guided teaching tour, role selection, email/password or Google sign-in, a step-by-step parent setup wizard and a permissions center
+- **QR pairing**: link a child device by scanning a QR code or entering a pairing code
+- **Dashboard**: live child status, battery, activity, alerts and a daily summary
+- **Controls hub**: screen-time limits, night mode, per-app management and configuration
+- **Location and safety**: live map, geofenced safe zones, emergency/SOS center
+- **Tasks, targets and rewards**: assign tasks, set goals and reward progress
+- **Approvals center**: review child requests and photo-proof task submissions
+- **AI insights**: AI reports, analytics, a detection center and *Disha*, a voice-enabled AI assistant
+- **Link safety**: URLhaus-powered malicious link detection
+- **Monitoring and notifications**: categorised alerts, activity feed and parent–child chat
+- **Privacy and compliance**: consent flow, legal pages, data export and account deletion
+
+### 🧒 Child app
+- Simple activation and pairing with the parent device
+- Home with daily tasks, goals, rewards and achievements
+- **SOS button** and trusted contacts
+- **Disha**, a child-safe AI buddy with text and voice chat
+- Chat with parents, settings and profile
+
+### 🌍 Built for everyone
+- **40+ languages**, including English, Hindi, Telugu, Tamil, Kannada, Malayalam, Marathi, Bengali, Odia, Urdu and many international languages
+- Dark premium UI with smooth animations, responsive from phones to tablets
+- App lifecycle handling: splash screen, update / force-update gate and a "what's new" screen
+
+---
+
+## 🛠️ Architecture
+
+```
+┌──────────────────────┐        ┌──────────────────────┐
+│  Web app (React 19)  │        │  Android (Flutter)   │
+│  Vercel              │        │  APK                 │
+└──────────┬───────────┘        └──────────┬───────────┘
+           │      REST + Socket.IO (JWT)    │
+           └───────────────┬────────────────┘
+                 ┌─────────▼──────────┐
+                 │  backend-v2        │
+                 │  Express+Socket.IO │──► PostgreSQL
+                 │  Render            │
+                 └────────────────────┘
+```
+
+> The V2 source (web, backend, Flutter and Android agent) is developed on the [`v2-foundation`](https://github.com/bhuvan-somisetty/ChildShield/tree/v2-foundation) branch.
+
+| Folder | What it is | Stack |
+|---|---|---|
+| `frontend-v2/` | Web app (parent + child) | React 19, Vite, Tailwind CSS 4, Framer Motion, React Router 7, Leaflet / MapLibre, Socket.IO client |
+| `alphaguard_flutter/` | Native Android app | Flutter 3.27+, go_router, Provider, Dio, socket_io_client, flutter_map, mobile_scanner, Firebase Messaging |
+| `backend-v2/` | Realtime API server | Node.js 20, Express, Socket.IO, PostgreSQL (`pg`), JWT, bcrypt, Google auth |
+| `android-agent/` | Native Android enforcement module | Kotlin / Android |
+| `frontend/`, `backend/`, `childshield-mobile/` | Legacy V1 (React Native / Expo + SQLite) | Kept for reference |
 
 ---
 
 ## 🚀 Running Locally
 
-**1. Boot Backend & Database**
+**1. Backend**
 ```bash
-cd backend
+cd backend-v2
 npm install
-npm start
+cp .env.example .env    # set DATABASE_URL, JWT_SECRET, etc.
+npm run dev             # http://localhost:4000
+npm test                # run the backend test suite
 ```
 
-**2. Launch Parent Mobile App**
+**2. Web app**
 ```bash
-cd childshield-mobile
+cd frontend-v2
 npm install
-npx expo start --web
+npm run dev             # http://localhost:5173
+```
+
+**3. Flutter app**
+```bash
+cd alphaguard_flutter
+flutter pub get
+flutter run                     # on a connected device or emulator
+flutter build apk --release     # build a release APK
 ```
 
 ---
 
-## 🌍 Deployment Strategy
+## ☁️ Deployment
 
-*   **Mobile**: Export via `eas build` for Android (APK) and iOS (IPA) distribution.
-*   **Backend**: Production-ready for **Railway** or **Render** with a single click.
-*   **Frontend**: SEO-optimized and ready for **Vercel** or **Netlify**.
+- **Web**: `frontend-v2` on **Vercel**, live at https://alphaguard-v2.vercel.app
+- **Backend**: `backend-v2` on **Render** via `backend-v2/render.yaml`, with database migrations running on boot
+- **Android**: `flutter build apk --release` / `flutter build appbundle` for the Play Store
 
 ---
 
-## 🔮 Future Roadmap (Phase 4+)
+## 📸 Screenshots
 
-*   **Live AI Content Filtering**: Real-time OCR and image analysis of device screens using quantized on-edge models.
-*   **Encrypted Log Sharing**: Secure, end-to-end encrypted export of 30-day activity logs directly to parent emails.
-*   **Dynamic Limit Scheduling**: Rule-based automation based on historical behavior patterns.
+| Welcome | Login | Child pairing |
+|---|---|---|
+| <img src="screenshots/welcome_page_live_android.png" width="220"> | <img src="screenshots/login_live.png" width="220"> | <img src="screenshots/child_pairing_live.png" width="220"> |
 
+---
+
+## 👤 Author
+
+**Bhuvan Somisetty**: [@bhuvan-somisetty](https://github.com/bhuvan-somisetty)
